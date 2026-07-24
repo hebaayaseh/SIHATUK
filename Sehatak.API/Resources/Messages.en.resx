@@ -367,4 +367,7 @@
   <data name="Doctor.CancelDay" xml:space="preserve">
     <value>Doctor Cancel Appointment This day</value>
   </data>
+  <data name="Slot.AlreadyBlocked" xml:space="preserve">
+    <value>The Appointment already canceled</value>
+  </data>
 </root>

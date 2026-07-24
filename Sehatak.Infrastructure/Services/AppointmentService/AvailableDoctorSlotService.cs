@@ -4,6 +4,7 @@ using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.ApointmentInterface;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
+using Sehatak.Domain.Enums.PostponeEnums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.CalculateSlot;
 using Sehatak.Infrastructure.Data;
@@ -11,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -51,10 +53,12 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
 
             var isDayBlocked = await db.DoctorBlockedDays
-                 .AnyAsync(bd => bd.doctorId == doctorId && bd.isBlocked && bd.date == date);
-
-            if (isDayBlocked)
-                throw new BusinessException("Doctor.DayBlocked");
+                 .Where(bd => bd.doctorId == doctorId 
+                        && bd.isBlocked 
+                        && bd.date == date 
+                        && bd.timeSlot.HasValue)
+                 .Select(bd => bd.timeSlot!.Value)
+                 .ToListAsync();
 
 
             var schedule = await db.DoctorSchedules
@@ -81,6 +85,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .Where(slot => slot.HasValue)
                 .Select(slot => slot!.Value)
                 .Except(bookedSlots.Where(b => b.HasValue).Select(b => b!.Value))
+                .Except(isDayBlocked)
                 .OrderBy(s => s)
                 .ToList();
 
@@ -118,11 +123,13 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
 
             var isDayBlocked = await db.DoctorBlockedDays
-                 .AnyAsync(bd => bd.doctorId == doctorId && bd.isBlocked
-                           && bd.date == request.dateOnly);
+                .Where(bd => bd.doctorId == doctorId 
+                       && bd.isBlocked 
+                       && bd.date == request.dateOnly 
+                       && bd.timeSlot.HasValue)
+                .Select(bd => bd.timeSlot!.Value)
+                 .ToListAsync();
 
-            if (isDayBlocked)
-                throw new BusinessException("Doctor.DayBlocked");
 
             var schedule = await db.DoctorSchedules
                .Include(d => d.doctor)
@@ -148,6 +155,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .Where(slot => slot.HasValue)
                 .Select(slot => slot!.Value)
                 .Except(bookedSlots.Where(b => b.HasValue).Select(b => b!.Value))
+                .Except(isDayBlocked)
                 .OrderBy(s => s)
                 .ToList();
 
@@ -219,6 +227,78 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         }
 
-        
+        public async Task<string> DeleteDoctorSlotAsync(int centerId, int userId, DeleteDoctorSlotRequest request)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .Where(d => d.userId == userId && d.user.isActive)
+                .FirstOrDefaultAsync();
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var doctorId = doctor.Id;
+
+            var alreadyBlocked = await db.DoctorBlockedDays
+                .AnyAsync(d => d.doctorId == doctor.Id && d.date == request.date && d.timeSlot == request.timeSlot && d.isBlocked);
+            if (alreadyBlocked)
+                throw new BusinessException("Slot.AlreadyBlocked");
+
+            var bookedSlot = await db.Appointments
+                .Include(p=>p.Patient)
+                .ThenInclude(u=>u.user)
+                .Where(a=>a.doctorId == doctorId
+                       && a.appointmentStatus == AppointmentStatus.Confirmed
+                       && a.appointmentDate == request.date
+                       && a.timeSlot == request.timeSlot
+                ).FirstOrDefaultAsync();
+
+            if(bookedSlot != null)
+            {
+                bookedSlot.appointmentStatus = AppointmentStatus.Cancelled;
+                bookedSlot.cancellationReason = request.Reason ?? "تم حجب هذا الموعد من قبل الطبيب";
+
+                await db.PostponedServices.AddAsync(
+                    new PostponedService
+                    {
+                        PatientId = bookedSlot.patientId,
+                        CreatedByUserId = userId,
+                        Type = PostponeType.DoctorAppointment,
+                        AppointmentId = bookedSlot.Id,
+                        Reason = request.Reason ?? "تم إلغاء الموعد من قبل الطبيب.",
+                        Status = PostponeStatus.Active,
+                    });
+
+                db.Notifications.Add(new Notification
+                {
+                    UserId = (int)bookedSlot.Patient.userId,
+                    Message = "نأسف لإبلاغكم بإلغاء موعدكم من قبل الطبيب. يرجى حجز موعد جديد.",
+                    CreatedAt = DateTime.UtcNow,
+                    Type = NotificationType.Cancellation,
+                    IsRead = false
+                });
+            }
+            db.DoctorBlockedDays.Add(
+            new DoctorBlockedDay
+            {
+                  doctorId = doctorId,
+                  date = request.date,
+                  isBlocked = true,
+                  timeSlot = request.timeSlot,
+                  Reason = request.Reason,
+                  CreatedAt = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+
+            return "تم الغاء الموعد المحدد في نجاح.";
+
+        }
     }
 }

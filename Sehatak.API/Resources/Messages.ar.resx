@@ -367,4 +367,7 @@
   <data name="Doctor.CancelDay" xml:space="preserve">
     <value>تم الغاء الحجوزات لهذا اليوم</value>
   </data>
+  <data name="Slot.AlreadyBlocked" xml:space="preserve">
+    <value>الموعد ملغى بالفعل!</value>
+  </data>
 </root>
