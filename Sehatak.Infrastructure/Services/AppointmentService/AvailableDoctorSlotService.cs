@@ -349,7 +349,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             var nextWaiting = await db.Waitlists
                     .Include(p => p.Patient)
                     .ThenInclude(u => u.user)
-                    .Where(w => w.DoctorId == doctor.Id
+                    .Where(w => w.DoctorId == doctorId
                            && w.PreferredDate == request.date
                            && w.Status == WaitlistStatus.Waiting)
                     .OrderBy(w => w.CreatedAt)
@@ -359,11 +359,11 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             {
                 await db.Appointments.AddAsync(new Appointment
                 {
-                    patientId = (int)nextWaiting.Patient.userId,
+                    patientId = nextWaiting.PatientId,
                     appointmentDate = request.date,
                     timeSlot = request.timeSlot,
                     appointmentStatus = AppointmentStatus.Confirmed,
-                    doctorId = doctor.Id,
+                    doctorId = doctorId,
                     createdAt = DateTime.UtcNow,
                     updateAt = DateTime.UtcNow
                 });
