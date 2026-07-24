@@ -9,6 +9,7 @@ using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.CalculateSlot;
 using Sehatak.Infrastructure.Data;
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq;
@@ -299,6 +300,88 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             return "تم الغاء الموعد المحدد في نجاح.";
 
+        }
+
+        public async Task<string> CancelAppointmentAsync(int centerId,int doctorId, int userId, CancelAppointmentRequest request)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .Where(d => d.Id == doctorId
+                       && d.user.isActive)
+                .FirstOrDefaultAsync();
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var appointment = await db.Appointments
+                .Include(p => p.Patient)
+                .ThenInclude(u => u.user)
+                .Where(a => a.doctorId == doctorId
+                       && a.appointmentStatus == AppointmentStatus.Confirmed
+                       && a.appointmentDate == request.date
+                       && a.timeSlot == request.timeSlot
+                ).FirstOrDefaultAsync();
+
+            if (appointment == null)
+                throw new BusinessException("Appointment.NotFound");
+
+            appointment.appointmentStatus = AppointmentStatus.Cancelled;
+            appointment.updateAt = DateTime.UtcNow;
+            appointment.cancellationReason = request.Resone;
+
+            await db.Notifications.AddAsync(new Notification
+            {
+                UserId = (int)appointment.Patient.userId,
+                Type = NotificationType.Cancellation,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                Message = "الغاء موعد."
+            });
+
+            var nextWaiting = await db.Waitlists
+                    .Include(p => p.Patient)
+                    .ThenInclude(u => u.user)
+                    .Where(w => w.DoctorId == doctor.Id
+                           && w.PreferredDate == request.date
+                           && w.Status == WaitlistStatus.Waiting)
+                    .OrderBy(w => w.CreatedAt)
+                    .FirstOrDefaultAsync();
+
+            if (nextWaiting != null)
+            {
+                await db.Appointments.AddAsync(new Appointment
+                {
+                    patientId = (int)nextWaiting.Patient.userId,
+                    appointmentDate = request.date,
+                    timeSlot = request.timeSlot,
+                    appointmentStatus = AppointmentStatus.Confirmed,
+                    doctorId = doctor.Id,
+                    createdAt = DateTime.UtcNow,
+                    updateAt = DateTime.UtcNow
+                });
+                nextWaiting.Status = WaitlistStatus.Entered;
+
+
+                await db.Notifications.AddAsync(new Notification
+                {
+                    UserId = (int)nextWaiting.Patient.userId,
+                    Type = NotificationType.Appointment,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow,
+                    Message = $"{request.timeSlot} في الوقت {request.date}توفر لك موعد في تاريخ "
+                });
+            }
+            await db.SaveChangesAsync();
+
+            return "تم الغاء موعدك بنجاح";
         }
     }
 }

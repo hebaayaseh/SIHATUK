@@ -33,6 +33,15 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
             return Ok(result);
         }
 
+        [HttpPost("cancel-appointment/{centerId}/{doctorId}")]
+        [Authorize(Roles = "Patient")]
+        public async Task<IActionResult> CancelAppointment(int centerId, int doctorId, [FromBody] CancelAppointmentRequest request)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await slotService.CancelAppointmentAsync(centerId, doctorId, userId, request);
+            return Ok(result);
+        }
+
         [Authorize(Policy = "DoctorOnly")]
         [HttpPost("cancel-slot/{centerId}")]
         public async Task<IActionResult> CancelSlotAsync(int centerId , DeleteDoctorSlotRequest request)
@@ -41,5 +50,7 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
             var result = await slotService.DeleteDoctorSlotAsync(centerId, userId, request);
             return Ok(result);
         }
+
+
     }
 }
