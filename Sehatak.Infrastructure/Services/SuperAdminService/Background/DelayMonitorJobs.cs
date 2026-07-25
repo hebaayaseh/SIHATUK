@@ -175,7 +175,10 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
                     {
                         var doctorId = doctorGroup.Key;
                         var schedule = await db.DoctorSchedules
-                            .FirstOrDefaultAsync(s => s.DoctorId == doctorId && s.IsActive);
+                            .FirstOrDefaultAsync(s => s.DoctorId == doctorId
+                                                 && s.IsActive
+                                                 && s.DayOfWeek == today.DayOfWeek);
+
                         if (schedule == null) continue;
 
                         double accumulatedDelay = 0;
@@ -187,12 +190,25 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
                                 accumulatedDelay += (double)extraDelay;
                             appt.DelayProcessed = true;
                         }
+                        var lastBookedSlot = await db.Appointments
+                            .Where(a => a.doctorId == doctorId 
+                                   && a.appointmentDate == today 
+                                   && a.timeSlot.HasValue)
+                            .OrderByDescending(a => a.timeSlot)
+                            .Select(a => a.timeSlot!.Value)
+                            .FirstOrDefaultAsync();
+
+                        var nextSlotTime = lastBookedSlot != default
+                            ? lastBookedSlot.AddMinutes((double)schedule.SlotDurationMinutes)
+                            : schedule.EndTime;
 
                         while (accumulatedDelay >= schedule.SlotDurationMinutes)
                         {
                             var nextWaiting = await db.Waitlists
-                                .Include(w => w.Patient).ThenInclude(p => p.user)
-                                .Where(w => w.DoctorId == doctorId && w.Status == WaitlistStatus.Waiting)
+                                .Include(w => w.Patient)
+                                .ThenInclude(p => p.user)
+                                .Where(w => w.DoctorId == doctorId 
+                                       && w.Status == WaitlistStatus.Waiting)
                                 .OrderBy(w => w.CreatedAt)
                                 .FirstOrDefaultAsync();
 
@@ -203,15 +219,14 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
                                 patientId = nextWaiting.PatientId,
                                 doctorId = doctorId,
                                 appointmentDate = today,
-                                timeSlot = nextWaiting.PreferredTimeSlot.HasValue
-                                    ? nextWaiting.PreferredTimeSlot.Value
-                                    : null,
-                                appointmentStatus = center.RequiresPrepayment
-                                    ? AppointmentStatus.Pending
-                                    : AppointmentStatus.Confirmed,
+                                timeSlot = nextSlotTime,
+                                appointmentStatus = AppointmentStatus.Confirmed,
+                                createdAt = DateTime.UtcNow,
+                                updateAt = DateTime.UtcNow
                             };
                             db.Appointments.Add(newAppointment);
                             await db.SaveChangesAsync();
+
 
                             if (center.RequiresPrepayment)
                             {
