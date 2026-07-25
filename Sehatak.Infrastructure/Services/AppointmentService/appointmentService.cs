@@ -20,12 +20,12 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Sehatak.Infrastructure.Services.AppointmentService
 {
-    public class AvailableDoctorSlotService : IAppointment
+    public class appointmentService : IAppointment
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
         private readonly GenerateTheoreticalSlots generateTheoreticalSlots;
-        public AvailableDoctorSlotService(SharedDbContext sharedDbContext , TenantDbContextFactory contextFactory , GenerateTheoreticalSlots generateTheoreticalSlot)
+        public appointmentService(SharedDbContext sharedDbContext , TenantDbContextFactory contextFactory , GenerateTheoreticalSlots generateTheoreticalSlot)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
@@ -382,6 +382,138 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             await db.SaveChangesAsync();
 
             return "تم الغاء موعدك بنجاح";
+        }
+
+        public async Task<BookAppointmentRespesponse> RescheduleAppointmentAsync(int centerId, int doctorId, int userId, RescheduleAppointmentRequest request)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .Where(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active)
+                .FirstOrDefaultAsync();
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .Where(p => p.userId == userId && p.user.isActive)
+                .FirstOrDefaultAsync();
+
+            if(patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .Where(d => d.Id == doctorId && d.user.isActive)
+                .FirstOrDefaultAsync();
+
+            if(doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var appintment = await db.Appointments
+                .Where(a => a.Id == request.appointmentId
+                       && a.doctorId == doctor.Id
+                       && a.patientId == patient.patientId
+                       && a.appointmentStatus == AppointmentStatus.Confirmed)
+                .FirstOrDefaultAsync();
+
+            if (appintment == null)
+                throw new BusinessException("Appointment.NotFound");
+
+            var isWholeDayBlocked = await db.DoctorBlockedDays
+                .AnyAsync(bd => bd.doctorId == doctorId 
+                          && bd.isBlocked 
+                          && bd.date == request.date 
+                          && bd.timeSlot == null);
+
+            if (isWholeDayBlocked)
+                throw new BusinessException("Doctor.DayBlocked");
+
+            var schedule = await db.DoctorSchedules
+               .Include(d => d.doctor)
+               .Where(d => d.DoctorId == doctorId
+                      && d.IsActive
+                      && d.DayOfWeek == request.date.DayOfWeek)
+               .FirstOrDefaultAsync();
+
+            if (schedule == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(schedule.StartTime, schedule.EndTime, (int)schedule.SlotDurationMinutes);
+
+            var bookedSlots = await db.Appointments
+                .Where(a => a.doctorId == doctorId
+                       && a.appointmentStatus == AppointmentStatus.Confirmed
+                       && a.appointmentDate == request.date)
+                      .Select(a => a.timeSlot)
+                      .ToListAsync();
+
+            var isDayBlocked = await db.DoctorBlockedDays
+                .Where(bd => bd.doctorId == doctorId
+                 && bd.isBlocked
+                 && bd.date == request.date
+                 && bd.timeSlot.HasValue)
+                .Select(bd => bd.timeSlot!.Value)
+                .ToListAsync();
+
+            var availableSlots = theoreticalSlots
+                .Where(slot => slot.HasValue)
+                .Select(slot => slot!.Value)
+                .Except(bookedSlots.Where(b => b.HasValue).Select(b => b!.Value))
+                .Except(isDayBlocked)
+                .OrderBy(s => s)
+                .ToList();
+
+            if(!availableSlots.Contains(request.timeSlot))
+            {
+
+                return new BookAppointmentRespesponse
+                {
+                    Message = availableSlots.Any()
+                        ? "هذا الموعد محجوز، يمكنك اختيار موعد آخر!"
+                        : "لا يوجد مواعيد متاحة لهذا اليوم، يمكنك البقاء في موعدك الحالي.",
+                    Success = false,
+                    AlternativeSlots = availableSlots.Any() ? availableSlots : null
+                };
+
+            }
+            if (appintment.RescheduleCount >= 3)
+            {
+                return new BookAppointmentRespesponse
+                {
+                    Message = "لقد تجاوزت العدد المسموح به لإعادة جدولة موعدك!",
+                    Success = false,
+                    AlternativeSlots = null
+                };
+            }
+
+            var oldDate = appintment.appointmentDate;
+            var oldTimeSlot = appintment.timeSlot;
+
+            appintment.appointmentDate = request.date;
+            appintment.timeSlot = request.timeSlot;
+            appintment.RescheduleCount++;
+            appintment.updateAt = DateTime.UtcNow;
+
+            await db.Notifications.AddAsync(new Notification
+            {
+                UserId = (int)appintment.Patient.userId,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                Message = "تم اعادة جدولة موعدك بنجاح.",
+                Type = NotificationType.Appointment
+            });
+
+            await db.SaveChangesAsync();
+
+            return new BookAppointmentRespesponse
+            {
+                Message = "تم اعادة جدولة موعدك بنجاح.",
+                Success = true,
+                AlternativeSlots = null
+            };
+
         }
     }
 }

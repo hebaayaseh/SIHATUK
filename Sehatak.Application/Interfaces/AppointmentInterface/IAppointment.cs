@@ -13,5 +13,6 @@ namespace Sehatak.Application.Interfaces.ApointmentInterface
         Task<BookAppointmentRespesponse> BookAppointmentAsync(int centerId , int doctorId ,int userId , BookAppointmentRequest request);
         Task<string> DeleteDoctorSlotAsync(int centerId, int userId, DeleteDoctorSlotRequest request);
         Task<string> CancelAppointmentAsync(int centerId , int doctor ,int userId , CancelAppointmentRequest request);
+        Task<BookAppointmentRespesponse> RescheduleAppointmentAsync(int centerId , int doctorId , int userId , RescheduleAppointmentRequest request);
     }
 }

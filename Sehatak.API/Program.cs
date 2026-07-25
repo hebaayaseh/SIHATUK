@@ -341,7 +341,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IChatHub, ChatHistoryService>();
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<ISearchDoctor, searchDoctorService>();
-            builder.Services.AddScoped<IAppointment, AvailableDoctorSlotService>();
+            builder.Services.AddScoped<IAppointment, appointmentService>();
             builder.Services.AddScoped<GenerateTheoreticalSlots>();
 
 

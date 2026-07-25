@@ -8,11 +8,11 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.PatientController.AppointmentController
 {
     [ApiController]
-    [Route("api-get-available-doctor-slot")]
-    public class AvailableDoctorSlotController : ControllerBase
+    [Route("api-appointment")]
+    public class Appointmentcontroller : ControllerBase
     {
         private readonly IAppointment slotService;
-        public AvailableDoctorSlotController(IAppointment slotService)
+        public Appointmentcontroller(IAppointment slotService)
         {
             this.slotService = slotService;
         }
@@ -51,6 +51,14 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
             return Ok(result);
         }
 
+        [HttpPost("reschedule-appointment/{centerId}/{doctorId}")]
+        [Authorize(Roles = "Patient")]
+        public async Task<IActionResult> RescheduleAppointment(int centerId, int doctorId, [FromBody] RescheduleAppointmentRequest request)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await slotService.RescheduleAppointmentAsync(centerId, doctorId, userId, request);
+            return Ok(result);
+        }
 
     }
 }
