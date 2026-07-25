@@ -12,8 +12,6 @@ namespace Sehatak.Application.DTOs.PatientCenter
     {
         public int Id { get; set; }
         public string pateintName { get; set; }
-        public BloodType BloodType { get; set; }
-        public Gender Gender { get; set; }
-        public List<string> appointments { get; set; } 
+        public List<PatientSummaryDto> appointments { get; set; } 
     }
 }

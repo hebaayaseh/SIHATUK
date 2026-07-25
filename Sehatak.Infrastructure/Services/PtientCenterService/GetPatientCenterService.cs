@@ -1,7 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DocumentFormat.OpenXml.Office2016.Excel;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.PatientCenter;
+using Sehatak.Application.Interfaces.ApointmentInterface;
 using Sehatak.Application.Interfaces.IPatientCenter;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
@@ -35,28 +37,41 @@ namespace Sehatak.Infrastructure.Services.PtientCenterService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-                var patient= await db.Users
-                .Where(u => u.role == userRole.Patient && u.patient != null && u.Id==request.userId)
-                .Select(u => new GetPatientResponseDto
-                {
-                    Id = u.Id,
-                    pateintName = u.firstName + " " + u.lastName,
-                    BloodType = u.patient.BloodType,
-                    Gender = u.patient.Gender,
-                    appointments = u.patient.appointments
-                    .Select(a => a.Doctor.user.firstName + " " + a.Doctor.user.lastName)
-                    .ToList(),
 
-                }).FirstOrDefaultAsync();
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .Where(p => p.userId == request.userId)
+                .FirstOrDefaultAsync();
 
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
-            return patient;
+            var appointments = await db.Appointments
+                        .Include(p => p.Patient)
+                        .ThenInclude(u => u.user)
+                        .Where(p => p.patientId == patient.patientId
+                               && p.appointmentStatus == request.status)
+                        .Select(p => new PatientSummaryDto
+                        {
+                            timeSlot = (TimeOnly)p.timeSlot,
+                            date = p.appointmentDate,
+                            status = p.appointmentStatus,
+                            DoctorName = $"{p.Doctor.user.firstName} {p.Doctor.user.lastName}",
+                        }).ToListAsync();
+
+
+            return new GetPatientResponseDto
+            {
+                Id = patient.patientId,
+                pateintName = $"{patient.user.firstName} {patient.user.lastName}",
+                appointments = appointments
+
+            };
+
 
         }
 
-        public async Task<List<GetPatientResponseDto>> GetPatientesAsync(int centerId)
+        public async Task<List<GetPatientResponseDto>> GetPatientesAsync(int centerId,AppointmentStatus status)
         {
             var center = await SharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
@@ -72,11 +87,18 @@ namespace Sehatak.Infrastructure.Services.PtientCenterService
                 {
                     Id = u.Id,
                     pateintName = u.firstName+" "+u.lastName,
-                    BloodType = u.patient.BloodType,
-                    Gender = u.patient.Gender,
-                    appointments = u.patient.appointments
-                    .Select(a=>a.Doctor.user.firstName+" "+ a.Doctor.user.lastName)
-                    .ToList(),
+                    appointments = db.Appointments
+                        .Include(p => p.Patient)
+                        .ThenInclude(u => u.user)
+                        .Where(p => p.patientId == u.patient.patientId
+                               && p.appointmentStatus == status)
+                        .Select(p => new PatientSummaryDto
+                        {
+                            timeSlot = (TimeOnly)p.timeSlot,
+                            date = p.appointmentDate,
+                            status = p.appointmentStatus,
+                            DoctorName = $"{p.Doctor.user.firstName} {p.Doctor.user.lastName}",
+                        }).ToList()
 
                 }).ToListAsync();
         }

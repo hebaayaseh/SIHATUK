@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Sehatak.Application.DTOs.PatientCenter;
 using Sehatak.Application.Interfaces.IPatientCenter;
+using Sehatak.Domain.Enums;
 
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.PtientCentercontroller
 {
@@ -16,10 +17,10 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.PtientCentercontroller
         }
 
         [Authorize(Policy = "AdminOrAbove")]
-        [HttpGet("get-patients-from-center/{centerId}")]
-        public async Task<IActionResult> GetPatientsAsync(int centerId)
+        [HttpPost("get-patients-from-center/{centerId}")]
+        public async Task<IActionResult> GetPatientsAsync(int centerId,[FromBody]AppointmentStatus status)
         {
-            var result = await getpatient.GetPatientesAsync(centerId);
+            var result = await getpatient.GetPatientesAsync(centerId,status);
             return Ok(result);
         }
         [Authorize(Policy = "AdminOrAbove")]
