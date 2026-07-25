@@ -34,6 +34,10 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         public async Task<AvailableDoctorSlot> GetAvailableDoctorSlot(int centerId, int doctorId, DateOnly date)
         {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (date < today)
+                throw new BusinessException("Date.Invalid");
+
             var center = await sharedDbContext.MedicalCenters
                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
 
@@ -90,7 +94,13 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .OrderBy(s => s)
                 .ToList();
 
+            if (date == today)
+    {
+        var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
+        availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
+    }
 
+    availableSlots = availableSlots.OrderBy(s => s).ToList();
 
             return new AvailableDoctorSlot
             {
@@ -104,6 +114,11 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
         }
         public async Task<BookAppointmentRespesponse> BookAppointmentAsync(int centerId , int doctorId ,int userId , BookAppointmentRequest request)
         {
+            
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (request.dateOnly < today)
+                throw new BusinessException("Date.Invalid");
+
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
                                      && c.CenterStatus == CenterStatus.Active);
@@ -121,7 +136,6 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
-
 
             var isDayBlocked = await db.DoctorBlockedDays
                 .Where(bd => bd.doctorId == doctorId 
@@ -142,6 +156,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (schedule == null)
                 throw new BusinessException("Doctor.NotFound");
 
+            
             var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(schedule.StartTime, schedule.EndTime, (int)schedule.SlotDurationMinutes);
 
             var bookedSlots = await db.Appointments
@@ -159,6 +174,12 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .Except(isDayBlocked)
                 .OrderBy(s => s)
                 .ToList();
+
+            if (request.dateOnly == today)
+            {
+                var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
+                availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
+            }
 
             var patient = await db.Patients
                 .Include(u => u.user)
@@ -187,7 +208,6 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                         PatientId = patient.patientId,
                         DoctorId = doctorId,
                         PreferredDate = request.dateOnly,
-                        PreferredTimeSlot = request.timeSlot,
                         Status = WaitlistStatus.Waiting,
                         CreatedAt = DateTime.UtcNow
                     });
@@ -230,6 +250,10 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         public async Task<string> DeleteDoctorSlotAsync(int centerId, int userId, DeleteDoctorSlotRequest request)
         {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (request.date < today)
+                throw new BusinessException("Date.Invalid");
+
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
             if (center == null)
@@ -386,6 +410,10 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         public async Task<BookAppointmentRespesponse> RescheduleAppointmentAsync(int centerId, int doctorId, int userId, RescheduleAppointmentRequest request)
         {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (request.date < today)
+                throw new BusinessException("Date.Invalid");
+
             var center = await sharedDbContext.MedicalCenters
                 .Where(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active)
                 .FirstOrDefaultAsync();
@@ -465,7 +493,14 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .OrderBy(s => s)
                 .ToList();
 
-            if(!availableSlots.Contains(request.timeSlot))
+            if (request.date == today)
+            {
+                var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
+                availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
+            }
+
+
+            if (!availableSlots.Contains(request.timeSlot))
             {
 
                 return new BookAppointmentRespesponse
