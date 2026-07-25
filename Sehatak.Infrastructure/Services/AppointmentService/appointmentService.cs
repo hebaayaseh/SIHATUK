@@ -179,6 +179,8 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
             }
 
+            availableSlots = availableSlots.OrderBy(s => s).ToList();
+
             var patient = await db.Patients
                 .Include(u => u.user)
                 .FirstOrDefaultAsync(u => u.userId == userId && u.user.isActive);
@@ -343,10 +345,18 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(u => u.userId == userId 
+                                     && u.user.isActive);
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
             var appointment = await db.Appointments
                 .Include(p => p.Patient)
                 .ThenInclude(u => u.user)
                 .Where(a => a.doctorId == doctorId
+                       && a.patientId == patient.patientId
                        && a.appointmentStatus == AppointmentStatus.Confirmed
                        && a.appointmentDate == request.date
                        && a.timeSlot == request.timeSlot
@@ -398,7 +408,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                     Type = NotificationType.Appointment,
                     IsRead = false,
                     CreatedAt = DateTime.UtcNow,
-                    Message = $"{request.timeSlot} في الوقت {request.date}توفر لك موعد في تاريخ "
+                    Message = $"توفر لك موعد في تاريخ {request.date} في الوقت {request.timeSlot}"
                 });
             }
             await db.SaveChangesAsync();
@@ -429,8 +439,6 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 throw new BusinessException("Patient.NotFound");
 
 
-            if (patient == null)
-                throw new BusinessException("Patient.NotFound");
 
             var doctor = await db.Doctors
                  .Include(u => u.user)
@@ -441,6 +449,8 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 throw new BusinessException("Doctor.NotFound");
 
             var appintment = await db.Appointments
+                .Include(p=>p.Patient)
+                .ThenInclude(u=>u.user)
                 .Where(a => a.Id == request.appointmentId
                        && a.doctorId == doctor.Id
                        && a.patientId == patient.patientId
@@ -472,13 +482,13 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(schedule.StartTime, schedule.EndTime, (int)schedule.SlotDurationMinutes);
 
             var bookedSlots = await db.Appointments
-                .Where(a => a.doctorId == doctorId
-                       && a.appointmentStatus == AppointmentStatus.Confirmed
-                       && a.appointmentDate == request.date)
-                      .Select(a => a.timeSlot)
-                      .ToListAsync();
+                 .Where(a => a.doctorId == doctorId
+                 && a.appointmentStatus == AppointmentStatus.Confirmed
+                 && a.appointmentDate == request.date)
+                .Select(a => a.timeSlot)
+                .ToListAsync();
 
-            var isDayBlocked = await db.DoctorBlockedDays
+            var blockedSlots = await db.DoctorBlockedDays
                 .Where(bd => bd.doctorId == doctorId
                  && bd.isBlocked
                  && bd.date == request.date
@@ -490,8 +500,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .Where(slot => slot.HasValue)
                 .Select(slot => slot!.Value)
                 .Except(bookedSlots.Where(b => b.HasValue).Select(b => b!.Value))
-                .Except(isDayBlocked)
-                .OrderBy(s => s)
+                .Except(blockedSlots)
                 .ToList();
 
             if (request.date == today)
@@ -500,6 +509,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
             }
 
+            availableSlots = availableSlots.OrderBy(s => s).ToList();
 
             if (!availableSlots.Contains(request.timeSlot))
             {
