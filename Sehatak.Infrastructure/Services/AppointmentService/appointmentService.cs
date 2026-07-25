@@ -49,9 +49,8 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var doctor = await db.Doctors
                 .Include(u => u.user)
-                .Where(d => d.Id == doctorId 
-                && d.user.isActive)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(d => d.Id == doctorId
+                                     && d.user.isActive);
 
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
@@ -95,12 +94,12 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .ToList();
 
             if (date == today)
-    {
-        var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
-        availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
-    }
+            {
+                var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
+                availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
+            }
 
-    availableSlots = availableSlots.OrderBy(s => s).ToList();
+           availableSlots = availableSlots.OrderBy(s => s).ToList();
 
             return new AvailableDoctorSlot
             {
@@ -129,10 +128,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             using var db = contextFactory.CreateForCenter(centerId);
 
             var doctor = await db.Doctors
-                .Include(u => u.user)
-                .Where(d => d.Id == doctorId
-                && d.user.isActive)
-                .FirstOrDefaultAsync();
+               .Include(u => u.user)
+               .FirstOrDefaultAsync(d => d.Id == doctorId
+                                    && d.user.isActive);
 
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
@@ -263,8 +261,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var doctor = await db.Doctors
                 .Include(u => u.user)
-                .Where(d => d.userId == userId && d.user.isActive)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(d => d.userId == userId
+                                     && d.user.isActive);
+                
 
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
@@ -338,9 +337,8 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var doctor = await db.Doctors
                 .Include(u => u.user)
-                .Where(d => d.Id == doctorId
-                       && d.user.isActive)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(d => d.Id == doctorId
+                                     && d.user.isActive);
 
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
@@ -424,19 +422,22 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             using var db = contextFactory.CreateForCenter(centerId);
 
             var patient = await db.Patients
-                .Include(u => u.user)
-                .Where(p => p.userId == userId && p.user.isActive)
-                .FirstOrDefaultAsync();
+               .Include(p => p.user)
+               .FirstOrDefaultAsync(p => p.userId == userId 
+                                    && p.user.isActive);
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
 
-            if(patient == null)
+
+            if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
             var doctor = await db.Doctors
-                .Include(u => u.user)
-                .Where(d => d.Id == doctorId && d.user.isActive)
-                .FirstOrDefaultAsync();
+                 .Include(u => u.user)
+                 .FirstOrDefaultAsync(d => d.Id == doctorId
+                                      && d.user.isActive);
 
-            if(doctor == null)
+            if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
             var appintment = await db.Appointments
@@ -548,6 +549,64 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 Success = true,
                 AlternativeSlots = null
             };
+
+        }
+
+        public async Task<string> JoinWaitListAsync(int centerId, int doctorId, int userId, DateOnly date)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (date < today)
+                throw new BusinessException("Date.Invalid");
+
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.Id == doctorId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var patient = await db.Patients
+                .Include(p => p.user)
+                .FirstOrDefaultAsync(p => p.userId == userId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            var alreadyInWaitlist = await db.Waitlists
+                .AnyAsync(w => w.DoctorId == doctorId
+                       && w.PatientId == patient.patientId
+                       && w.Status == WaitlistStatus.Waiting
+                       && w.PreferredDate == date);
+                
+
+            if (alreadyInWaitlist)
+                throw new BusinessException("Waitlist.AlreadyJoined");
+
+            await db.Waitlists
+                .AddAsync(new Waitlist
+                {
+                    PatientId = patient.patientId,
+                    DoctorId = doctorId,
+                    PreferredDate = date,
+                    CreatedAt = DateTime.UtcNow,
+                    Status = WaitlistStatus.Waiting,
+                });
+
+            
+
+            await db.SaveChangesAsync();
+            return "تم إضافتك لقائمة الانتظار، سيتم إعلامك عند توفر موعد.";
 
         }
     }

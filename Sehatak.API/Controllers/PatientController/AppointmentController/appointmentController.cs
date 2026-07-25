@@ -60,5 +60,14 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
             return Ok(result);
         }
 
+        [HttpPost("join-waitlist/{centerId}/{doctorId}")]
+        [Authorize(Roles = "Patient")]
+        public async Task<IActionResult> JoinWaitLis(int centerId, int doctorId, [FromBody] DateOnly date)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await slotService.JoinWaitListAsync(centerId, doctorId, userId, date);
+            return Ok(result);
+        }
+
     }
 }
