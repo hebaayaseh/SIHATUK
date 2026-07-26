@@ -15,6 +15,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Umbraco.Core.Services.Implement;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Sehatak.Infrastructure.Services.AddStaff
 {
@@ -149,6 +150,27 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 isBlocked = true
             });
 
+            var waitList = await db.Waitlists
+                 .Include(w => w.Patient).ThenInclude(p => p.user)
+                 .Where(d => d.DoctorId == doctorId
+                  && d.Status == WaitlistStatus.Waiting
+                  && d.PreferredDate == date)
+                 .ToListAsync();
+
+            foreach (var item in waitList)
+            {
+                item.Status = WaitlistStatus.Exited;
+
+                db.Notifications.Add(new Notification
+                {
+                    UserId = (int)item.Patient.userId,
+                    Message = "تم تعديل جدول الطبيب لهذا اليوم، يرجى محاولة الحجز من جديد على الموعد الجديد.",
+                    CreatedAt = DateTime.UtcNow,
+                    Type = NotificationType.Cancellation,
+                    IsRead = false
+                });
+            }
+
             await db.SaveChangesAsync();
 
             return appointments.Any()
@@ -230,7 +252,32 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 });
                 //await NotifyPatientPostponeAsync(appointment.Patient.user);
             }
+            var affectedDates = affectedAppointments
+                  .Select(a => a.appointmentDate)
+                  .Distinct()
+                  .ToList();
 
+            var waitList = await db.Waitlists
+                 .Include(w => w.Patient)
+                 .ThenInclude(u => u.user)
+                 .Where(w => w.DoctorId == doctorId
+                  && w.Status == WaitlistStatus.Waiting
+                  && affectedDates.Contains(w.PreferredDate))
+                  .ToListAsync();
+
+            foreach (var item in waitList)
+            {
+                item.Status = WaitlistStatus.Exited;
+
+                db.Notifications.Add(new Notification
+                {
+                    UserId = (int)item.Patient.userId,
+                    Message = "تم تعديل جدول الطبيب لهذا اليوم، يرجى محاولة الحجز من جديد على الموعد الجديد.",
+                    CreatedAt = DateTime.UtcNow,
+                    Type = NotificationType.Cancellation,
+                    IsRead = false
+                });
+            }
 
             doctorSchedual.IsActive = false;
 
