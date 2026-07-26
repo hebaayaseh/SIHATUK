@@ -154,7 +154,21 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (schedule == null)
                 throw new BusinessException("Doctor.NotFound");
 
-            
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(u => u.userId == userId && u.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            var hasExistingAppointment = await db.Appointments
+               .AnyAsync(a => a.patientId == patient.patientId
+                        && a.doctorId == doctorId
+                        && a.appointmentDate == request.dateOnly
+                        && a.appointmentStatus == AppointmentStatus.Confirmed);
+            if (hasExistingAppointment)
+                throw new BusinessException("Appointment.AlreadyExists");
+
             var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(schedule.StartTime, schedule.EndTime, (int)schedule.SlotDurationMinutes);
 
             var bookedSlots = await db.Appointments
@@ -164,7 +178,8 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                       .Select(a => a.timeSlot)
                       .ToListAsync();
 
-
+            
+            
             var availableSlots = theoreticalSlots
                 .Where(slot => slot.HasValue)
                 .Select(slot => slot!.Value)
@@ -181,12 +196,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             availableSlots = availableSlots.OrderBy(s => s).ToList();
 
-            var patient = await db.Patients
-                .Include(u => u.user)
-                .FirstOrDefaultAsync(u => u.userId == userId && u.user.isActive);
-
-            if (patient == null)
-                throw new BusinessException("Auth.Forbidden");
+            
 
             if (!availableSlots.Contains(request.timeSlot))
             {
