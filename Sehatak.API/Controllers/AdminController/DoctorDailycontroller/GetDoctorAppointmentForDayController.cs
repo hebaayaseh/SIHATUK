@@ -17,7 +17,7 @@ namespace Sehatak.API.Controllers.AdminController.DoctorDailycontroller
 
         [Authorize(Policy = "DoctorOnly")]
         [HttpPost("/{centerId}")]
-        public async Task<IActionResult> GetDoctorAppointmentsForDay(int centerId , DateOnly date)
+        public async Task<IActionResult> GetDoctorAppointmentsForDay(int centerId ,[FromBody] DateOnly date)
         {
             var userId = int.Parse(
                 User.FindFirst(ClaimTypes.NameIdentifier)!.Value);

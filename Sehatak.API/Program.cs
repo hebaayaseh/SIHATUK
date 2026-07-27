@@ -21,6 +21,7 @@ using Sehatak.Application.Interfaces.CenterRegistrationRequest;
 using Sehatak.Application.Interfaces.Centers;
 using Sehatak.Application.Interfaces.CentersStatusDto;
 using Sehatak.Application.Interfaces.ChatInterface;
+using Sehatak.Application.Interfaces.ConsultaionInterface;
 using Sehatak.Application.Interfaces.DepartmentInterface;
 using Sehatak.Application.Interfaces.DoctorAppointment;
 using Sehatak.Application.Interfaces.Features;
@@ -43,6 +44,7 @@ using Sehatak.Application.Interfaces.ServicePriceInterface;
 using Sehatak.Application.Interfaces.SignUp;
 using Sehatak.Application.Interfaces.StaffLogin;
 using Sehatak.Application.Interfaces.SuperAdminInterface;
+using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.CalculateSlot;
 using Sehatak.Infrastructure.Data;
@@ -52,6 +54,7 @@ using Sehatak.Infrastructure.Security;
 using Sehatak.Infrastructure.Services;
 using Sehatak.Infrastructure.Services.AddStaff;
 using Sehatak.Infrastructure.Services.AppointmentService;
+using Sehatak.Infrastructure.Services.Consultationservice;
 using Sehatak.Infrastructure.Services.DepartmentService;
 using Sehatak.Infrastructure.Services.DoctorAppointmentservice;
 using Sehatak.Infrastructure.Services.EditProfileService;
@@ -345,6 +348,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IAppointment, appointmentService>();
             builder.Services.AddScoped<GenerateTheoreticalSlots>();
             builder.Services.AddScoped<IDoctorAppointment, DoctorAppointmentService>();
+            builder.Services.AddScoped<IConsultation, ConsultationService>();
 
 
             var app = builder.Build();
