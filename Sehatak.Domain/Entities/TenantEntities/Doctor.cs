@@ -6,7 +6,7 @@ namespace Sehatak.Domain.Entities.TenantEntities
     {
         public int Id { get; set; }
         public int userId { get; set; }
-        public int? departmentId { get; set; }
+        public int departmentId { get; set; }
         public string Specialization { get; set; }
         public string Bio { get; set; }
         

@@ -95,9 +95,6 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
                             patientId = nextWaiting.PatientId,
                             doctorId = appointment.doctorId,
                             appointmentDate = today,
-                            timeSlot = nextWaiting.PreferredTimeSlot.HasValue
-                                    ? nextWaiting.PreferredTimeSlot.Value
-                                    : null,
                             appointmentStatus = AppointmentStatus.Pending,
                         };
                         db.Appointments.Add(newAppointment);

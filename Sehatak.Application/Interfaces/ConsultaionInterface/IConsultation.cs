@@ -10,6 +10,7 @@ namespace Sehatak.Application.Interfaces.ConsultaionInterface
     public interface IConsultation
     {
         Task<List<DoctorEnableResponse>> GetDoctorEnableConsultation(int centerId);
+        Task<string> ConsultationRequest(int centerId, int doctorId, int userId);
 
     }
 }

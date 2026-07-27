@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Sehatak.Application.Interfaces.ConsultaionInterface;
+using System.Security.Claims;
 
 namespace Sehatak.API.Controllers.Consultationcontroller
 {
@@ -17,6 +19,16 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         public async Task<IActionResult> GetDoctors(int centerId)
         {
             var result = await consultation.GetDoctorEnableConsultation(centerId);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "PatientOnly")]
+        [HttpPost("request/{centerId}/{doctorId}")]
+        public async Task<IActionResult> RequestConsultation(int centerId , int doctorId)
+        {
+            var userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await consultation.ConsultationRequest(centerId, doctorId, userId);
             return Ok(result);
         }
     }

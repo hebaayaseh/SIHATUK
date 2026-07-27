@@ -118,7 +118,7 @@ namespace Sehatak.Infrastructure.Data
                 entity.HasOne(e => e.department)
                       .WithMany(d => d.Doctors)
                       .HasForeignKey(e => e.departmentId)
-                      .OnDelete(DeleteBehavior.SetNull);
+                      .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(e => e.ConsultationCost)
                       .WithMany()

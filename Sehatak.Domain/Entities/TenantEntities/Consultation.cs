@@ -12,7 +12,7 @@ namespace Sehatak.Domain.Entities.TenantEntities
 
         public int DoctorId { get; set; }
 
-        public DateTime ScheduledAt { get; set; }
+        public DateTime? ScheduledAt { get; set; }
 
         public ConsultationStatus Status { get; set; } = ConsultationStatus.Pending;
 

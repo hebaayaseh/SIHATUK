@@ -2,6 +2,8 @@
 using Sehatak.Application.DTOs.ConsultationDto;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.ConsultaionInterface;
+using Sehatak.Domain.Entities.TenantEntities;
+using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
 using System;
@@ -20,6 +22,66 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
+        }
+
+        public async Task<string> ConsultationRequest(int centerId, int doctorId, int userId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                 .FirstOrDefaultAsync(c => c.Id == centerId
+                                      && c.CenterStatus == CenterStatus.Active);
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .Where(d => d.Id == doctorId
+                       && d.user.isActive
+                       && d.OnlineEnabled)
+                .FirstOrDefaultAsync();
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .Where(p => p.userId == userId
+                       && p.user.isActive)
+                .FirstOrDefaultAsync();
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            var hasPendingRequest = await db.Consultations
+               .AnyAsync(c => c.DoctorId == doctorId
+                         && c.PatientId == patient.patientId
+                         && c.Status == ConsultationStatus.Pending);
+
+            if (hasPendingRequest)
+                throw new BusinessException("Consultation.AlreadyRequested");
+
+            await db.Consultations
+                .AddAsync(new Consultation
+            {
+                DoctorId = doctor.Id,
+                PatientId = patient.patientId,
+                Status = ConsultationStatus.Pending,
+
+            });
+            await db.Notifications
+                .AddAsync(new Notification
+                {
+                    UserId = (int)patient.userId,
+                    Message = "تم ارسال طلب الاستشارة الى الطبيب , سيصلك الموعد من قبل الطبيب عند الموافقة على الطلب" ,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow,
+                    Type = NotificationType.Appointment
+                   
+                });
+            await db.SaveChangesAsync();
+            return "تم ارسال طلب الاستشارة الى الطبيب بانتظار موافقة الطبيب.";
+
         }
 
         public async Task<List<DoctorEnableResponse>> GetDoctorEnableConsultation(int centerId)

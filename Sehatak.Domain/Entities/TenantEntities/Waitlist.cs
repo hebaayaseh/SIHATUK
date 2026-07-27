@@ -10,7 +10,6 @@ namespace Sehatak.Domain.Entities.TenantEntities
         public int? ReceptionistId { get; set; } 
         public DateOnly PreferredDate { get; set; }
         public int? PromotedAppointmentId { get; set; }
-        public TimeOnly? PreferredTimeSlot {  get; set; }
         public WaitlistStatus Status { get; set; } = WaitlistStatus.Waiting;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sehatak.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using Sehatak.Infrastructure.Data;
 namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 {
     [DbContext(typeof(TenantDbContext))]
-    partial class TenantDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727203612_EditId")]
+    partial class EditId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -311,7 +314,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Property<int?>("PaymentId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("ScheduledAt")
+                    b.Property<DateTime>("ScheduledAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Status")
@@ -380,7 +383,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
 
-                    b.Property<int>("departmentId")
+                    b.Property<int?>("departmentId")
                         .HasColumnType("int");
 
                     b.Property<int>("userId")
@@ -1060,6 +1063,9 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Property<DateOnly>("PreferredDate")
                         .HasColumnType("date");
 
+                    b.Property<TimeOnly?>("PreferredTimeSlot")
+                        .HasColumnType("time(6)");
+
                     b.Property<int?>("PromotedAppointmentId")
                         .HasColumnType("int");
 
@@ -1205,8 +1211,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.Department", "department")
                         .WithMany("Doctors")
                         .HasForeignKey("departmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "user")
                         .WithOne("doctor")
