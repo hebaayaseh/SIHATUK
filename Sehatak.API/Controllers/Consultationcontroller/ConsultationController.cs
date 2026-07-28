@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sehatak.Application.Interfaces.ConsultaionInterface;
+using Sehatak.Domain.Enums;
 using System.Security.Claims;
 
 namespace Sehatak.API.Controllers.Consultationcontroller
@@ -39,6 +40,16 @@ namespace Sehatak.API.Controllers.Consultationcontroller
             var userId = int.Parse(
                 User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await consultation.ViewConsultation(centerId, doctorId, userId);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "PatientOnly")]
+        [HttpPost("get-consultations/{centerId}/")]
+        public async Task<IActionResult> GetConsultations(int centerId, [FromBody] ConsultationStatus status)
+        {
+            var userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await consultation.ViewConsultations(centerId,userId,status);
             return Ok(result);
         }
     }

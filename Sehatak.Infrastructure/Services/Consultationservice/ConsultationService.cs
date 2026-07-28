@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.ConsultationDto;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.ConsultaionInterface;
@@ -152,9 +153,34 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
         }
 
-        public Task<List<ConsultationResponse>> ViewConsultations(int centerId, int userId)
+        public async Task<List<ConsultationResponse>> ViewConsultations(int centerId, int userId ,  ConsultationStatus status)
         {
-            throw new NotImplementedException();
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(p => p.userId == userId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            return await db.Consultations
+                .Where(c => c.PatientId == patient.patientId
+                       && c.Status == status)
+                .Select(p => new ConsultationResponse
+                {
+                    Id = p.Id,
+                    Status = status,
+                    PaymentStatus = p.Payment.Status
+                }).ToListAsync();
         }
     }
 }
