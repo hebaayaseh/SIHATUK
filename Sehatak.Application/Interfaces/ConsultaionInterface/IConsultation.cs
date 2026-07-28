@@ -11,6 +11,9 @@ namespace Sehatak.Application.Interfaces.ConsultaionInterface
     {
         Task<List<DoctorEnableResponse>> GetDoctorEnableConsultation(int centerId);
         Task<string> ConsultationRequest(int centerId, int doctorId, int userId);
+        Task<List<ConsultationResponse>> ViewConsultations(int centerId ,  int userId);
+        Task<ConsultationResponse> ViewConsultation(int centerId, int doctorId, int userId);
+        Task<string> ConsultationPayment(int centerId, int consultationId, int userId);
 
     }
 }

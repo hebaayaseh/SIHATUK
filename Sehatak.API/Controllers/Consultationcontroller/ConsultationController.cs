@@ -31,5 +31,15 @@ namespace Sehatak.API.Controllers.Consultationcontroller
             var result = await consultation.ConsultationRequest(centerId, doctorId, userId);
             return Ok(result);
         }
+
+        [Authorize(Policy = "PatientOnly")]
+        [HttpGet("get-consultation/{centerId}/{doctorId}")]
+        public async Task<IActionResult> GetConsultation(int centerId, int doctorId)
+        {
+            var userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await consultation.ViewConsultation(centerId, doctorId, userId);
+            return Ok(result);
+        }
     }
 }

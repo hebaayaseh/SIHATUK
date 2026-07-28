@@ -24,6 +24,11 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             this.contextFactory = contextFactory;
         }
 
+        public Task<string> ConsultationPayment(int centerId, int consultationId, int userId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<string> ConsultationRequest(int centerId, int doctorId, int userId)
         {
             var center = await sharedDbContext.MedicalCenters
@@ -106,6 +111,50 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                     profileImage = r.user.ProfileImageUrl != null ? r.user.ProfileImageUrl :  null,
                 }).ToListAsync();
 
+        }
+
+        public async Task<ConsultationResponse?> ViewConsultation(int centerId, int doctorId, int userId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.Id == doctorId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(p => p.userId == userId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            return await db.Consultations
+                .Where(c => c.DoctorId == doctor.Id
+                                     && c.PatientId == patient.patientId)
+                .Select(p => new ConsultationResponse
+                {
+                    Id = p.Id,
+                    Status = p.Status,
+                    PaymentStatus = p.Payment.Status 
+                }).FirstOrDefaultAsync();
+
+        }
+
+        public Task<List<ConsultationResponse>> ViewConsultations(int centerId, int userId)
+        {
+            throw new NotImplementedException();
         }
     }
 }
