@@ -24,7 +24,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
         private readonly IHostEnvironment _env;
         private readonly IEmailService _emailService;
 
-        public SubscriptionPaymentService(SharedDbContext sharedDb, IHostEnvironment env,IEmailService emailService)
+        public SubscriptionPaymentService(SharedDbContext sharedDb, IHostEnvironment env, IEmailService emailService)
         {
             sharedDbContext = sharedDb;
             _env = env;
@@ -39,11 +39,17 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
             if (payment == null)
                 throw new BusinessException("Payment.NotFound");
 
-            if(payment.RecordedBySuperAdminId!=null)
+            if (payment.RecordedBySuperAdminId != null)
                 throw new BusinessException("Payment.AlreadyConfirmed");
 
+            if (payment.Subscription == null)
+                throw new BusinessException("Subscription.NotFound");
+
             var subscription = payment.Subscription;
-            
+
+            if (subscription.Status != SubscriptionStatus.Pending)
+                throw new BusinessException("Subscription.AlreadyProcessed");
+
             var center = await sharedDbContext.MedicalCenters.FindAsync(subscription.CenterId);
             if (center == null)
                 throw new BusinessException("Center.NotFound");
@@ -62,7 +68,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
                 .Select(f => f.FeatureId)
                 .ToListAsync();
 
-            foreach(var feature in newFeatureIds)
+            foreach (var feature in newFeatureIds)
             {
                 sharedDbContext.CenterFeatures.Add(new CenterFeature
                 {
@@ -72,12 +78,12 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
                 });
             }
 
-            if (center != null && center.CenterStatus == CenterStatus.Suspended)
+            if (center.CenterStatus == CenterStatus.Suspended)
                 center.CenterStatus = CenterStatus.Active;
 
             await sharedDbContext.SaveChangesAsync();
 
-            if (!string.IsNullOrEmpty(center?.AdminEmail))
+            if (!string.IsNullOrEmpty(center.AdminEmail))
             {
                 await _emailService.SendPaymentConfirmedAsync(
                     center.AdminEmail,
@@ -105,7 +111,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
                 {
                     Id = p.Id,
                     CenterId = p.CenterId,
-                    CenterName = p.Center.Name,
+                    CenterName = p.Center!.Name,
                     SubscriptionId = p.SubscriptionId,
                     Amount = p.Amount,
                     PaymentMethod = p.PaymentMethod,
@@ -122,31 +128,31 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
 
         public async Task<List<PaymentResponseDto>> GetPendingPaymentsAsync()
         {
-           
-                return await sharedDbContext.subscriptionPayments
-                .Include(p => p.Center)
-                .Include(p => p.Subscription).ThenInclude(s => s.Plan)
-                .Where(p => p.RecordedBySuperAdminId==null)
-                .OrderByDescending(p => p.PaidAt)
-                .Select(p => new PaymentResponseDto
-                {
-                    Id = p.Id,
-                    CenterId = p.CenterId,
-                    CenterName = p.Center.Name,
-                    SubscriptionId = p.SubscriptionId,
-                    Amount = p.Amount,
-                    PaymentMethod = p.PaymentMethod,
-                    ReferenceNumber = p.ReferenceNumber,
-                    ReceiptImageUrl = p.ReceiptImageUrl,
-                    PaidAt = p.PaidAt,
-                    Notes = p.Notes,
-                    IsConfirmed = false
 
-                }).ToListAsync();
-            
+            return await sharedDbContext.subscriptionPayments
+            .Include(p => p.Center)
+            .Include(p => p.Subscription).ThenInclude(s => s.Plan)
+            .Where(p => p.RecordedBySuperAdminId == null && p.RequestId == null)
+            .OrderByDescending(p => p.PaidAt)
+            .Select(p => new PaymentResponseDto
+            {
+                Id = p.Id,
+                CenterId = p.CenterId,
+                CenterName = p.Center!.Name,
+                SubscriptionId = p.SubscriptionId,
+                Amount = p.Amount,
+                PaymentMethod = p.PaymentMethod,
+                ReferenceNumber = p.ReferenceNumber,
+                ReceiptImageUrl = p.ReceiptImageUrl,
+                PaidAt = p.PaidAt,
+                Notes = p.Notes,
+                IsConfirmed = false
+
+            }).ToListAsync();
+
         }
 
-        public async Task<PaymentResponseDto> RecordPaymentAsync(recordPaymentRequestDto request, int centerId)
+        public async Task<PaymentResponseDto> RecordPaymentAsync(PaymentRequestExist request, int centerId)
         {
             var center = await sharedDbContext.MedicalCenters.FindAsync(centerId);
 
@@ -155,7 +161,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
 
             var supscriptionCenter = await sharedDbContext.CenterSubscriptions
                 .Include(c => c.Plan)
-                .FirstOrDefaultAsync(c => c.Id == request.SubscriptionId 
+                .FirstOrDefaultAsync(c => c.Id == request.SubscriptionId
                                      && c.CenterId == centerId
                                      && c.Status == SubscriptionStatus.Pending);
 
@@ -166,7 +172,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
            .AnyAsync(p => p.SubscriptionId == request.SubscriptionId);
 
             if (paymentExists)
-                throw new BusinessException("General.NotFound");
+                throw new BusinessException("Payment.Exists");
 
             string? receiptImageUrl = null;
             if (request.ReceiptImage != null)
@@ -196,7 +202,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
             {
                 CenterId = centerId,
                 SubscriptionId = request.SubscriptionId,
-                Amount = supscriptionCenter.Plan.Price,  
+                Amount = supscriptionCenter.Plan.Price,
                 PaymentMethod = request.PaymentMethod,
                 ReferenceNumber = request.ReferenceNumber,
                 ReceiptImageUrl = receiptImageUrl,
@@ -206,7 +212,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
 
             };
 
-            
+
             await sharedDbContext.subscriptionPayments.AddAsync(payment);
             await sharedDbContext.SaveChangesAsync();
 

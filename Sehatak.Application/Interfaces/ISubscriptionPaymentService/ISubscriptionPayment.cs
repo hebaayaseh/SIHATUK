@@ -9,7 +9,7 @@ namespace Sehatak.Application.Interfaces.ISubscriptionPaymentService
 {
     public interface ISubscriptionPayment
     {
-        Task<PaymentResponseDto>RecordPaymentAsync(recordPaymentRequestDto request, int centerId);
+        Task<PaymentResponseDto> RecordPaymentAsync(PaymentRequestExist request, int centerId);
         Task<bool> ConfirmPaymentAsync(int paymentId, int superAdminId);
         Task<List<PaymentResponseDto>> GetPendingPaymentsAsync();
         Task<List<PaymentResponseDto>> GetCenterPaymentsAsync(int centerId);

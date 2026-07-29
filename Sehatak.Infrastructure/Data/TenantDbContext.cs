@@ -312,9 +312,9 @@ namespace Sehatak.Infrastructure.Data
                       .HasForeignKey(e => e.PatientId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(e => e.Receptionist)
+                entity.HasOne(e => e.Staff)
                       .WithMany()
-                      .HasForeignKey(e => e.ReceptionistId)
+                      .HasForeignKey(e => e.RecordedByStaffId)
                       .OnDelete(DeleteBehavior.NoAction);
             });
 

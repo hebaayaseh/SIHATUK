@@ -1,9 +1,6 @@
-﻿using Sehatak.Application.DTOs.CreateCenterRequestDto;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
+using Sehatak.Application.DTOs.CreateCenterRequestDto;
+using Sehatak.Application.DTOs.RecordPaymentRequestDto;
 
 namespace Sehatak.Application.Interfaces.CenterRegistrationRequest
 {
@@ -11,8 +8,12 @@ namespace Sehatak.Application.Interfaces.CenterRegistrationRequest
     {
         Task<CenterRegistrationResponseDto> CenterRequestAsync(CenterRegistrationRequestDto request);
         Task<List<CenterRegistrationResponseDto>> GetCentersRegisterationAsync();
-        Task<CenterRegistrationResponseDto> GetCenterRegistrationAsync(int requestId);
+        Task<CenterRegistrationResponseDto?> GetCenterRegistrationAsync(int centerId);
         Task<bool> ApproveCenterRequest(int requestId, int superAdminId);
         Task<bool> RejectAsync(int requestId, int superAdminId, string rejectionReason);
+
+        Task<bool> RecordRegistrationPaymentAsync(int requestId, recordPaymentRequestDto request);
+        Task<List<PaymentResponseDto>> GetPendingRegistrationPaymentsAsync();
+        Task<bool> ConfirmRegistrationPaymentAsync(int paymentId, int superAdminId);
     }
 }

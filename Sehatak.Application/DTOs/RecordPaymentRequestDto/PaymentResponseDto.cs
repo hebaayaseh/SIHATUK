@@ -9,9 +9,9 @@ namespace Sehatak.Application.DTOs.RecordPaymentRequestDto
     public class PaymentResponseDto
     {
         public int Id { get; set; }
-        public int CenterId { get; set; }
+        public int? CenterId { get; set; }
         public string CenterName { get; set; } = string.Empty;
-        public int SubscriptionId { get; set; }
+        public int? SubscriptionId { get; set; }
         public decimal Amount { get; set; }
         public string PaymentMethod { get; set; } = string.Empty;
         public string? ReferenceNumber { get; set; }

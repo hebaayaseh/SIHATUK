@@ -1,4 +1,5 @@
 ﻿using Sehatak.Application.DTOs.ConsultationDto;
+using Sehatak.Application.DTOs.PaymentDto;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using System;
@@ -15,7 +16,7 @@ namespace Sehatak.Application.Interfaces.ConsultaionInterface
         Task<string> ConsultationRequest(int centerId, int doctorId, int userId);
         Task<List<ConsultationResponse>> ViewConsultations(int centerId ,  int userId, ConsultationStatus status);
         Task<ConsultationResponse> ViewConsultation(int centerId, int doctorId, int userId);
-        Task<string> ConsultationPayment(int centerId, int consultationId, int userId );
-
+        Task<string> ConsultationRecordPayment(int centerId, int consultationId, int userId , PaymentRequestDto request);
+        Task<bool> ConfirmPaymentAsync(int paymentId, int doctorId);
     }
 }
