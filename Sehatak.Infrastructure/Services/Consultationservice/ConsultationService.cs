@@ -27,9 +27,62 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             this.contextFactory = contextFactory;
         }
 
-        public Task<bool> ConfirmPaymentAsync(int paymentId, int doctorId)
+        public async Task<bool> ConfirmPaymentAsync(int centerId ,int paymentId, int doctorId , DateTime ScheduledAt , string videoLink)
         {
-            throw new NotImplementedException();
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.Id == doctorId);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var payment = await db.Payments
+                .Include(p=>p.Patient)
+                .Include(c=>c.Consultation)
+                .FirstOrDefaultAsync(p => p.Id == paymentId);
+
+            if (payment == null)
+                throw new BusinessException("Payment.NotFound");
+
+            if (payment.RecordedByStaffId != null)
+                throw new BusinessException("Payment.AlreadyConfirmed");
+
+            if (payment.Status != PaymentStatus.Pending)
+                throw new BusinessException("Payment.AlreadyProcessed");
+
+            var patient = payment.Patient;
+
+            payment.RecordedByStaffId = doctor.user.Id;
+
+            if (payment.Type != PaymentType.Consultation || payment.Consultation == null)
+                throw new BusinessException("Consultation.NotFound");
+
+            payment.Consultation.Status = ConsultationStatus.Accepted;
+            payment.Status = PaymentStatus.Paid;
+            payment.Consultation.ScheduledAt = ScheduledAt;
+            payment.Consultation.VideoLink = videoLink;
+
+            await db.Notifications.AddAsync( new Notification
+            {
+                UserId = (int)patient.userId,
+                Type = NotificationType.Appointment,
+                IsRead = false,
+                CreatedAt=DateTime.UtcNow,
+                Message = $" {ScheduledAt} في الموعد {doctor.user.firstName} {doctor.user.lastName} تم الموافقة على الاستشارة عند الطبيب "
+            });
+
+            await db.SaveChangesAsync();
+            return true;
+
         }
 
         public async Task<string> ConsultationRecordPayment(int centerId, int consultationId, int userId , PaymentRequestDto request)
@@ -59,8 +112,8 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (consultaion == null)
                 throw new BusinessException("Consultation.NotFound");
 
-            var paymentExists = await db.Consultations
-                .AnyAsync(c => c.Id == request.ConsultationId);
+            var paymentExists = await db.Payments
+                .AnyAsync(p => p.ConsultationId == request.ConsultationId);
 
             if (paymentExists)
                 throw new BusinessException("Payment.Exists");
@@ -88,9 +141,9 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
                 receiptImageUrl = $"/uploads/receipts/{fileName}";
             }
-
             var payment = new Payment
             {
+                PatientId = patient.patientId,
                 ConsultationId = request.ConsultationId,
                 ReceiptImageUrl = receiptImageUrl,
                 PaidAt = DateTime.UtcNow,
@@ -99,8 +152,8 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 ReferenceNumber = request.ReferenceNumber,
                 Status = PaymentStatus.Pending,
                 Notes = request.Notes,
-                RecordedByStaffId = null
-
+                RecordedByStaffId = null,
+                
             };
             await db.Payments.AddAsync(payment);
             await db.SaveChangesAsync();

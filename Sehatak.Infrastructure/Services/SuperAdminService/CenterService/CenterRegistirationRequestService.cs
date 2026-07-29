@@ -293,7 +293,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
             if (plan == null)
                 throw new BusinessException("Subscription.PlanNotFound");
 
-            // لازم يكون في دفعة مسجّلة ومؤكدة من سوبر أدمن قبل الموافقة
+
             var confirmedPayment = await sharedDbContext.subscriptionPayments
                 .FirstOrDefaultAsync(p => p.RequestId == requestId && p.RecordedBySuperAdminId != null);
 

@@ -17,6 +17,6 @@ namespace Sehatak.Application.Interfaces.ConsultaionInterface
         Task<List<ConsultationResponse>> ViewConsultations(int centerId ,  int userId, ConsultationStatus status);
         Task<ConsultationResponse> ViewConsultation(int centerId, int doctorId, int userId);
         Task<string> ConsultationRecordPayment(int centerId, int consultationId, int userId , PaymentRequestDto request);
-        Task<bool> ConfirmPaymentAsync(int paymentId, int doctorId);
+        Task<bool> ConfirmPaymentAsync(int centerId , int paymentId, int doctorId , DateTime ScheduledAt , string videoLink);
     }
 }

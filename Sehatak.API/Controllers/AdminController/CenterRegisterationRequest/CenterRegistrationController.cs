@@ -40,7 +40,7 @@ namespace Sehatak.API.Controllers.CenterRegistration
             return Ok(result);
         }
 
-        // 4️⃣ السوبر أدمن يأكد الدفعة (بعد ما يتحقق من صورة الحوالة يدويًا)
+
         [Authorize(Policy = "SuperAdminOnly")]
         [HttpPost("payments/{paymentId}/confirm")]
         public async Task<IActionResult> ConfirmRegistrationPayment(int paymentId)
@@ -50,7 +50,7 @@ namespace Sehatak.API.Controllers.CenterRegistration
             return Ok(new { success = result });
         }
 
-        // 5️⃣ السوبر أدمن يشوف كل الطلبات (Pending)
+
         [Authorize(Policy = "SuperAdminOnly")]
         [HttpGet("requests")]
         public async Task<IActionResult> GetCentersRegisteration()
@@ -59,7 +59,7 @@ namespace Sehatak.API.Controllers.CenterRegistration
             return Ok(result);
         }
 
-        // 6️⃣ السوبر أدمن يشوف تفاصيل طلب معيّن
+
         [Authorize(Policy = "SuperAdminOnly")]
         [HttpGet("requests/{requestId}")]
         public async Task<IActionResult> GetCenterRegistration(int requestId)

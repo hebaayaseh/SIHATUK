@@ -15,9 +15,10 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SubscriptionPayment
         {
             this.subscriptionPayment = subscriptionPayment;
         }
+
         [Authorize(Policy = "AdminOrAbove")]
         [HttpPost("record-payment/{centerId}")]
-        public async Task<IActionResult> RecordPayment(int centerId, [FromForm] recordPaymentRequestDto request)
+        public async Task<IActionResult> RecordPayment(int centerId, [FromForm] PaymentRequestExist request)
         {
             var result = await subscriptionPayment.RecordPaymentAsync(request, centerId);
             return Ok(result);
