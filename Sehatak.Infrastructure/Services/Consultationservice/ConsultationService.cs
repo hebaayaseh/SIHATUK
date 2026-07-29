@@ -244,6 +244,56 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
         }
 
+        public async Task<string> RejectConsultationPaymentAsync(int centerId, int paymentId, int doctorId, string rejectionReason)
+        {
+            var center = await sharedDbContext.MedicalCenters
+    .FirstOrDefaultAsync(c => c.Id == centerId
+                         && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.Id == doctorId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var payment = await db.Payments
+        .Include(p => p.Patient)
+        .Include(p => p.Consultation)
+        .FirstOrDefaultAsync(p => p.Id == paymentId);
+
+            if (payment == null)
+                throw new BusinessException("Payment.NotFound");
+
+            if (payment.Type != PaymentType.Consultation || payment.Consultation == null)
+                throw new BusinessException("Consultation.NotFound");
+
+            if (payment.Status != PaymentStatus.Pending)
+                throw new BusinessException("Payment.AlreadyProcessed");
+
+            payment.Status = PaymentStatus.Failed;
+            payment.RecordedByStaffId = doctor.user.Id;
+            payment.Notes = rejectionReason;
+
+            await db.Notifications.AddAsync(new Notification
+            {
+                UserId = (int)payment.Patient.userId,
+                Type = NotificationType.Appointment,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                Message = "تم رفض إيصال الدفع، يرجى التأكد من البيانات وإعادة الإرسال."
+            });
+
+            await db.SaveChangesAsync();
+            return "تم رفض الدفعة.";
+        }
+
         public async Task<string> RejectConsultationRequestAsync(int centerId, int consultationId, int doctorId, string rejectionReason)
         {
             var center = await sharedDbContext.MedicalCenters
