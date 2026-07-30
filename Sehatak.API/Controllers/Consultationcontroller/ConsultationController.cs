@@ -127,6 +127,17 @@ namespace Sehatak.API.Controllers.Consultationcontroller
             return Ok(result);
         }
 
+        [Authorize(Policy = "DoctorOnly")]
+        [HttpGet("get-consultation/{centerId}")]
+        public async Task<IActionResult> GetConsultationsSchedualeAsync(int centerId)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await consultation.GetConsultationsScheduale(centerId, userId);
+            return Ok(result);
+        }
+
+
+
     }
 
 }

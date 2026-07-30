@@ -330,6 +330,36 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
         }
 
+        public async Task<List<ConsultationResponseDto>> GetConsultationsScheduale(int centerId, int userId )
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.userId == userId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            return await db.Consultations
+                .Where(c => c.DoctorId == doctor.Id
+                       && c.Status == ConsultationStatus.Accepted)
+                .Select(n => new ConsultationResponseDto
+                {
+                    ConsultationId = n.Id,
+                    patientName = $"{n.Patient.user.firstName} {n.Patient.user.lastName}",
+                    SchedualeDate = (DateTime)n.ScheduledAt 
+                }).ToListAsync();
+
+        }
+
         public async Task<List<DoctorEnableResponse>> GetDoctorEnableConsultation(int centerId)
         {
             var center = await sharedDbContext.MedicalCenters
