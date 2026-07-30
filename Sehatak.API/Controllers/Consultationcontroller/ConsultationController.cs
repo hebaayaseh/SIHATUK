@@ -108,6 +108,17 @@ namespace Sehatak.API.Controllers.Consultationcontroller
             var result = await consultation.GetPaymentPinding(centerId, userId, paymentId);
             return Ok(result);
         }
+
+        [Authorize(Policy = "PatientOnly")]
+        [HttpPut("cancel/{centerId}/{consultationId}")]
+        public async Task<IActionResult> CancelConsultationAsync(int centerId , int consultationId)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await consultation.CancelConsultaion(centerId, userId, consultationId);
+            return Ok(result);
+        }
+
+
     }
 
 }

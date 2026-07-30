@@ -81,6 +81,62 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             return "تم الغاء الموعد بنجاح.";
         }
 
+        public async Task<string> CompleteConsultation(int centerId, int userId, int consultationId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.userId == userId
+                                    && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var payment = await db.Payments
+                .Include(c => c.Consultation)
+                .FirstOrDefaultAsync(p => p.ConsultationId == consultationId
+                                     && p.Status == PaymentStatus.Paid);
+
+            if (payment == null)
+                throw new BusinessException("Payment.NotComlete");
+
+            var consultation = await db.Consultations
+                .Include(p => p.Patient)
+                .ThenInclude(u => u.user)
+                .FirstOrDefaultAsync(c => c.Id == consultationId
+                                    && c.DoctorId == doctor.Id
+                                    && c.PaymentId == payment.Id
+                                    && c.Status == ConsultationStatus.Accepted);
+
+            if (consultation == null)
+                throw new BusinessException("Consultation.NotFound");
+
+            consultation.Status = ConsultationStatus.Completed;
+
+            db.Notifications.AddAsync(new Notification
+            {
+                UserId = (int)consultation.Patient.userId,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                Message = "تم انهاء استشارتك , يمكنك مراجعة ملفك الطبي لمتابعة التفاصيل.",
+                Type = NotificationType.Appointment
+
+            });
+
+            await db.SaveChangesAsync();
+            return "تم انهاء الاستشارة بنجاح.";
+
+        }
+
         public async Task<bool> ConfirmPaymentAsync(int centerId ,int paymentId, int doctorId , DateTime ScheduledAt , string videoLink)
         {
             var center = await sharedDbContext.MedicalCenters
