@@ -40,7 +40,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             var doctor = await db.Doctors
                 .Include(u => u.user)
-                .FirstOrDefaultAsync(d => d.Id == doctorId);
+                .FirstOrDefaultAsync(d => d.userId == doctorId);
 
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
@@ -56,7 +56,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (payment.Type != PaymentType.Consultation || payment.Consultation == null)
                 throw new BusinessException("Consultation.NotFound");
 
-            if (payment.Consultation.DoctorId != doctorId) 
+            if (payment.Consultation.DoctorId != doctor.Id) 
                 throw new BusinessException("Auth.Forbidden");
 
             if (payment.RecordedByStaffId != null)
@@ -262,13 +262,15 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             using var db = contextFactory.CreateForCenter(centerId);
 
             var doctor = await db.Doctors
-                .FirstOrDefaultAsync(d => d.Id == doctorId && d.user.isActive);
+                .FirstOrDefaultAsync(d => d.userId == doctorId 
+                                     && d.user.isActive);
+
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
             return await db.Payments
                 .Where(p => p.ConsultationId != null
-                    && p.Consultation.DoctorId == doctorId
+                    && p.Consultation.DoctorId == doctor.Id
                     && p.Consultation.Status == ConsultationStatus.Pending
                     && p.Status == PaymentStatus.Pending)
                 .Select(n => new PaymentResponseDto
@@ -291,14 +293,16 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             using var db = contextFactory.CreateForCenter(centerId);
 
             var doctor = await db.Doctors
-                .FirstOrDefaultAsync(d => d.Id == doctorId && d.user.isActive);
+                .FirstOrDefaultAsync(d => d.userId == doctorId 
+                                    && d.user.isActive);
+
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
             var payment = await db.Payments
                 .Where(p => p.Id == paymentId
                     && p.ConsultationId != null
-                    && p.Consultation.DoctorId == doctorId
+                    && p.Consultation.DoctorId == doctor.Id
                     && p.Consultation.Status == ConsultationStatus.Pending
                     && p.Status == PaymentStatus.Pending)
                 .Select(n => new PaymentResponseDto
@@ -329,7 +333,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             var doctor = await db.Doctors
                 .Include(u => u.user)
-                .FirstOrDefaultAsync(d => d.Id == doctorId
+                .FirstOrDefaultAsync(d => d.userId == doctorId
                                      && d.user.isActive);
 
             if (doctor == null)
@@ -346,7 +350,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (payment.Type != PaymentType.Consultation || payment.Consultation == null)
                 throw new BusinessException("Consultation.NotFound");
 
-            if (payment.Consultation.DoctorId != doctorId) 
+            if (payment.Consultation.DoctorId != doctor.Id) 
                 throw new BusinessException("Auth.Forbidden");
 
             if (payment.Status != PaymentStatus.Pending)
@@ -382,7 +386,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             var doctor = await db.Doctors
                 .Include(u => u.user)
-                .FirstOrDefaultAsync(d => d.Id == doctorId
+                .FirstOrDefaultAsync(d => d.userId == doctorId
                                      && d.user.isActive);
 
             if (doctor == null)
@@ -392,7 +396,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             var consultation = await db.Consultations
                 .Include(p=>p.Patient)
                 .FirstOrDefaultAsync(c => c.Id == consultationId
-                                    && c.DoctorId == doctorId
+                                    && c.DoctorId == doctor.Id
                                     && c.Status == ConsultationStatus.Pending);
 
             if (consultation == null)
