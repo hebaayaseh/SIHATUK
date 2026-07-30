@@ -6,7 +6,7 @@ using Sehatak.Infrastructure.Data;
 
 namespace Sehatak.API.Hubs;
 
-[Authorize(Policy = "ChatAccess")]
+[Authorize(Policy = "MedicalStaff")]
 public class ChatHubs : Hub
 {
     private readonly TenantDbContextFactory _tenantFactory;

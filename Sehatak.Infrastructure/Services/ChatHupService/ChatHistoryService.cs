@@ -98,11 +98,6 @@ namespace Sehatak.Infrastructure.Services
             var query = db.Users.Where(u => u.Id != currentUserId && u.isActive);
 
 
-            if (currentUser.role == userRole.Patient)
-            {
-                query = query.Where(u => u.role != userRole.Patient);
-            }
-
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 query = query.Where(u =>

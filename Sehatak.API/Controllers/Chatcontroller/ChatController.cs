@@ -7,7 +7,7 @@ namespace Sehatak.API.Controllers.Chat
 {
     [ApiController]
     [Route("api/chat")]
-    [Authorize(Policy = "ChatAccess")]
+    [Authorize(Policy = "MedicalStaff")]
     public class ChatController : ControllerBase
     {
         private readonly IChatHub _chatHistoryService;
