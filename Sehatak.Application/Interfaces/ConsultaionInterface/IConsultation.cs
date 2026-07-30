@@ -17,10 +17,11 @@ namespace Sehatak.Application.Interfaces.ConsultaionInterface
         Task<List<ConsultationResponse>> ViewConsultations(int centerId ,  int userId, ConsultationStatus status);
         Task<ConsultationResponse> ViewConsultation(int centerId, int doctorId, int userId);
         Task<string> ConsultationRecordPayment(int centerId, int consultationId, int userId , PaymentRequestDto request);
-        Task<bool> ConfirmPaymentAsync(int centerId , int paymentId, int doctorId , DateTime ScheduledAt , string videoLink);
-        Task<string> RejectConsultationRequestAsync(int centerId, int consultationId, int doctorId, string rejectionReason);
-        Task<string> RejectConsultationPaymentAsync(int centerId, int paymentId, int doctorId, string rejectionReason);
+        Task<bool> ConfirmPaymentAsync(int centerId , int paymentId, int userId , DateTime ScheduledAt , string videoLink);
+        Task<string> RejectConsultationRequestAsync(int centerId, int consultationId, int userId, string rejectionReason);
+        Task<string> RejectConsultationPaymentAsync(int centerId, int paymentId, int userId, string rejectionReason);
         Task<List<PaymentResponseDto>> GetPaymentPinding(int centerId , int doctorId);
-        Task<PaymentResponseDto> GetPaymentPinding(int centerId, int doctorId, int paymentId);
+        Task<PaymentResponseDto> GetPaymentPinding(int centerId, int userId, int paymentId);
+        Task<string> CancelConsultaion(int centerId, int userId, int consultationId);
     }
 }

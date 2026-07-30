@@ -27,6 +27,60 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             this.contextFactory = contextFactory;
         }
 
+        public async Task<string> CancelConsultaion(int centerId, int userId, int consultationId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(p => p.userId == userId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            var consultation = await db.Consultations
+                .Include(d=>d.Doctor)
+                .ThenInclude(u=>u.user)
+                .FirstOrDefaultAsync(c => c.Id == consultationId
+                                     && c.PatientId == patient.patientId);
+
+            if (consultation == null)
+                throw new BusinessException("Consultation.NotFound");
+
+            if (consultation.Status != ConsultationStatus.Pending)
+                throw new BusinessException("Consultation.CannotCancelAfterConfirmed");
+
+            var hasPayment = await db.Payments
+                .AnyAsync(p => p.ConsultationId == consultationId);
+
+            if (hasPayment)
+                throw new BusinessException("Consultation.CannotCancelAfterPaymentSubmitted");
+
+
+            consultation.Status = ConsultationStatus.Cancelled;
+
+            db.Notifications.Add(new Notification
+            {
+                UserId = consultation.Doctor.user.Id,
+                Message = "قام المريض بإلغاء طلب الاستشارة.",
+                Type = NotificationType.Cancellation,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await db.SaveChangesAsync();
+
+            return "تم الغاء الموعد بنجاح.";
+        }
+
         public async Task<bool> ConfirmPaymentAsync(int centerId ,int paymentId, int doctorId , DateTime ScheduledAt , string videoLink)
         {
             var center = await sharedDbContext.MedicalCenters
