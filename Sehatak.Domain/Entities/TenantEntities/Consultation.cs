@@ -16,9 +16,6 @@ namespace Sehatak.Domain.Entities.TenantEntities
 
         public ConsultationStatus Status { get; set; } = ConsultationStatus.Pending;
 
-        public int? PaymentId { get; set; }
-
-
         public string? VideoLink { get; set; }
 
         public string? Notes { get; set; }

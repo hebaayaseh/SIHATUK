@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sehatak.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using Sehatak.Infrastructure.Data;
 namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 {
     [DbContext(typeof(TenantDbContext))]
-    partial class TenantDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260730211549_RenameReceptionistIdOnCenters")]
+    partial class RenameReceptionistIdOnCenters
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -308,6 +311,9 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("PaymentId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("ScheduledAt")
                         .HasColumnType("datetime(6)");
 
@@ -323,6 +329,9 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.HasIndex("DoctorId");
 
                     b.HasIndex("PatientId");
+
+                    b.HasIndex("PaymentId")
+                        .IsUnique();
 
                     b.ToTable("consultations", (string)null);
                 });
@@ -840,9 +849,6 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.HasIndex("AppointmentId")
                         .IsUnique();
 
-                    b.HasIndex("ConsultationId")
-                        .IsUnique();
-
                     b.HasIndex("PatientId");
 
                     b.HasIndex("RecordedByStaffId");
@@ -1189,9 +1195,16 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.Payment", "Payment")
+                        .WithOne("Consultation")
+                        .HasForeignKey("Sehatak.Domain.Entities.TenantEntities.Consultation", "PaymentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
+
+                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Doctor", b =>
@@ -1448,11 +1461,6 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasForeignKey("Sehatak.Domain.Entities.TenantEntities.Payment", "AppointmentId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.Consultation", "Consultation")
-                        .WithOne("Payment")
-                        .HasForeignKey("Sehatak.Domain.Entities.TenantEntities.Payment", "ConsultationId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.Patient", "Patient")
                         .WithMany("payments")
                         .HasForeignKey("PatientId")
@@ -1465,8 +1473,6 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Appointment");
-
-                    b.Navigation("Consultation");
 
                     b.Navigation("Patient");
 
@@ -1580,11 +1586,6 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Navigation("Rating");
                 });
 
-            modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Consultation", b =>
-                {
-                    b.Navigation("Payment");
-                });
-
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Department", b =>
                 {
                     b.Navigation("Doctors");
@@ -1633,6 +1634,8 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Payment", b =>
                 {
+                    b.Navigation("Consultation");
+
                     b.Navigation("LabResult");
                 });
 

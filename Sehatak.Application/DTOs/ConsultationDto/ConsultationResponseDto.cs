@@ -11,7 +11,7 @@ namespace Sehatak.Application.DTOs.ConsultationDto
     {
         public int ConsultationId { get; set; }
         public string patientName { get; set; }
-        public DateTime SchedualeDate { get; set; }
+        public DateTime? SchedualeDate { get; set; }
 
 
     }

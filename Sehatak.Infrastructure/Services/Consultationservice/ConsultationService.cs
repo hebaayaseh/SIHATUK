@@ -217,7 +217,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 throw new BusinessException("Consultation.NotFound");
 
             var paymentExists = await db.Payments
-                .AnyAsync(p => p.ConsultationId == request.ConsultationId);
+                .AnyAsync(p => p.ConsultationId == consultationId);
 
             if (paymentExists)
                 throw new BusinessException("Payment.Exists");
@@ -253,7 +253,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             var payment = new Payment
             {
                 PatientId = patient.patientId,
-                ConsultationId = request.ConsultationId,
+                ConsultationId = consultationId,
                 ReceiptImageUrl = receiptImageUrl,
                 Amount = servicePrice.Price,
                 PaidAt = DateTime.UtcNow,
@@ -355,7 +355,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 {
                     ConsultationId = n.Id,
                     patientName = $"{n.Patient.user.firstName} {n.Patient.user.lastName}",
-                    SchedualeDate = (DateTime)n.ScheduledAt 
+                    SchedualeDate = n.ScheduledAt 
                 }).ToListAsync();
 
         }
@@ -384,7 +384,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
         }
 
-        public async Task<List<PaymentResponseDto>> GetPaymentPinding(int centerId, int doctorId)
+        public async Task<List<PaymentResponseDto>> GetPaymentPinding(int centerId, int userId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
@@ -394,7 +394,8 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             using var db = contextFactory.CreateForCenter(centerId);
 
             var doctor = await db.Doctors
-                .FirstOrDefaultAsync(d => d.userId == doctorId 
+                .Include(u=>u.user)
+                .FirstOrDefaultAsync(d => d.userId == userId 
                                      && d.user.isActive);
 
             if (doctor == null)
@@ -415,7 +416,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 }).ToListAsync();
         }
 
-        public async Task<PaymentResponseDto> GetPaymentPinding(int centerId, int doctorId, int paymentId)
+        public async Task<PaymentResponseDto> GetPaymentPinding(int centerId, int userId, int paymentId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
@@ -425,34 +426,42 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             using var db = contextFactory.CreateForCenter(centerId);
 
             var doctor = await db.Doctors
-                .FirstOrDefaultAsync(d => d.userId == doctorId 
-                                    && d.user.isActive);
+                .Include(d => d.user)
+                .FirstOrDefaultAsync(d => d.userId == userId && d.user.isActive);
 
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
             var payment = await db.Payments
-                .Where(p => p.Id == paymentId
-                    && p.ConsultationId != null
-                    && p.Consultation.DoctorId == doctor.Id
-                    && p.Consultation.Status == ConsultationStatus.Pending
-                    && p.Status == PaymentStatus.Pending)
-                .Select(n => new PaymentResponseDto
-                {
-                    Id = n.Id,
-                    patientId = n.PatientId,
-                    PaidAt = n.PaidAt,
-                    ReceiptImageUrl = n.ReceiptImageUrl,
-                    ReferenceNumber = n.ReferenceNumber
-                }).FirstOrDefaultAsync();
+                .Include(p => p.Consultation)
+                .FirstOrDefaultAsync(p => p.Id == paymentId);
 
             if (payment == null)
                 throw new BusinessException("Payment.NotFound");
 
-            return payment;
+            if (payment.Consultation == null)
+                throw new BusinessException("Consultation.NotFound");
+
+            if (payment.Consultation.DoctorId != doctor.Id)
+                throw new BusinessException("Auth.Forbidden");
+
+            if (payment.Consultation.Status != ConsultationStatus.Pending)
+                throw new BusinessException("Consultation.NotPending");
+
+            if (payment.Status != PaymentStatus.Pending)
+                throw new BusinessException("Payment.AlreadyProcessed");
+
+            return new PaymentResponseDto
+            {
+                Id = payment.Id,
+                patientId = payment.PatientId,
+                PaidAt = payment.PaidAt,
+                ReceiptImageUrl = payment.ReceiptImageUrl,
+                ReferenceNumber = payment.ReferenceNumber
+            };
         }
 
-        public async Task<string> RejectConsultationPaymentAsync(int centerId, int paymentId, int doctorId, string rejectionReason)
+        public async Task<string> RejectConsultationPaymentAsync(int centerId, int paymentId, int userId, string rejectionReason)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -465,7 +474,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             var doctor = await db.Doctors
                 .Include(u => u.user)
-                .FirstOrDefaultAsync(d => d.userId == doctorId
+                .FirstOrDefaultAsync(d => d.userId == userId
                                      && d.user.isActive);
 
             if (doctor == null)
@@ -505,7 +514,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             return "تم رفض الدفعة.";
         }
 
-        public async Task<string> RejectConsultationRequestAsync(int centerId, int consultationId, int doctorId, string rejectionReason)
+        public async Task<string> RejectConsultationRequestAsync(int centerId, int consultationId, int userId, string rejectionReason)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -518,7 +527,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             var doctor = await db.Doctors
                 .Include(u => u.user)
-                .FirstOrDefaultAsync(d => d.userId == doctorId
+                .FirstOrDefaultAsync(d => d.userId == userId
                                      && d.user.isActive);
 
             if (doctor == null)

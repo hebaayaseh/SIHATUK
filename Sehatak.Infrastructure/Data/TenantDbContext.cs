@@ -457,11 +457,6 @@ namespace Sehatak.Infrastructure.Data
                 entity.ToTable("consultations");
                 entity.HasKey(e => e.Id);
 
-                entity.HasOne(e => e.Payment)
-                      .WithOne(p => p.Consultation)
-                      .HasForeignKey<Consultation>(e => e.PaymentId)
-                      .OnDelete(DeleteBehavior.SetNull);
-
                 entity.Property(e => e.Status)
                       .HasConversion<string>();
 

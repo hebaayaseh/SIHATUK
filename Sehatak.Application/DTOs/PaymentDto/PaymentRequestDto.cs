@@ -13,7 +13,6 @@ namespace Sehatak.Application.DTOs.PaymentDto
         public PaymentMethod Method { get; set; } = PaymentMethod.online;
         public PaymentType Type { get; set; } 
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
-        public int? ConsultationId { get; set; }
         public string? ReferenceNumber { get; set; }
         public IFormFile? ReceiptImageUrl { get; set; }
         public DateTime PaidAt { get; set; } = DateTime.UtcNow;

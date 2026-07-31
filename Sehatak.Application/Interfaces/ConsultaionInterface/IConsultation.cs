@@ -20,7 +20,7 @@ namespace Sehatak.Application.Interfaces.ConsultaionInterface
         Task<bool> ConfirmPaymentAsync(int centerId , int paymentId, int userId , DateTime ScheduledAt , string videoLink);
         Task<string> RejectConsultationRequestAsync(int centerId, int consultationId, int userId, string rejectionReason);
         Task<string> RejectConsultationPaymentAsync(int centerId, int paymentId, int userId, string rejectionReason);
-        Task<List<PaymentResponseDto>> GetPaymentPinding(int centerId , int doctorId);
+        Task<List<PaymentResponseDto>> GetPaymentPinding(int centerId , int userId);
         Task<PaymentResponseDto> GetPaymentPinding(int centerId, int userId, int paymentId);
         Task<string> CancelConsultaion(int centerId, int userId, int consultationId);
         Task<string> CompleteConsultation(int centerId, int userId, int consultationId);
