@@ -12,13 +12,13 @@ namespace Sehatak.Application.Interfaces.IProfileInterface
     {
         Task<ProfileResponse> ViewProfile(int UserId);
 
-        Task<bool> RequestEditEmail(int UserId, EditEmailRequest request);
-        Task<EmailResponse> ConfirmEditEmail(int UserId, ConfirmEditEmailRequest request);
+        Task<bool> RequestEditEmail(int userId, EditEmailRequest request);
+        Task<EmailResponse> ConfirmEditEmail(int userId, ConfirmEditEmailRequest request);
 
-        Task<bool> RequestEditPassword(int UserId, EditPasswordRequest request);
-        Task<PasswordResponse> ConfirmEditPassword(int UserId, ConfirmEditPasswordRequest request);
+        Task<bool> RequestEditPassword(int userId, EditPasswordRequest request);
+        Task<PasswordResponse> ConfirmEditPassword(int userId, ConfirmEditPasswordRequest request);
 
-        Task<NameResponse> EditName(int UserId, EditNameRequest request);
-        Task<ProfileImageResponse> EditProfileImage(int UserId, EditProfileImageRequest request);
+        Task<NameResponse> EditName(int userId, EditNameRequest request);
+        Task<ProfileImageResponse> EditProfileImage(int userId, EditProfileImageRequest request);
     }
 }

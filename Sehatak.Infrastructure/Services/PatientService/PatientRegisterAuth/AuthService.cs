@@ -137,12 +137,12 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
             if (request.ProfileImage != null)
             {
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.ProfileImage.FileName);
-                var path = Path.Combine("wwwroot/uploads/receipts", fileName);
+                var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await request.ProfileImage.CopyToAsync(stream);
                 }
-                user.ProfileImageUrl = $"/uploads/receipts/{fileName}";
+                user.ProfileImageUrl = $"/uploads/profileImage/{fileName}";
             }
 
             await db.Users.AddAsync(user);

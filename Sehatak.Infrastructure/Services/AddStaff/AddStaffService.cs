@@ -65,12 +65,12 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             if (request.ProfileImage != null)
             {
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.ProfileImage.FileName);
-                var path = Path.Combine("wwwroot/uploads/receipts", fileName);
+                var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await request.ProfileImage.CopyToAsync(stream);
                 }
-                newLabTechnician.ProfileImageUrl = $"/uploads/receipts/{fileName}";
+                newLabTechnician.ProfileImageUrl = $"/uploads/profileImage/{fileName}";
             }
             await db.Users.AddAsync(newLabTechnician);
             await db.SaveChangesAsync();
@@ -125,12 +125,12 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             if (request.ProfileImage != null)
             {
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.ProfileImage.FileName);
-                var path = Path.Combine("wwwroot/uploads/receipts", fileName);
+                var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await request.ProfileImage.CopyToAsync(stream);
                 }
-                newReceptionist.ProfileImageUrl = $"/uploads/receipts/{fileName}";
+                newReceptionist.ProfileImageUrl = $"/uploads/profileImage/{fileName}";
             }
             await db.Users.AddAsync(newReceptionist);
             await db.SaveChangesAsync();

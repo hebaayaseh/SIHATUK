@@ -56,16 +56,24 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
             if (request.ImageFile == null)
                 throw new BusinessException("General.NotFound");
 
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+            var extension = Path.GetExtension(request.ImageFile.FileName).ToLower();
+            if (!allowedExtensions.Contains(extension))
+                throw new BusinessException("Validation.InvalidFileType");
+
+            if (request.ImageFile.Length > 5 * 1024 * 1024)
+                throw new BusinessException("Validation.FileTooLarge");
+
             var fileName = Guid.NewGuid() + Path.GetExtension(request.ImageFile.FileName);
 
-            var path = Path.Combine("wwwroot/uploads/receipts", fileName);
+            var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
 
             using (var stream = new FileStream(path, FileMode.Create))
             {
                 await request.ImageFile.CopyToAsync(stream);
             }
 
-            superAdmin.ProfileImageUrl = $"/uploads/receipts/{fileName}";
+            superAdmin.ProfileImageUrl = $"/uploads/profileImage/{fileName}";
 
             
             await sharedDbContext.SaveChangesAsync();

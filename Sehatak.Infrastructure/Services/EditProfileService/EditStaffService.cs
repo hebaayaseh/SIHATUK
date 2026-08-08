@@ -154,18 +154,26 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
 
             if (request.profileImage != null)
             {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                var extension = Path.GetExtension(request.profileImage.FileName).ToLower();
+                if (!allowedExtensions.Contains(extension))
+                    throw new BusinessException("Validation.InvalidFileType");
+
+                if (request.profileImage.Length > 5 * 1024 * 1024)
+                    throw new BusinessException("Validation.FileTooLarge");
+
                 if (!string.IsNullOrEmpty(user.ProfileImageUrl))
                     DeleteImageFile(user.ProfileImageUrl);
 
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.profileImage.FileName);
-                var path = Path.Combine("wwwroot/uploads/receipts", fileName);
+                var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
 
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await request.profileImage.CopyToAsync(stream);
                 }
 
-                user.ProfileImageUrl = $"/uploads/receipts/{fileName}";
+                user.ProfileImageUrl = $"/uploads/profileImage/{fileName}";
             }
             else if (request.RemoveProfileImage)
             {

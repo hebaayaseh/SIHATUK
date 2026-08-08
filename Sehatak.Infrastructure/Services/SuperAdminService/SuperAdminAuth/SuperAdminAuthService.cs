@@ -83,14 +83,14 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
 
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.ProfileImageUrl.FileName);
 
-                var path = Path.Combine("wwwroot/uploads/receipts", fileName);
+                var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
 
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await request.ProfileImageUrl.CopyToAsync(stream);
                 }
 
-                superAdmin.ProfileImageUrl = $"/uploads/receipts/{fileName}";
+                superAdmin.ProfileImageUrl = $"/uploads/profileImage/{fileName}";
             }
 
             await sharedDbContext.AddAsync(superAdmin);
