@@ -18,5 +18,6 @@ namespace Sehatak.Application.DTOs.EditProfile.EditProfileActors
         public string? phoneNumber { get; set; }
         public string? Specialization { get; set; }
         public string? Bio { get; set; }
+        public bool? OnlineEnabled { get; set; }
     }
 }

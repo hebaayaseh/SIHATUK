@@ -196,6 +196,9 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
 
                 if (request.Bio != null)
                     doctor.Bio = request.Bio;
+
+                if(request.OnlineEnabled!=null )
+                    doctor.OnlineEnabled = (bool)request.OnlineEnabled;
             }
 
             await db.SaveChangesAsync();
