@@ -26,7 +26,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.EditProfilecontroller
         }
 
         [Authorize(Policy = "MedicalStaff")]
-        [HttpPost("edit-staff-information/{centerId}")]
+        [HttpPut("edit-staff-information/{centerId}")]
         public async Task<IActionResult> EditStaffInformation(int centerId, [FromForm] EditSttafInformationRequest request)
         {
             var adminId = int.Parse(

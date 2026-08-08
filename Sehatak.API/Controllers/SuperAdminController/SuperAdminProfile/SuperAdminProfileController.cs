@@ -59,7 +59,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.SuperAdminProfile
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPost("super-admin-edit-name/{superAdminId}")]
+        [HttpPut("super-admin-edit-name/{superAdminId}")]
         public async Task<IActionResult> EditName(int superAdminId, [FromBody] EditNameRequest request)
         {
             var result = await profile.EditName(superAdminId, request);
@@ -67,7 +67,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.SuperAdminProfile
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPost("super-admin-edit-profile-image/{superAdminId}")]
+        [HttpPut("super-admin-edit-profile-image/{superAdminId}")]
         public async Task<IActionResult> EditProfileImage(int superAdminId, [FromForm] EditProfileImageRequest request)
         {
             var result = await profile.EditProfileImage(superAdminId, request);
