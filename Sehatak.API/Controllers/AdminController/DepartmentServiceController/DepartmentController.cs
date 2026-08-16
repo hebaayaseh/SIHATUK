@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.DepartmentInterface;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.DepartmentServiceController
 {
     [ApiController]
-    [Route("api_department_service")]
+    [Route("api/AdminOnly")]
     public class DepartmentController : ControllerBase
     {
         private readonly IDepartmentService departmentService;

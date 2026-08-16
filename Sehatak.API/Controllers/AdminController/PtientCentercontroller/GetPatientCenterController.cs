@@ -7,7 +7,7 @@ using Sehatak.Domain.Enums;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.PtientCentercontroller
 {
     [ApiController]
-    [Route("api-get-patient")]
+    [Route("api/AdminOrAbove")]
     public class GetPatientCenterController : ControllerBase
     {
         private readonly IGetpatientCenter getpatient;

@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.RenewSubscription;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SupscriptionPlans
 {
     [ApiController]
-    [Route("api/renew-subscription")]
+    [Route("api/AdminOrAbove")]
     public class RenewSubscriptionController : ControllerBase
     {
         private readonly IRenewSubscription renewSubscriptionService;

@@ -9,7 +9,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.Consultationcontroller
 {
     [ApiController]
-    [Route("Consultation")]
+    [Route("api/DoctorOrPatient")]
     public class ConsultationController : ControllerBase
     {
         private readonly IConsultation consultation;

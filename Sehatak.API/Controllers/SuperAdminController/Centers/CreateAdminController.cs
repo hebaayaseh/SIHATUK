@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.MedicalCenter;
 namespace Sehatak.API.Controllers.SuperAdminController.Centers
 {
     [ApiController]
-    [Route("create-admin")]
+    [Route("api/SuperAdminOnly")]
     public class CreateAdminController : ControllerBase 
     {
         private readonly ICreateAdminService createAdminService;

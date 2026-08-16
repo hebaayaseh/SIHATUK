@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.DepartmentInterface;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.DepartmentServiceController
 {
     [ApiController]
-    [Route("api-add-doctor-to-department")]
+    [Route("api/AdminOnly")]
     public class AddDoctorToDepartmentController : ControllerBase
     {
         private readonly IAddDoctorToDepartment addDoctor;

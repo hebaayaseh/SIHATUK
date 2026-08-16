@@ -5,8 +5,8 @@ using Sehatak.Application.Interfaces.Plans;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SupscriptionPlans
 {
     [ApiController]
-    [Route("plan-list")]
-   public class ListOfPlanController : ControllerBase
+    [Route("api/AdminOrAbove")]
+    public class ListOfPlanController : ControllerBase
     {
         private readonly IListOfPlan listOfPlan;
         public ListOfPlanController(IListOfPlan listOfPlan)

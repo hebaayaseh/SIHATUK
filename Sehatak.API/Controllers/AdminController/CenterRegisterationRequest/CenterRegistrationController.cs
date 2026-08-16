@@ -7,7 +7,7 @@ using Sehatak.Application.Interfaces.CenterRegistrationRequest;
 namespace Sehatak.API.Controllers.CenterRegistration
 {
     [ApiController]
-    [Route("api/center-registration")]
+    [Route("api/SuperAdminOnly")]
     public class CenterRegistrationController : ControllerBase
     {
         private readonly ICenterRegistration _registrationService;
@@ -68,7 +68,6 @@ namespace Sehatak.API.Controllers.CenterRegistration
             return Ok(result);
         }
 
-        // 7️⃣ السوبر أدمن يوافق (بس لو فيه دفعة مؤكدة مسبقًا)
         [Authorize(Policy = "SuperAdminOnly")]
         [HttpPost("requests/{requestId}/approve")]
         public async Task<IActionResult> ApproveCenterRequest(int requestId)

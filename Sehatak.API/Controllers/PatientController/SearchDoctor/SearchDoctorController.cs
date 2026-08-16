@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.SearchDoctor;
 namespace Sehatak.API.Controllers.PatientController.SearchDoctor
 {
     [ApiController]
-    [Route("api-searc-doctor")]
+    [Route("api/PatientOnly")]
     public class SearchDoctorControlle : ControllerBase
     {
         private readonly ISearchDoctor searchDoctor;

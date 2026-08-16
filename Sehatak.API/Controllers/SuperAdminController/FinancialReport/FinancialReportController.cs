@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.IFinancialReports;
 namespace Sehatak.API.Controllers.SuperAdminController.FinancialReport
 {
     [ApiController]
-    [Route("api-financial-report")]
+    [Route("api/SuperAdminOnly")]
     public class FinancialReportController : ControllerBase
     {
         private readonly IFinancialReport financialReport;

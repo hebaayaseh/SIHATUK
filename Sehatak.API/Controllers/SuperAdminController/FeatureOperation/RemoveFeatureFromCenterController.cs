@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.RemoveFeatureFromCenter;
 namespace Sehatak.API.Controllers.SuperAdminController.FeatureOperation
 {
     [ApiController]
-    [Route("api/remove-feature-from-center")]
+    [Route("api/SuperAdminOnly")]
     public class RemoveFeatureFromCenterController : ControllerBase
     {
         private readonly IRemoveFeatureFromCenter removeFeatureFromCenterService;

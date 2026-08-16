@@ -5,7 +5,7 @@ using Sehatak.Application.Interfaces.GetSttafInterFace;
 namespace Sehatak.API.Controllers.PatientController.GetStaffcontroller
 {
     [ApiController]
-    [Route("get-Receptionist-and-LabTechnician")]
+    [Route("api/AdminOnly")]
     public class GetReceptionistController : ControllerBase
     {
         private readonly IGetStaff getStaff;

@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.ServicePricecontroller
 {
     [ApiController]
-    [Route("api-service-price")]
+    [Route("api/AdminOnly")]
     public class ServicePriceController : ControllerBase
     {
         private readonly IServicePrice servicePrice;

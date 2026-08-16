@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.AssignFeatursToPlan;
 namespace Sehatak.API.Controllers.SuperAdminController.FeatureOperation
 {
     [ApiController]
-    [Route("api/admin/plans/{planId}/features")]
+    [Route("api/AdminOrAbove")]
     public class PlanFeatureController : ControllerBase
     {
         private readonly IPlanFeatureService planFeatureService;
@@ -15,7 +15,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.FeatureOperation
             this.planFeatureService = planFeatureService;
         }
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPost("AssignFeature")]
+        [HttpPost("AssignFeature/{planId}")]
         public async Task<IActionResult> AssignFeature( int planId, AssignFeatureToPlanRequestDto request)
         {
             var result = await planFeatureService.AssignFeatureAsync(planId, request);
@@ -23,7 +23,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.FeatureOperation
         }
 
         [Authorize(Policy = "AdminOrAbove")]
-        [HttpGet("GetFeatures")]
+        [HttpGet("GetFeatures/{planId}")]
         public async Task<IActionResult> GetFeatures(int planId)
         {
             var result = await planFeatureService.GetPlanFeaturesAsync(planId);

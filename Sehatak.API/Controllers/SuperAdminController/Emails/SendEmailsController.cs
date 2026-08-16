@@ -12,7 +12,7 @@ using Sehatak.Infrastructure.Services.SuperAdminService.Background;
 namespace Sehatak.API.Controllers.SuperAdminController.Emails
 {
     [ApiController]
-    [Route("api/send_emails")]
+    [Route("api/SuperAdminOnly")]
     public class SendEmailsController : ControllerBase
     {
         private readonly IAdminBulkEmailService _adminBulkEmailService;
@@ -20,6 +20,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.Emails
         {
             _adminBulkEmailService = adminBulkEmailService;
         }
+        [Authorize(Policy = "SuperAdminOnly")]
         [HttpPost("send-email")]
         public async Task<IActionResult> SendEmail([FromBody] SendEmailDto request)
         {

@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.AddFeatureToCenter;
 namespace Sehatak.API.Controllers.SuperAdminController.FeatureOperation
 {
     [ApiController]
-    [Route("api/add-feature-to-center")]
+    [Route("api/SuperAdminOnly")]
     public class AddFeatureToCenterController : ControllerBase
     {
         private readonly IAddFeatureToCenter addFeatureToCenterService;

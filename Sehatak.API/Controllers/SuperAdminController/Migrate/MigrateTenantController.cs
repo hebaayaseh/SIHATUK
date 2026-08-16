@@ -6,7 +6,7 @@ using Sehatak.Infrastructure.Services;
 namespace Sehatak.API.Controllers.SuperAdminController.Migrate
 {
     [ApiController]
-    [Route("api/migrate-tenant")]
+    [Route("api/SuperAdminOnly")]
     public class MigrateTenantController : ControllerBase
     {
         private readonly TenantMigrationRunner _migrationRunner;

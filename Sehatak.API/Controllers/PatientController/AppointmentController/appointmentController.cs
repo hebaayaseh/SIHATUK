@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.PatientController.AppointmentController
 {
     [ApiController]
-    [Route("api-appointment")]
+    [Route("api/DoctorOnly")]
     public class Appointmentcontroller : ControllerBase
     {
         private readonly IAppointment slotService;

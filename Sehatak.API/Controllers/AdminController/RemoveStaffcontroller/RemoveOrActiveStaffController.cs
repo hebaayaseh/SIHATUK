@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.DepartmentInterface;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.RemoveStaffcontroller
 {
     [ApiController]
-    [Route("remove-or-active-staff")]
+    [Route("api/AdminOrAbove")]
     public class RemoveOrActiveStaffController : ControllerBase
     {
         private readonly IRemoveStaff removeStaff;

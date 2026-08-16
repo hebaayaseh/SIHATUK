@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.SignUp;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.GetLabTechnicianAndReceptionistController
 {
     [ApiController]
-    [Route("add-Receptionist-And-LabTechnician")]
+    [Route("api/AdminOnly")]
     public class AddReceptionistAndLabTechnicianController : ControllerBase
     {
         private readonly ISignup signup;

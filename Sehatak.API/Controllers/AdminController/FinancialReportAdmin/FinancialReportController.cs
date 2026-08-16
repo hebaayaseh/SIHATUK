@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.SuperAdminController1.FinancialReportAdmin
 {
     [ApiController]
-    [Route("api-admin-financial-report")]
+    [Route("api/AdminOnly")]
     public class FinancialReportController : ControllerBase
     {
         private readonly IFinancialReportAdmin financialReport;

@@ -7,7 +7,7 @@ using Sehatak.Application.Interfaces.IProfileInterface;
 namespace Sehatak.API.Controllers.SuperAdminController.SuperAdminProfile
 {
     [ApiController]
-    [Route("super-admin-profile")]
+    [Route("api/SuperAdminOnly")]
     public class SuperAdminProfileController : ControllerBase
     {
         private readonly IProfile profile;

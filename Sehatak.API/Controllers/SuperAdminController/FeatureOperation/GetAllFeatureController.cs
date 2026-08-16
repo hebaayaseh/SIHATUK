@@ -5,7 +5,7 @@ using Sehatak.Application.Interfaces.Features;
 namespace Sehatak.API.Controllers.SuperAdminController.FeatureOperation
 {
     [ApiController]
-    [Route("api/get-all-feature")]
+    [Route("api/AdminOrAbove")]
     public class GetAllFeatureController : ControllerBase
     {
         private readonly IGetAllFeature getAllFeatureService;

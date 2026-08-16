@@ -296,7 +296,7 @@ namespace Sehatak.API
                 options.AddPolicy("DoctorOnly", policy => policy.RequireRole("Doctor"));
                 options.AddPolicy("ReceptionistOnly", policy => policy.RequireRole("Receptionist"));
                 options.AddPolicy("PatientOnly", policy => policy.RequireRole("Patient"));
-                options.AddPolicy("ChatAccess", policy => policy.RequireRole("Admin","Doctor","Receptionist","LapTechnician","Patient"));
+                
             });
 
             // 11. SERVICES

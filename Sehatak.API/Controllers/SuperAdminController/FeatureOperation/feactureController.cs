@@ -7,7 +7,7 @@ using Sehatak.Domain.Entities.SharedEntities;
 namespace Sehatak.API.Controllers.SuperAdminController.FeatureOperation
 {
     [ApiController]
-    [Route("api/feature")]
+    [Route("api/SuperAdminOnly")]
     public class feactureController : ControllerBase
     {
         private readonly IFeatureService featureService;

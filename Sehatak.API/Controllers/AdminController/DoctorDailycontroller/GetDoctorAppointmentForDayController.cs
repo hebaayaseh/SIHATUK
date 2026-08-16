@@ -6,7 +6,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.AdminController.DoctorDailycontroller
 {
     [ApiController]
-    [Route("get-appointment-day")]
+    [Route("api/DoctorOnly")]
     public class GetDoctorAppointmentForDayController : ControllerBase
     {
         private readonly IDoctorAppointment appointment;
