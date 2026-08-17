@@ -1,21 +1,20 @@
-﻿namespace Sehatak.Domain.Entities.TenantEntities
+﻿using Sehatak.Domain.Enums;
+
+namespace Sehatak.Domain.Entities.TenantEntities
 {
     public class StaffShift
     {
 
         public int Id { get; set; }
 
-        public int staffId { get; set; }
+        public int UserId { get; set; }
 
-        public DayOfWeek DayOfWeek { get; set; }
-        public string ShiftName { get; set; } = string.Empty;
-        public TimeOnly StartTime { get; set; }
-
-        public TimeOnly EndTime { get; set; }
+        public DateOnly ShiftDate { get; set; }
+        public ShiftGroup ShiftName { get; set; } 
             
         public bool IsActive { get; set; } = true;
 
         //  Navigation Properties :
-        public User User { get; set; } = null!;
+        public User Staff { get; set; } = null!;
     }
 }

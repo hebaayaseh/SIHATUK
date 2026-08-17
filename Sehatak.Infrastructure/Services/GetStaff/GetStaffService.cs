@@ -120,7 +120,7 @@ namespace Sehatak.Infrastructure.Services.GetStaff
 
             var attendances = await db.StaffAttendances
               .Include(a => a.Shift)
-              .Where(a => a.StaffId == userId)
+              .Where(a => a.UserId == userId)
               .OrderByDescending(a => a.AttendanceDate)
               .ToListAsync();
 
@@ -136,9 +136,7 @@ namespace Sehatak.Infrastructure.Services.GetStaff
                 LabTechnicalShift = attendances.Select(a => new SummaryShiftDto
                 {
                     ShiftName = a.Shift.ShiftName,
-                    DayOfWeek = a.Shift.DayOfWeek,
-                    StartTime = a.Shift.StartTime,
-                    EndTime = a.Shift.EndTime,
+                    ShistDate = a.Shift.ShiftDate,
                     CheckInTime = a.CheckInTime,
                     CheckOutTime = a.CheckOutTime,
                     attendanceStatus = a.attendanceStatus,
@@ -188,7 +186,7 @@ namespace Sehatak.Infrastructure.Services.GetStaff
 
             var attendances = await db.StaffAttendances
               .Include(a => a.Shift)
-              .Where(a => a.StaffId == userId)
+              .Where(a => a.UserId == userId)
               .OrderByDescending(a => a.AttendanceDate)
               .ToListAsync();
 
@@ -203,10 +201,8 @@ namespace Sehatak.Infrastructure.Services.GetStaff
                 ReceptionistName = $"{user.firstName} {user.lastName}",
                 ReceptionistShift = attendances.Select(a => new SummaryShiftDto
                 {
-                    ShiftName = a.Shift.ShiftName,
-                    DayOfWeek = a.Shift.DayOfWeek,
-                    StartTime = a.Shift.StartTime,
-                    EndTime = a.Shift.EndTime,
+                    ShiftName =a.Shift.ShiftName,
+                    ShistDate = a.Shift.ShiftDate,
                     CheckInTime = a.CheckInTime,
                     CheckOutTime = a.CheckOutTime,
                     attendanceStatus = a.attendanceStatus,

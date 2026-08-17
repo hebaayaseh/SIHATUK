@@ -9,11 +9,8 @@ namespace Sehatak.Application.DTOs.GetStaffDto
 {
     public class SummaryShiftDto
     {
-        public DayOfWeek DayOfWeek { get; set; }
-        public string ShiftName { get; set; } = string.Empty;
-        public TimeOnly StartTime { get; set; }
-
-        public TimeOnly EndTime { get; set; }
+        public DateOnly ShistDate { get; set; }
+        public ShiftGroup ShiftName { get; set; }
 
         public bool IsActive { get; set; } = true;
         public DateOnly AttendanceDate { get; set; }

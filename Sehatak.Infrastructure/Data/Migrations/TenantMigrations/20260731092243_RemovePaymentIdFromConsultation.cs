@@ -37,6 +37,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                 onDelete: ReferentialAction.SetNull);
         }
 
+
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {

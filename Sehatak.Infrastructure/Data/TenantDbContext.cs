@@ -41,6 +41,7 @@ namespace Sehatak.Infrastructure.Data
 
         public DbSet<EmailVerificationCode> EmailVerificationCodes => Set<EmailVerificationCode>();
         public DbSet<DoctorBlockedDay> DoctorBlockedDays => Set<DoctorBlockedDay>();
+        public DbSet<ShiftSchedule> shiftSchedules => Set<ShiftSchedule>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -176,15 +177,15 @@ namespace Sehatak.Infrastructure.Data
                 entity.ToTable("staff_shifts");
                 entity.HasKey(e => e.Id);
 
-                entity.Property(e => e.DayOfWeek)
+                entity.Property(e => e.ShiftDate)
                       .HasConversion<string>();
 
                 entity.Property(e => e.ShiftName)
                       .HasMaxLength(100);
 
-                entity.HasOne(e => e.User)
+                entity.HasOne(e => e.Staff)
                       .WithMany(u => u.Shifts)
-                      .HasForeignKey(e => e.staffId)
+                      .HasForeignKey(e => e.UserId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -414,9 +415,9 @@ namespace Sehatak.Infrastructure.Data
                 entity.HasOne(e => e.User)
                       .WithMany()
                       .HasForeignKey(e => e.UserId)
-                      .OnDelete(DeleteBehavior.Restrict); // ما تحذف اليوزر لو عنده audit logs
+                      .OnDelete(DeleteBehavior.Restrict); 
 
-                entity.HasIndex(e => new { e.EntityType, e.EntityId }); // فهرسة للبحث السريع
+                entity.HasIndex(e => new { e.EntityType, e.EntityId }); 
                 entity.HasIndex(e => e.CreatedAt);
             });
 
@@ -508,11 +509,11 @@ namespace Sehatak.Infrastructure.Data
                 entity.Property(e => e.attendanceStatus)
                       .HasConversion<string>();
 
-                entity.HasIndex(e => new { e.StaffId, e.AttendanceDate }).IsUnique();
+                entity.HasIndex(e => new { e.UserId, e.AttendanceDate }).IsUnique();
 
-                entity.HasOne(e => e.User)
+                entity.HasOne(e => e.Staff)
                       .WithMany()
-                      .HasForeignKey(e => e.StaffId)
+                      .HasForeignKey(e => e.UserId)
                       .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(e => e.Shift)
@@ -521,6 +522,13 @@ namespace Sehatak.Infrastructure.Data
                       .OnDelete(DeleteBehavior.Restrict);
 
             });
+
+            modelBuilder.Entity<ShiftSchedule>(entity =>
+            {
+                entity.ToTable("staff_schedule");
+                entity.HasKey(e => e.Id);
+            });
+
 
             //  NOTIFICATION 
             modelBuilder.Entity<Notification>(entity =>

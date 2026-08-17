@@ -13,6 +13,8 @@ namespace Sehatak.Domain.Enums
         Doctor = 3,
         Receptionist = 4,
         LabTechnician= 5,
-        Patient = 6
+        Patient = 6,
+        Nurse = 7,
+        GeneralDoctor = 8
     }
 }

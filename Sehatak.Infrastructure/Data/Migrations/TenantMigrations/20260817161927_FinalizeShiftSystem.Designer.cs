@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sehatak.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using Sehatak.Infrastructure.Data;
 namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 {
     [DbContext(typeof(TenantDbContext))]
-    partial class TenantDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260817161927_FinalizeShiftSystem")]
+    partial class FinalizeShiftSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -901,28 +904,6 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.HasIndex("PatientId");
 
                     b.ToTable("postponed_services", (string)null);
-                });
-
-            modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.ShiftSchedule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("time(6)");
-
-                    b.Property<int>("ShiftName")
-                        .HasColumnType("int");
-
-                    b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("time(6)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("staff_schedule", (string)null);
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.StaffAttendance", b =>

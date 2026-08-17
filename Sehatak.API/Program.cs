@@ -32,6 +32,7 @@ using Sehatak.Application.Interfaces.IFinancialReports;
 using Sehatak.Application.Interfaces.IPatientCenter;
 using Sehatak.Application.Interfaces.IProfileInterface;
 using Sehatak.Application.Interfaces.IProfileInterface.ProfileAdmin;
+using Sehatak.Application.Interfaces.IShiftSchedule;
 using Sehatak.Application.Interfaces.ISubscriptionPaymentService;
 using Sehatak.Application.Interfaces.MedicalCenter;
 using Sehatak.Application.Interfaces.MedicalCenter;
@@ -64,6 +65,7 @@ using Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
 using Sehatak.Infrastructure.Services.PtientCenterService;
 using Sehatak.Infrastructure.Services.SearchDoctorService;
 using Sehatak.Infrastructure.Services.ServicePriceService;
+using Sehatak.Infrastructure.Services.ShiftService;
 using Sehatak.Infrastructure.Services.StaffLogin;
 using Sehatak.Infrastructure.Services.SuperAdminService.Background;
 using Sehatak.Infrastructure.Services.SuperAdminService.CenterService;
@@ -296,6 +298,7 @@ namespace Sehatak.API
                 options.AddPolicy("DoctorOnly", policy => policy.RequireRole("Doctor"));
                 options.AddPolicy("ReceptionistOnly", policy => policy.RequireRole("Receptionist"));
                 options.AddPolicy("PatientOnly", policy => policy.RequireRole("Patient"));
+
                 
             });
 
@@ -349,6 +352,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<GenerateTheoreticalSlots>();
             builder.Services.AddScoped<IDoctorAppointment, DoctorAppointmentService>();
             builder.Services.AddScoped<IConsultation, ConsultationService>();
+            builder.Services.AddScoped<IShiftSchedule, ShiftScheduleService>();
 
 
             var app = builder.Build();
