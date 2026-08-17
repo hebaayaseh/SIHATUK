@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Sehatak.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -8,10 +9,11 @@ using System.Threading.Tasks;
 
 namespace Sehatak.Application.DTOs.StaffSignup
 {
-    public class LabTechnicianRequestDto
+    public class AddStaffRequestDto
     {
-        public string LapTechnicalFirstName { get; set; }
-        public string LapTechnicalLastName { get; set; }
+        public userRole userRole {  get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
 
         [Required]
         [EmailAddress]
@@ -23,7 +25,6 @@ namespace Sehatak.Application.DTOs.StaffSignup
         public string? phoneNumber { get; set; }
         public string address { get; set; }
         public string city { get; set; }
-        public DateTime createdAt { get; set; } = DateTime.UtcNow;
         public IFormFile? ProfileImage { get; set; }
     }
 }
