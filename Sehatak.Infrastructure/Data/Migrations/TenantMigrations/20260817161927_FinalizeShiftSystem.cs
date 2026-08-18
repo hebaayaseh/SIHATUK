@@ -19,6 +19,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
             migrationBuilder.Sql(
                 "ALTER TABLE `staff_shifts` DROP INDEX `IX_staff_shifts_staffId`, ADD INDEX `IX_staff_shifts_UserId` (`UserId`);");
 
+
             migrationBuilder.Sql(
                 "ALTER TABLE `staff_attendance` CHANGE COLUMN `StaffId` `UserId` int(11) NOT NULL;");
 

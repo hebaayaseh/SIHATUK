@@ -12,6 +12,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+
             migrationBuilder.CreateTable(
                 name: "staff_schedule",
                 columns: table => new
