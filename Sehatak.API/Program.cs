@@ -352,7 +352,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<GenerateTheoreticalSlots>();
             builder.Services.AddScoped<IDoctorAppointment, DoctorAppointmentService>();
             builder.Services.AddScoped<IConsultation, ConsultationService>();
-            builder.Services.AddScoped<IShiftSchedule, ShiftScheduleService>();
+            builder.Services.AddScoped<IShift, ShiftScheduleService>();
 
 
             var app = builder.Build();

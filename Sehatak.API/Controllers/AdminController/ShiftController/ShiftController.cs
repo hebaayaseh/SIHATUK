@@ -10,8 +10,8 @@ namespace Sehatak.API.Controllers.AdminController.ShiftController
     [Route("api/AdminOnly")]
     public class ShiftController : ControllerBase
     {
-        private readonly IShiftSchedule shiftSchedule;
-        public ShiftController(IShiftSchedule shiftSchedule)
+        private readonly IShift shiftSchedule;
+        public ShiftController(IShift shiftSchedule)
         {
             this.shiftSchedule = shiftSchedule;
         }
@@ -21,6 +21,15 @@ namespace Sehatak.API.Controllers.AdminController.ShiftController
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await shiftSchedule.AddShiftSchedule(userId, centerId, request);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "AdminOnly")]
+        [HttpPost("add-staff-shift/{centerId}")]
+        public async Task<IActionResult> AddStaffShift(int centerId, [FromBody] AssignShiftToStaffRequestDto request)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await shiftSchedule.AssignShiftToStaffAsync(userId, centerId, request);
             return Ok(result);
         }
     }
