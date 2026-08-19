@@ -13,7 +13,7 @@ namespace Sehatak.Application.DTOs.StaffAttendance
 
         public DateOnly AttendanceDate { get; set; }
 
-        public DateTime CheckInTime { get; set; }
+        public DateTime CheckTime { get; set; }
 
     }
 }

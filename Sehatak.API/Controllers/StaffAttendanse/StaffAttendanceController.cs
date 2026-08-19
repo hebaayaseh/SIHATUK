@@ -25,5 +25,14 @@ namespace Sehatak.API.Controllers.StaffAttendanse
             return Ok(result);
         }
 
+        [Authorize(Policy = "StaffShift")]
+        [HttpPost("chickout-time{centerId}")]
+        public async Task<IActionResult> ChickOutTimeAsync(int centerId, [FromBody] StaffAttendanceCheckInRequestDto request)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await staffAttendance.CheckOutTimeAsync(centerId, userId, request);
+            return Ok(result);
+        }
+
     }
 }

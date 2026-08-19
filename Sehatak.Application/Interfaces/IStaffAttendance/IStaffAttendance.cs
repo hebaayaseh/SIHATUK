@@ -10,6 +10,8 @@ namespace Sehatak.Application.Interfaces.IStaffAttendance
 {
     public interface IStaffAttendance
     {
-        Task<string> CheckInTimeAsync(int centerId, int userId, StaffAttendanceCheckInRequestDto request); 
+        Task<string> CheckInTimeAsync(int centerId, int userId, StaffAttendanceCheckInRequestDto request);
+        Task<string> CheckOutTimeAsync(int centerId, int userId, StaffAttendanceCheckInRequestDto request);
+
     }
 }
