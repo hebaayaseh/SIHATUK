@@ -34,5 +34,14 @@ namespace Sehatak.API.Controllers.StaffAttendanse
             return Ok(result);
         }
 
+        [Authorize(Policy = "StaffShift")]
+        [HttpPost("onleave{centerId}")]
+        public async Task<IActionResult> OnLeaveAsync(int centerId, [FromBody] StaffOnLeaveRequestDto request)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await staffAttendance.OnLeaveAsync(centerId, userId, request);
+            return Ok(result);
+        }
+
     }
 }

@@ -6,11 +6,9 @@ using System.Threading.Tasks;
 
 namespace Sehatak.Application.DTOs.StaffAttendance
 {
-    public class StaffAttendanceCheckInRequestDto
+    public class StaffOnLeaveRequestDto
     {
+
         public DateOnly AttendanceDate { get; set; }
-
-        public DateTime CheckTime { get; set; }
-
     }
 }

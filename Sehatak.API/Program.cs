@@ -296,8 +296,8 @@ namespace Sehatak.API
                 options.AddPolicy("SuperAdminOnly", policy => policy.RequireRole("SuperAdmin"));
                 options.AddPolicy("AdminOrAbove", policy => policy.RequireRole("SuperAdmin", "Admin"));
                 options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-                options.AddPolicy("MedicalStaff", policy => policy.RequireRole("Admin", "Doctor", "Receptionist", "LabTechnician","Nurse","GeneralDocto"));
-                options.AddPolicy("StaffShift", policy => policy.RequireRole("Receptionist", "LabTechnician","Nurse","GeneralDocto"));
+                options.AddPolicy("MedicalStaff", policy => policy.RequireRole("Admin", "Doctor", "Receptionist", "LabTechnician","Nurse","GeneralDoctor"));
+                options.AddPolicy("StaffShift", policy => policy.RequireRole("Receptionist", "LabTechnician","Nurse","GeneralDoctor"));
                 options.AddPolicy("DoctorOnly", policy => policy.RequireRole("Doctor"));
                 options.AddPolicy("ReceptionistOnly", policy => policy.RequireRole("Receptionist"));
                 options.AddPolicy("PatientOnly", policy => policy.RequireRole("Patient"));
