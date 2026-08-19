@@ -24,5 +24,6 @@ namespace Sehatak.Domain.Entities.TenantEntities
         public Patient Patient { get; set; } = null!;
         public Doctor Doctor { get; set; } = null!;
         public Payment? Payment { get; set; }
+
     }
 }

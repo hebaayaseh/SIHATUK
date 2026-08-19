@@ -345,6 +345,11 @@ namespace Sehatak.Infrastructure.Data
                       .WithOne(a => a.MedicalRecord)
                       .HasForeignKey<MedicalRecord>(e => e.AppointmentId)
                       .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.Consultation)
+                      .WithMany()
+                      .HasForeignKey(e => e.ConsultationId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             //  LAB RESULT 

@@ -10,7 +10,7 @@ namespace Sehatak.Domain.Entities.TenantEntities
         public int PatientId { get; set; }
 
         public int DoctorId { get; set; }
-
+        public int? ConsultationId { get; set; }
         public int? AppointmentId { get; set; }
  
 
@@ -25,5 +25,6 @@ namespace Sehatak.Domain.Entities.TenantEntities
         public Patient Patient { get; set; } = null!;
         public Doctor Doctor { get; set; } = null!;
         public Appointment? Appointment { get; set; }
+        public Consultation? Consultation { get; set; }
     }
 }

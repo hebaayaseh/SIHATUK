@@ -11,6 +11,7 @@ using Sehatak.API.Hubs;
 using Sehatak.API.Hubs;
 using Sehatak.API.Middleware;
 using Sehatak.API.Middleware;
+using Sehatak.Application.Interfaces;
 using Sehatak.Application.Interfaces.AddDoctorDailyHours;
 using Sehatak.Application.Interfaces.AddFeatureToCenter;
 using Sehatak.Application.Interfaces.ApointmentInterface;
@@ -62,6 +63,7 @@ using Sehatak.Infrastructure.Services.DoctorAppointmentservice;
 using Sehatak.Infrastructure.Services.EditProfileService;
 using Sehatak.Infrastructure.Services.FinancialReportServices;
 using Sehatak.Infrastructure.Services.GetStaff;
+using Sehatak.Infrastructure.Services.MedicalRecordService;
 using Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
 using Sehatak.Infrastructure.Services.PtientCenterService;
 using Sehatak.Infrastructure.Services.SearchDoctorService;
@@ -357,6 +359,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IConsultation, ConsultationService>();
             builder.Services.AddScoped<IShift, ShiftScheduleService>();
             builder.Services.AddScoped<IStaffAttendance, StaffAttendanceService>();
+            builder.Services.AddScoped<IMedicalRecord, MedicalRecordService>();
 
             var app = builder.Build();
 
