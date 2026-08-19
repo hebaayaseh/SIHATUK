@@ -43,5 +43,13 @@ namespace Sehatak.API.Controllers.StaffAttendanse
             return Ok(result);
         }
 
+        [Authorize(Policy = "AdminOnly")]
+        [HttpPost("absent{centerId}")]
+        public async Task<IActionResult> StaffAbsentAsync(int centerId, [FromBody] StaffAbsentRequestDto request)
+        {
+            var result = await staffAttendance.AbsentStaffAsync(centerId, request);
+            return Ok(result);
+        }
+
     }
 }
