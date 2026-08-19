@@ -37,10 +37,16 @@ namespace Sehatak.Infrastructure.Services.ShiftService
 
             var admin = await db.Users
                 .FirstOrDefaultAsync(a => a.Id == userId
-                                     && a.isActive);
+                                     && a.isActive
+                                     && a.role == userRole.Admin);
 
             if (admin == null)
                 throw new BusinessException("Auth.Forbidden");
+
+            var exists = await db.shiftSchedules
+                 .AnyAsync(s => s.ShiftName == request.ShiftName);
+            if (exists)
+                throw new BusinessException("ShiftSchedule.AlreadyExists");
 
             var shiftScedule = new ShiftSchedule
             { 
@@ -74,10 +80,16 @@ namespace Sehatak.Infrastructure.Services.ShiftService
 
             var admin = await db.Users
                 .FirstOrDefaultAsync(a => a.Id == userId
-                                     && a.isActive);
+                                     && a.isActive
+                                     && a.role == userRole.Admin);
 
             if (admin == null)
                 throw new BusinessException("Auth.Forbidden");
+
+            var scheduleExists = await db.shiftSchedules
+                .AnyAsync(s => s.ShiftName == request.ShiftName);
+            if (!scheduleExists)
+                throw new BusinessException("ShiftSchedule.NotConfigured");
 
             var user = await db.Users
                 .FirstOrDefaultAsync(u => u.Id == request.UserId
@@ -88,6 +100,16 @@ namespace Sehatak.Infrastructure.Services.ShiftService
 
             if (user == null)
                 throw new BusinessException("Staff.NotFound");
+
+
+
+            var alreadyAssigned = await db.StaffShifts
+               .AnyAsync(s => s.UserId == request.UserId &&
+                         s.ShiftDate == request.ShiftDate 
+                         && s.IsActive);
+
+            if (alreadyAssigned)
+                throw new BusinessException("StaffShift.AlreadyAssigned");
 
             var StaffShift = new StaffShift
             {

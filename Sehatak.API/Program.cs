@@ -33,6 +33,7 @@ using Sehatak.Application.Interfaces.IPatientCenter;
 using Sehatak.Application.Interfaces.IProfileInterface;
 using Sehatak.Application.Interfaces.IProfileInterface.ProfileAdmin;
 using Sehatak.Application.Interfaces.IShiftSchedule;
+using Sehatak.Application.Interfaces.IStaffAttendance;
 using Sehatak.Application.Interfaces.ISubscriptionPaymentService;
 using Sehatak.Application.Interfaces.MedicalCenter;
 using Sehatak.Application.Interfaces.MedicalCenter;
@@ -66,6 +67,7 @@ using Sehatak.Infrastructure.Services.PtientCenterService;
 using Sehatak.Infrastructure.Services.SearchDoctorService;
 using Sehatak.Infrastructure.Services.ServicePriceService;
 using Sehatak.Infrastructure.Services.ShiftService;
+using Sehatak.Infrastructure.Services.StaffAttendanceService;
 using Sehatak.Infrastructure.Services.StaffLogin;
 using Sehatak.Infrastructure.Services.SuperAdminService.Background;
 using Sehatak.Infrastructure.Services.SuperAdminService.CenterService;
@@ -295,6 +297,7 @@ namespace Sehatak.API
                 options.AddPolicy("AdminOrAbove", policy => policy.RequireRole("SuperAdmin", "Admin"));
                 options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
                 options.AddPolicy("MedicalStaff", policy => policy.RequireRole("Admin", "Doctor", "Receptionist", "LabTechnician","Nurse","GeneralDocto"));
+                options.AddPolicy("StaffShift", policy => policy.RequireRole("Receptionist", "LabTechnician","Nurse","GeneralDocto"));
                 options.AddPolicy("DoctorOnly", policy => policy.RequireRole("Doctor"));
                 options.AddPolicy("ReceptionistOnly", policy => policy.RequireRole("Receptionist"));
                 options.AddPolicy("PatientOnly", policy => policy.RequireRole("Patient"));
@@ -353,7 +356,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IDoctorAppointment, DoctorAppointmentService>();
             builder.Services.AddScoped<IConsultation, ConsultationService>();
             builder.Services.AddScoped<IShift, ShiftScheduleService>();
-
+            builder.Services.AddScoped<IStaffAttendance, StaffAttendanceService>();
 
             var app = builder.Build();
 

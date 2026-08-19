@@ -129,11 +129,7 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
 
             var user = await db.Users
             .FirstOrDefaultAsync(u => u.Id == userId
-                             && u.isActive
-                             && (u.role == userRole.Admin
-                              || u.role == userRole.Receptionist
-                              || u.role == userRole.LabTechnician 
-                              || u.role == userRole.Doctor));
+                             && u.isActive);
             if (user == null)
                 throw new BusinessException("Auth.Forbidden");
 
@@ -230,11 +226,7 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
 
             var user = await db.Users
             .FirstOrDefaultAsync(u => u.Id == userId
-                             && u.isActive
-                             && (u.role == userRole.Admin
-                              || u.role == userRole.Receptionist
-                              || u.role == userRole.LabTechnician
-                              || u.role == userRole.Doctor));
+                             && u.isActive);
             if (user == null)
                 throw new BusinessException("Auth.Forbidden");
 
@@ -276,11 +268,7 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
 
             var user = await db.Users
             .FirstOrDefaultAsync(u => u.Id == userId
-                             && u.isActive
-                             && (u.role == userRole.Admin
-                              || u.role == userRole.Receptionist
-                              || u.role == userRole.LabTechnician
-                              || u.role == userRole.Doctor));
+                             && u.isActive);
             if (user == null)
                 throw new BusinessException("Auth.Forbidden");
 
@@ -316,11 +304,7 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
 
             var user = await db.Users
                 .FirstOrDefaultAsync(u => u.Id == userId
-                                 && u.isActive
-                                 && (u.role == userRole.Admin
-                                  || u.role == userRole.Receptionist
-                                  || u.role == userRole.LabTechnician
-                                  || u.role == userRole.Doctor));
+                                 && u.isActive);
             if (user == null)
                 throw new BusinessException("Auth.Forbidden");
 
@@ -361,11 +345,7 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
 
             var user = await db.Users
                 .FirstOrDefaultAsync(u => u.Id == userId
-                                 && u.isActive
-                                 && (u.role == userRole.Admin
-                                  || u.role == userRole.Receptionist
-                                  || u.role == userRole.LabTechnician
-                                  || u.role == userRole.Doctor));
+                                 && u.isActive);
             if (user == null)
                 throw new BusinessException("Auth.Forbidden");
 

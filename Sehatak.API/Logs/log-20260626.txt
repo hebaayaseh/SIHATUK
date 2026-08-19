@@ -1,7 +1,0 @@
-2026-06-26 23:54:21 [ERR] Failed executing DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
-CREATE TABLE `platform_features` (
-    `Id` int NOT NULL AUTO_INCREMENT,
-    `NameOfFeature` varchar(100) CHARACTER SET utf8mb4 NOT NULL,
-    `Description` varchar(300) CHARACTER SET utf8mb4 NULL,
-    CONSTRAINT `PK_platform_features` PRIMARY KEY (`Id`)
-) CHARACTER SET=utf8mb4; {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}

@@ -5,11 +5,6 @@ using Sehatak.Application.Interfaces.GetSttafInterFace;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.GetStaff
 {
@@ -42,9 +37,11 @@ namespace Sehatak.Infrastructure.Services.GetStaff
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var blockedDates = await db.DoctorBlockedDays
-                        .Where(d => d.doctorId == doctor.Id && d.isBlocked && d.date >= today)
-                        .FirstOrDefaultAsync();
-
+                        .Where(d => d.doctorId == doctor.Id 
+                               && d.isBlocked 
+                               && d.date >= today)
+                        .Select(d => d.date)
+                        .ToListAsync();
 
             return new DoctorSummaryDto
             {
@@ -54,7 +51,7 @@ namespace Sehatak.Infrastructure.Services.GetStaff
                 Bio = doctor.Bio,
                 Specialization = doctor.Specialization,
                 ProfileImageUrl = doctor.user.ProfileImageUrl,
-                BlockedDates = blockedDates!=null? blockedDates.date : null,
+                BlockedDates = blockedDates.Cast<DateOnly?>().ToList(),
                 doctorSchedule = doctor.doctorschedules
                     .Where(s => s.IsActive)
                     .Select(d => new SummatySchedualDto
@@ -80,6 +77,7 @@ namespace Sehatak.Infrastructure.Services.GetStaff
             using var db = contextFactory.CreateForCenter(centerId);
 
             return await db.Departments
+                .Where(p => p.Doctors.Any(a => a.user.isActive))
                 .Select(p => new GetDoctorsResponseDto
                 {
                     DepartmentId = p.Id,
@@ -102,10 +100,11 @@ namespace Sehatak.Infrastructure.Services.GetStaff
 
         }
 
-        public async Task<GetLapTechnicalDto> GetLapTechnicalAsync(int centerId, int userId)
+        public async Task<GetStaffResponseDto> GetStaffAsync(int centerId, int userId)
         {
             var center = await SharedDbContext.MedicalCenters
-              .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
+              .FirstOrDefaultAsync(c => c.Id == centerId 
+                                   && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
                 throw new BusinessException("Center.NotFound");
@@ -113,123 +112,64 @@ namespace Sehatak.Infrastructure.Services.GetStaff
             using var db = contextFactory.CreateForCenter(centerId);
 
             var user = await db.Users
-               .FirstOrDefaultAsync(u => u.Id == userId && u.isActive && u.role == userRole.LabTechnician);
+               .FirstOrDefaultAsync(u => u.Id == userId 
+                                    && u.isActive 
+                                    && (u.role == userRole.LabTechnician
+                                    || u.role == userRole.GeneralDoctor
+                                    || u.role == userRole.Nurse
+                                    || u.role == userRole.Receptionist));
+
             if (user == null)
                 throw new BusinessException("User.NotFound");
 
 
-            var attendances = await db.StaffAttendances
-              .Include(a => a.Shift)
+            var shift = await db.StaffShifts
               .Where(a => a.UserId == userId)
-              .OrderByDescending(a => a.AttendanceDate)
               .ToListAsync();
 
-            if (attendances == null)
-            {
-                throw new BusinessException("User.NotFound");
-            }
+            var attendence = await db.StaffAttendances
+                .Where(a => a.UserId == userId)
+                .ToListAsync();
 
-            return new GetLapTechnicalDto
+            return new GetStaffResponseDto
             {
-                LapTechnicalId = user.Id,
-                LapTechnicalName = $"{user.firstName} {user.lastName}",
-                LabTechnicalShift = attendances.Select(a => new SummaryShiftDto
+                UserId = user.Id,
+                UserName = $"{user.firstName} {user.lastName}",
+                StaffShift = shift.Select(a => new SummaryShiftDto
                 {
-                    ShiftName = a.Shift.ShiftName,
-                    ShistDate = a.Shift.ShiftDate,
-                    CheckInTime = a.CheckInTime,
-                    CheckOutTime = a.CheckOutTime,
-                    attendanceStatus = a.attendanceStatus,
-                    IsActive = user.isActive,
-                    AttendanceDate = a.AttendanceDate,
+                    ShiftName = a.ShiftName,
+                    ShistDate = a.ShiftDate,
                 }).ToList()
 
             };
         }
 
-        public async Task<List<GetLapTechnicalDto>> GetLapTechnicalsAsync(int centerId)
+        public async Task<List<GetStaffResponseDto>> GetStaffsAsync(int centerId)
         {
             var center = await SharedDbContext.MedicalCenters
-                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
+                .FirstOrDefaultAsync(c => c.Id == centerId 
+                                     && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
+            
 
             return await db.Users
-                .Where(u => u.role == userRole.LabTechnician && u.isActive)
-                .Select(r => new GetLapTechnicalDto
+                .Where(u => (u.role == userRole.LabTechnician
+                             || u.role == userRole.GeneralDoctor
+                             || u.role == userRole.Nurse
+                             || u.role == userRole.Receptionist)
+                             && u.isActive)
+                .Select(r => new GetStaffResponseDto
                 {
-
-                    LapTechnicalId = r.Id,
-                    LapTechnicalName = r.firstName + " " + r.lastName
+                    UserId = r.Id,
+                    UserName = r.firstName + " " + r.lastName
                     
                 }).ToListAsync();
         }
 
-        public async Task<GetReceptionistResponseDto> GetReceptionistAsync(int centerId, int userId)
-        {
-            var center = await SharedDbContext.MedicalCenters
-              .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
-
-            if (center == null)
-                throw new BusinessException("Center.NotFound");
-
-            using var db = contextFactory.CreateForCenter(centerId);
-
-            var user = await db.Users
-               .FirstOrDefaultAsync(u => u.Id == userId && u.isActive && u.role == userRole.Receptionist);
-            if (user == null)
-                throw new BusinessException("User.NotFound");
-
-
-            var attendances = await db.StaffAttendances
-              .Include(a => a.Shift)
-              .Where(a => a.UserId == userId)
-              .OrderByDescending(a => a.AttendanceDate)
-              .ToListAsync();
-
-            if (attendances == null)
-            {
-                throw new BusinessException("User.NotFound");
-            }
-
-            return new GetReceptionistResponseDto
-            {
-                ReceptionistId = user.Id,
-                ReceptionistName = $"{user.firstName} {user.lastName}",
-                ReceptionistShift = attendances.Select(a => new SummaryShiftDto
-                {
-                    ShiftName =a.Shift.ShiftName,
-                    ShistDate = a.Shift.ShiftDate,
-                    CheckInTime = a.CheckInTime,
-                    CheckOutTime = a.CheckOutTime,
-                    attendanceStatus = a.attendanceStatus,
-                    IsActive = user.isActive,
-                    AttendanceDate = a.AttendanceDate,
-                }).ToList()
-
-            };
-        }
-
-        public async Task<List<GetReceptionistResponseDto>> GetReceptionistsAsync(int centerId)
-        {
-            var center = await SharedDbContext.MedicalCenters
-               .FindAsync(centerId);
-
-            if (center == null)
-                throw new BusinessException("Center.NotFound");
-
-            using var db = contextFactory.CreateForCenter(centerId);
-
-            return await db.Users
-                .Where(u => u.role == userRole.Receptionist && u.isActive)
-                .Select(r=>new GetReceptionistResponseDto { 
-                
-                    ReceptionistId = r.Id,
-                    ReceptionistName = r.firstName+" "+r.lastName
-                }) .ToListAsync();
-        }
+        
     }
 }

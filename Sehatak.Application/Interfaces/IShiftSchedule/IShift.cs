@@ -10,6 +10,6 @@ namespace Sehatak.Application.Interfaces.IShiftSchedule
     public interface IShift
     {
         Task<ShiftScheduleResponse> AddShiftSchedule(int userId,int centerId, ShiftScheduleRequest request);
-        Task<string> AssignShiftToStaffAsync(int userId, int centerId, AssignShiftToStaffRequestDto request);
+        Task<string> AssignShiftToStaffAsync(int userId , int centerId , AssignShiftToStaffRequestDto request);
     }
 }
