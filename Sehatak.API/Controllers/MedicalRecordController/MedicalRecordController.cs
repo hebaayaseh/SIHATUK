@@ -24,5 +24,14 @@ namespace Sehatak.API.Controllers.MedicalRecordController
             var result = await medical.AddMedicalRecordAsync(centerId, userId, request);
             return Ok(result);
         }
+
+        [Authorize("DoctorOnly")]
+        [HttpPost("update-medicalrecord")]
+        public async Task<IActionResult> UpdateMedicakRecor(int centerId, [FromBody] UpdateMedicalRecordRequestDto request)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await medical.EditMedicalRecordAsync(centerId, userId, request);
+            return Ok(result);
+        }
     }
 }

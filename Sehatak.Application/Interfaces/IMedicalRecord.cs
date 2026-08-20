@@ -10,5 +10,6 @@ namespace Sehatak.Application.Interfaces
     public interface IMedicalRecord
     {
         Task<MedicalRecordResponseDto> AddMedicalRecordAsync(int centerId,int userId, MedicalReqordRequestDto request);
+        Task<string> EditMedicalRecordAsync(int centerId , int userId, UpdateMedicalRecordRequestDto request);
     }
 }
