@@ -10,7 +10,8 @@ namespace Sehatak.Domain.Enums
     {
         ConsultationCost = 1,  
         LabTest = 2,          
-        MedicalSupply = 3,    
-        Other = 4             
+        MedicalSupply = 3, 
+        Appointment = 4,
+        Other = 5           
     }
 }

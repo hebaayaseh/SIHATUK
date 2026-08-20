@@ -17,5 +17,9 @@ namespace Sehatak.Application.DTOs.MedicalRecordDto
         public string Prescription { get; set; }
         public string Notes { get; set; }
         public string? Diagnosis { get; set; }
+
+        public int? ServicePriceId { get; set; }
+        public int? ServicePriceQuantity { get; set; } = 1;
+        public decimal? ConsultationCost { get; set; }
     }
 }

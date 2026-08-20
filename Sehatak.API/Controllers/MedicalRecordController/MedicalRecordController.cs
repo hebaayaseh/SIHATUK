@@ -21,7 +21,7 @@ namespace Sehatak.API.Controllers.MedicalRecordController
         public async Task<IActionResult> AddMedicakRecor(int centerId,[FromBody]MedicalReqordRequestDto request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await medical.AddMedicalRecordaSYNC(centerId, userId, request);
+            var result = await medical.AddMedicalRecordAsync(centerId, userId, request);
             return Ok(result);
         }
     }

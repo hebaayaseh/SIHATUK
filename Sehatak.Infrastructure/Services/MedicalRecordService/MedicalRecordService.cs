@@ -24,7 +24,7 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
             this.contextFactory = contextFactory;
         }
 
-        public async Task<MedicalRecordResponseDto> AddMedicalRecordaSYNC(int centerId,int userId, MedicalReqordRequestDto request)
+        public async Task<MedicalRecordResponseDto> AddMedicalRecordAsync(int centerId,int userId, MedicalReqordRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -53,9 +53,49 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
             {
                 var appointment = await db.Appointments
                     .FirstOrDefaultAsync(d => d.Id == request.AppointmentId
-                                         && d.doctorId == doctor.Id);
+                                         && d.doctorId == doctor.Id
+                                         && (d.appointmentStatus == AppointmentStatus.InProgress
+                                         || d.appointmentStatus == AppointmentStatus.Confirmed));
                 if (appointment == null)
                     throw new BusinessException("Appointment.NotFound");
+
+                if(request.ConsultationCost!=null)
+                {
+                    appointment.ConsultationCost = (decimal)request.ConsultationCost; 
+                }
+                if(request.ServicePriceId!=null)
+                {
+                    var service = await db.ServicePrices
+                        .FirstOrDefaultAsync(s => s.Id == request.ServicePriceId
+                                             && s.IsActive);
+                    if (service == null)
+                        throw new BusinessException("ServicePrice.NotFound");
+
+                    var servicePrice = new AppointmentItem 
+                    {
+                        AppointmentId = appointment.Id,
+                        Quantity = (int)(request.ServicePriceQuantity!=null ? request.ServicePriceQuantity:1),
+                        ServicePriceId = (int)request.ServicePriceId,
+                        UnitPrice = service.Price,
+                        TotalPrice = service.Price * (request.ServicePriceQuantity != null ? request.ServicePriceQuantity.Value : 1),
+                        
+                        
+                    };
+                    await db.AppointmentItems.AddAsync(servicePrice);
+                    appointment.BillAmount = (service.Price * request.ServicePriceQuantity) + request.ConsultationCost;
+                    appointment.ItemsTotal = (request.ServicePriceQuantity != null ? request.ServicePriceQuantity.Value : 1);
+
+                }
+                if (request.ServicePriceId == null)
+                {
+                    var costAppointment = await db.ServicePrices
+                        .FirstOrDefaultAsync(s => s.Type == ServiceType.Appointment);
+                    if (costAppointment == null)
+                        throw new BusinessException("ServicePrice.NotFound");
+
+                    appointment.BillAmount = costAppointment.Price;
+                }
+                
             }
             else
             {
@@ -66,6 +106,8 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                  if (consultation == null)
                     throw new BusinessException("Consultation.NotFound");
             }
+
+            
             var record = new MedicalRecord
             {
                 PatientId = request.PatientId,
