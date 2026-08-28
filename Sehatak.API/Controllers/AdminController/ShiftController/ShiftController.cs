@@ -58,9 +58,17 @@ namespace Sehatak.API.Controllers.AdminController.ShiftController
 
         [Authorize(Policy = "AdminOnly")]
         [HttpGet("get-staffs-schedule/{centerId}")]
-        public async Task<IActionResult> DeleteShift(int centerId, ShiftGroup shift, int? year = null, int? month = null)
+        public async Task<IActionResult> GetStaffsWithShift(int centerId, ShiftGroup shift, int? year = null, int? month = null)
         {
             var result = await shiftSchedule.GetStaffsWithShiftAsync(centerId, shift,year,month);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "AdminOnly")]
+        [HttpGet("get-all-staffs/{centerId}")]
+        public async Task<IActionResult> GetAllSTaffs(int centerId)
+        {
+            var result = await shiftSchedule.GetAllStaffAsync(centerId);
             return Ok(result);
         }
 

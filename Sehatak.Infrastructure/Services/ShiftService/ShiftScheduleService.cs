@@ -160,6 +160,35 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             return "تم الحذف بنجاح.";
         }
 
+        public async Task<List<StaffDirectoryResponseDto>> GetAllStaffAsync(int centerId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var staffs = await db.Users
+                .Where(u => u.role == userRole.GeneralDoctor
+                       || u.role == userRole.Nurse
+                       || u.role == userRole.LabTechnician
+                       || u.role == userRole.Receptionist)
+                .Select(u => new StaffDirectoryResponseDto
+                {
+                    Id = u.Id,
+                    Name = $"{u.firstName} {u.lastName}",
+                    Email = u.email,
+                    PhoneNumber = u.phoneNumber,
+                    role = u.role.ToString(),
+                    isActive = u.isActive
+                }).ToListAsync();
+
+            return staffs;
+        }
+
         public async Task<GetShiftsScheduleResponseDto> GetShiftsSchedulesAsync(int centerId)
         {
             var center = await sharedDbContext.MedicalCenters
