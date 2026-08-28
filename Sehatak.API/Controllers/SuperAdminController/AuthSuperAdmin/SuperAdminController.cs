@@ -22,7 +22,6 @@ namespace Sehatak.API.Controllers.SuperAdminController.AuthSuperAdmin
             var result = await superAdminAuthService.RegisterAsync(superAdminDto);
             return Ok(result);
         }
-        [AllowAnonymous]
         [HttpPost("SuperAdmin_Login")]
         public async Task<IActionResult> SuperAdminLogin(SuperAdminLoginRequestDto superAdminDto)
         {

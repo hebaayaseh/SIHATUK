@@ -14,7 +14,6 @@ namespace Sehatak.API.Controllers.StaffLogin
         {
             this.staffLogin = staffLogin;
         }
-        [AllowAnonymous]
         [HttpPost("staff-login/{centerId}")]
         public async Task<IActionResult> MedicalStaffLogin(int centerId,StaffLoginRequestDto request)
         {

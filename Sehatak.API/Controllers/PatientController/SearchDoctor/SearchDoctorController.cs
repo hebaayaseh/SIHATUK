@@ -14,7 +14,6 @@ namespace Sehatak.API.Controllers.PatientController.SearchDoctor
         {
             this.searchDoctor = searchDoctor;
         }
-        [AllowAnonymous]
         [HttpPost("search-doctor-name/{centerId}")]
         public async Task<IActionResult> SearchDoctor(int centerId , [FromBody] SearchDoctorRequest request)
         {

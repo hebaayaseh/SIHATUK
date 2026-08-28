@@ -15,6 +15,6 @@ namespace Sehatak.Application.Interfaces.IShiftSchedule
         Task<GetShiftsScheduleResponseDto> GetShiftsSchedulesAsync(int centerId);
         Task<ShiftScheduleResponse> UpdateShiftScheduleAsync(int centerId, UpdateShiftSchedualRequestDto request);
         Task<string> DeleteShiftSchedualeAsync(int centerId, int shiftId);
-        Task<List<GetStaffsShitfResponseDto>> GetStaffsAsync(int centerId, ShiftGroup shift);
+        Task<List<GetStaffsShitfResponseDto>> GetStaffsAsync(int centerId, ShiftGroup shift, int? year = null, int? month = null);
     }
 }

@@ -65,7 +65,7 @@ namespace Sehatak.Infrastructure.Services.SearchDoctorService
                 Bio = a.Bio,
                 doctorSchedule = a.doctorschedules
                 .Where(s => s.IsActive)
-                .Select(d => new SummatySchedualDto
+                .Select(d => new SummarySchedualDto
                 {
                     Id = d.Id,
                     StartTime = d.StartTime,

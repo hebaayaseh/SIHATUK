@@ -10,9 +10,8 @@ namespace Sehatak.Application.Interfaces.GetSttafInterFace
     public interface IGetStaff
     {
         Task<List<GetDoctorsResponseDto>> GetDoctorsAsync(int centerId);
-        Task<List<GetStaffResponseDto>> GetStaffsAsync(int centerId);
-        Task<DoctorSummaryDto> GetDoctorAsync(int centerId, int doctorId);
-        Task<GetStaffResponseDto> GetStaffAsync(int centerId, int userId);
+        Task<DoctorSummaryDto> GetDoctorAsync(int centerId, int doctorId,int? year = null, int? month = null);
+        
         
     }
 }

@@ -23,9 +23,9 @@ namespace Sehatak.API.Controllers.AdminController.GetStaffcontroller
 
         [Authorize("AdminOnly")]
         [HttpGet("get-doctor/{centerId}/{doctorId}")]
-        public async Task<IActionResult> GetDoctor(int centerId,int doctorId)
+        public async Task<IActionResult> GetDoctor(int centerId,int doctorId,int? year = null, int? month = null)
         {
-            var result = await getStaff.GetDoctorAsync(centerId,doctorId);
+            var result = await getStaff.GetDoctorAsync(centerId,doctorId,year,month);
             return Ok(result);
         }
 

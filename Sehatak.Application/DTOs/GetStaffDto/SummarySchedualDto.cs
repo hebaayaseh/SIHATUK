@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Sehatak.Application.DTOs.GetStaffDto
 {
-    public class SummatySchedualDto
+    public class SummarySchedualDto
     {
         public int Id { get; set; }
         public DayOfWeek DayOfWeek { get; set; }

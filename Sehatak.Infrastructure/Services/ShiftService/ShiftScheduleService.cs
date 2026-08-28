@@ -135,7 +135,9 @@ namespace Sehatak.Infrastructure.Services.ShiftService
                 throw new BusinessException("Shift.NotFound");
 
             var staffs = await db.StaffShifts
-                .Where(s => s.ShiftName == shift.ShiftName)
+                .Where(s => s.ShiftName == shift.ShiftName
+                      && s.IsActive
+                      && s.ShiftDate >= DateOnly.FromDateTime(DateTime.UtcNow))
                 .ToListAsync();
 
             db.shiftSchedules.Remove(shift);
@@ -184,7 +186,7 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             };
         }
 
-        public async Task<List<GetStaffsShitfResponseDto>> GetStaffsAsync(int centerId, ShiftGroup shift)
+        public async Task<List<GetStaffsShitfResponseDto>> GetStaffsAsync(int centerId, ShiftGroup shift, int? year = null, int? month = null)
         {
             var center = await sharedDbContext.MedicalCenters
                .FirstOrDefaultAsync(c => c.Id == centerId
@@ -193,27 +195,52 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
+            var targetYear = year ?? DateTime.UtcNow.Year;
+            var targetMonth = month ?? DateTime.UtcNow.Month;
+
+            var startOfMonth = new DateOnly(targetYear, targetMonth, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+
             using var db = contextFactory.CreateForCenter(centerId);
 
-            var staffs = await db.StaffAttendances
-                .Include(s=>s.Shift)
-                .Where(s => s.Shift.ShiftName == shift
-                       && s.Shift.ShiftDate <= DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)))
-                .Select(n => new GetStaffsShitfResponseDto
-                {
-                    userId = n.UserId,
-                    email = n.Staff.email,
-                    phoneNumber = n.Staff.phoneNumber,
-                    name = $"{n.Staff.firstName} {n.Staff.lastName}",
-                    role = n.Staff.role.ToString(),
-                    isActive = n.Shift.IsActive,
-                    status = n.attendanceStatus,
-                    address = n.Staff.address,
-                    city = n.Staff.city,
-                    userIsActive = n.Staff.isActive
-                }).ToListAsync();
+            var shifts = await db.StaffShifts
+                .Include(s => s.Staff)
+                .Where(s => s.ShiftName == shift
+                       && s.ShiftDate >= startOfMonth
+                       && s.ShiftDate <= endOfMonth)
+                .ToListAsync();
 
-            return staffs;
+            var shiftIds = shifts.Select(i => i.Id).ToList();
+
+            var attendances = await db.StaffAttendances
+                .Where(a=> shiftIds.Contains(a.StaffShiftId))
+                .ToListAsync();
+
+            var result = shifts
+                .GroupBy(u => u.UserId)
+                .Select(g =>
+                {
+                    var staff = g.First().Staff;
+                    return new GetStaffsShitfResponseDto
+                    {
+                        userId = staff.Id,
+                        name = $"{staff.firstName} {staff.lastName}",
+                        email = staff.email,
+                        phoneNumber = staff.phoneNumber,
+                        role = staff.role.ToString(),
+                        userIsActive = staff.isActive,
+                        Days = g.Select(s => new DailyAttendanceDto
+                        {
+                            Date = s.ShiftDate,
+                            Status = attendances.FirstOrDefault(a => a.StaffShiftId == s.Id)?.attendanceStatus,
+                            isActive = s.IsActive,
+                        })
+                        .OrderBy(d => d.Date)
+                        .ToList()
+                    };
+                }).ToList();
+
+            return result;
         }
 
         public async Task<ShiftScheduleResponse> UpdateShiftScheduleAsync(int centerId, UpdateShiftSchedualRequestDto request)

@@ -14,11 +14,8 @@ namespace Sehatak.Application.DTOs.ShiftDto
         public string email { get; set; }
         public string? phoneNumber { get; set; }
         public string name { get; set; }
-        public bool isActive { get; set; }
         public bool userIsActive {  get; set; }
-        public string address { get; set; }
-        public string city { get; set; }
-        public AttendanceStatus status {  get; set; }
+        public List<DailyAttendanceDto> Days { get; set; } = new();
 
     }
 }
