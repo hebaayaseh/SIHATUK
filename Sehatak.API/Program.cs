@@ -334,7 +334,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IRemoveStaff, RemoveStaffFromCenter>();
             builder.Services.AddScoped<IListOfPlan, ListOfPlanService>();
             builder.Services.AddScoped<IGetpatientCenter, GetPatientCenterService>();
-            builder.Services.AddScoped<IGetStaff, GetStaffService>();
+            builder.Services.AddScoped<IGetStaff, GetDoctorService>();
             builder.Services.AddScoped<ISignup, AddStaffService>();
             builder.Services.AddScoped<IprofileStaff, EditStaffService>();
             builder.Services.AddScoped<IDoctorDailyHours, DoctorDailyHoursService>();

@@ -9,11 +9,11 @@ using Sehatak.Infrastructure.Data;
 
 namespace Sehatak.Infrastructure.Services.GetStaff
 {
-    public class GetStaffService : IGetStaff
+    public class GetDoctorService : IGetStaff
     {
         private readonly SharedDbContext SharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public GetStaffService(TenantDbContextFactory contextFactory,SharedDbContext sharedDbContext)
+        public GetDoctorService(TenantDbContextFactory contextFactory,SharedDbContext sharedDbContext)
         {
             this.SharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;

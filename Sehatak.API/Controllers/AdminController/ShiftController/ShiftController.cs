@@ -60,7 +60,7 @@ namespace Sehatak.API.Controllers.AdminController.ShiftController
         [HttpGet("get-staffs-schedule/{centerId}")]
         public async Task<IActionResult> DeleteShift(int centerId, ShiftGroup shift, int? year = null, int? month = null)
         {
-            var result = await shiftSchedule.GetStaffsAsync(centerId, shift,year,month);
+            var result = await shiftSchedule.GetStaffsWithShiftAsync(centerId, shift,year,month);
             return Ok(result);
         }
 

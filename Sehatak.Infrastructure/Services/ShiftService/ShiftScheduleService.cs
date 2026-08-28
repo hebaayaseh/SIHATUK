@@ -186,7 +186,7 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             };
         }
 
-        public async Task<List<GetStaffsShitfResponseDto>> GetStaffsAsync(int centerId, ShiftGroup shift, int? year = null, int? month = null)
+        public async Task<List<GetStaffsShitfResponseDto>> GetStaffsWithShiftAsync(int centerId, ShiftGroup shift, int? year = null, int? month = null)
         {
             var center = await sharedDbContext.MedicalCenters
                .FirstOrDefaultAsync(c => c.Id == centerId
