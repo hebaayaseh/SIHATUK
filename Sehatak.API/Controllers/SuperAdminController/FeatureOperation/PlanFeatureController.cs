@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.AssignFeatursToPlan;
 namespace Sehatak.API.Controllers.SuperAdminController.FeatureOperation
 {
     [ApiController]
-    [Route("api/AdminOrAbove")]
+    [Route("api/[Controller]")]
     public class PlanFeatureController : ControllerBase
     {
         private readonly IPlanFeatureService planFeatureService;

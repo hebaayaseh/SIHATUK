@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.MedicalRecordDto;
-using Sehatak.Application.Interfaces;
+using Sehatak.Application.Interfaces.IMedicalRecord;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
@@ -249,7 +249,7 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                 record.Notes = request.Notes;
 
             if (request.Diagnosis != null)
-                record.Diagnosis = record.Diagnosis;
+                record.Diagnosis = request.Diagnosis;
 
             record.UpdatedAt = DateTime.UtcNow;
 

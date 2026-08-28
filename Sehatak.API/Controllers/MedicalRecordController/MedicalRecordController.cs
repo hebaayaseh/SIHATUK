@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sehatak.Application.DTOs.MedicalRecordDto;
-using Sehatak.Application.Interfaces;
+using Sehatak.Application.Interfaces.IMedicalRecord;
 using System.Security.Claims;
 
 namespace Sehatak.API.Controllers.MedicalRecordController
 {
     [ApiController]
-    [Route("api/DoctorOnly")]
+    [Route("api/[Controller]")]
     public class MedicalRecordController :ControllerBase
     {
         private readonly IMedicalRecord medical;
@@ -17,7 +17,7 @@ namespace Sehatak.API.Controllers.MedicalRecordController
         }
 
         [Authorize("DoctorOnly")]
-        [HttpPost("add-medicalrecord")]
+        [HttpPost("add-medicalrecord/{centerId}")]
         public async Task<IActionResult> AddMedicakRecor(int centerId,[FromBody]MedicalReqordRequestDto request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -26,7 +26,7 @@ namespace Sehatak.API.Controllers.MedicalRecordController
         }
 
         [Authorize("DoctorOnly")]
-        [HttpPost("update-medicalrecord")]
+        [HttpPost("update-medicalrecord/{centerId}")]
         public async Task<IActionResult> UpdateMedicakRecor(int centerId, [FromBody] UpdateMedicalRecordRequestDto request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);

@@ -5,7 +5,7 @@ using Sehatak.Application.Interfaces.IAuth;
 namespace Sehatak.API.Controllers.tokenController
 {
     [ApiController]
-    [Route("api/auth")]
+    [Route("api/[Controller]")]
     public class TokenController : ControllerBase
     {
         private readonly ITokenService _tokenService;

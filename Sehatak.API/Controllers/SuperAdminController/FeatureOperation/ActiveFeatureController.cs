@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.Features;
 namespace Sehatak.API.Controllers.SuperAdminController.FeatureOperation
 {
     [ApiController]
-    [Route("api/SuperAdminOnly")]
+    [Route("api/[Controller]")]
     public class ActiveFeatureController : ControllerBase
     {
         private readonly IActiveFeature activeFeatureService;

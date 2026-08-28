@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.SuperAdminController1.FinancialReportAdmin
 {
     [ApiController]
-    [Route("api/AdminOnly")]
+    [Route("api/[Controller]")]
     public class FinancialReportController : ControllerBase
     {
         private readonly IFinancialReportAdmin financialReport;
@@ -18,7 +18,7 @@ namespace Sehatak.API.Controllers.SuperAdminController1.FinancialReportAdmin
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpGet("/{centerId}")]
+        [HttpGet("{centerId}")]
         public async Task<IActionResult> FinancialReport(int centerId, [FromQuery] int year, [FromQuery] int? month)
         {
             int userId = int.Parse(

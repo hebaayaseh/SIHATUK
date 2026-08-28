@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.MedicalCenter;
 namespace Sehatak.API.Controllers.SuperAdminController.Centers
 {
     [ApiController]
-    [Route("api/AdminOrAbove")]
+    [Route("api/[Controller]")]
     public class SpacificCenterController : ControllerBase
     {
         private readonly ISpasificCenter centerService;

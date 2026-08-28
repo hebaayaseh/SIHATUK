@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.StaffLogin;
 namespace Sehatak.API.Controllers.StaffLogin
 {
     [ApiController]
-    [Route("api/auth")]
+    [Route("api/[Controller]")]
     public class StaffLoginController : ControllerBase
     {
         private readonly IStaffLogin staffLogin;
@@ -14,7 +14,7 @@ namespace Sehatak.API.Controllers.StaffLogin
         {
             this.staffLogin = staffLogin;
         }
-
+        [AllowAnonymous]
         [HttpPost("staff-login/{centerId}")]
         public async Task<IActionResult> MedicalStaffLogin(int centerId,StaffLoginRequestDto request)
         {

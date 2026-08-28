@@ -7,7 +7,7 @@ using Sehatak.Application.Interfaces.IProfileInterface;
 namespace Sehatak.API.Controllers.PatientController.EditProfile
 {
     [ApiController]
-    [Route("api/PatientOnly")]
+    [Route("api/[Controller]")]
     public class EditProfileController : ControllerBase
     {
         private readonly IProfilePatient profilePatient;

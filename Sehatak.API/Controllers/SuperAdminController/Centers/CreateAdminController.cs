@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.MedicalCenter;
 namespace Sehatak.API.Controllers.SuperAdminController.Centers
 {
     [ApiController]
-    [Route("api/SuperAdminOnly")]
+    [Route("api/[Controller]")]
     public class CreateAdminController : ControllerBase 
     {
         private readonly ICreateAdminService createAdminService;
@@ -16,10 +16,10 @@ namespace Sehatak.API.Controllers.SuperAdminController.Centers
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPost("create-admin{centarId}")]
-        public async Task<IActionResult> CreateAdminToCenter(int centarId ,[FromBody] CreateAdminRequestDto request)
+        [HttpPost("create-admin/{centerId}")]
+        public async Task<IActionResult> CreateAdminToCenter(int centerId ,[FromBody] CreateAdminRequestDto request)
         {
-            var result = await createAdminService.CreateAdminAsync(centarId, request);
+            var result = await createAdminService.CreateAdminAsync(centerId, request);
             return Ok(result);
         }
     }

@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.AdminController.AddStaffController
 {
     [ApiController]
-    [Route("api/AdminOnly")]
+    [Route("api/[Controller]")]
     public class AddStaffController : ControllerBase
     {
         private readonly ISignup signup;

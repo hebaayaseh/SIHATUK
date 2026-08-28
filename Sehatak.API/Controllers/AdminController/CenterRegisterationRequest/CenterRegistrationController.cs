@@ -7,7 +7,7 @@ using Sehatak.Application.Interfaces.CenterRegistrationRequest;
 namespace Sehatak.API.Controllers.CenterRegistration
 {
     [ApiController]
-    [Route("api/SuperAdminOnly")]
+    [Route("api/[Controller]")]
     public class CenterRegistrationController : ControllerBase
     {
         private readonly ICenterRegistration _registrationService;

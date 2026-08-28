@@ -181,7 +181,8 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 Type = NotificationType.Appointment,
                 IsRead = false,
                 CreatedAt=DateTime.UtcNow,
-                Message = $"تم الموافقة على الاستشارة عند الطبيب {doctor.user.firstName} {doctor.user.lastName} في الموعد {ScheduledAt}"
+                Message = $"تم الموافقة على الاستشارة عند الطبيب {doctor.user.firstName} {doctor.user.lastName} في الموعد {ScheduledAt} " +
+                $"الاستشارة تتم هنا : {payment.Consultation.VideoLink}"
             });
 
             await db.SaveChangesAsync();

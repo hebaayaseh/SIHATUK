@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.DepartmentInterface;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.DepartmentServiceController
 {
     [ApiController]
-    [Route("api/AdminOnly")]
+    [Route("api/[Controller]")]
     public class DepartmentController : ControllerBase
     {
         private readonly IDepartmentService departmentService;
@@ -17,9 +17,9 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.DepartmentServiceController
 
         [Authorize(Policy = "AdminOrAbove")]
         [HttpPost("add-department/{centerId}")]
-        public async Task<IActionResult> AddDepartment(int centerId , [FromForm] DepartmentRequestDto request)
+        public async Task<IActionResult> AddDepartment(int centerId, [FromForm] DepartmentRequestDto request)
         {
-            var result = await departmentService.AddDepartmentAsync(centerId,request);
+            var result = await departmentService.AddDepartmentAsync(centerId, request);
             return Ok(result);
         }
 
@@ -36,6 +36,14 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.DepartmentServiceController
         public async Task<IActionResult> DeleteDepartment(int centerId, [FromBody] DepartmentRemoveRequestDto request)
         {
             var result = await departmentService.RemoveDepartmentAsync(centerId, request);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "AdminOrAbove")]
+        [HttpGet("/{centerId}")]
+        public async Task<IActionResult> GetDepartments(int centerId)
+        {
+            var result = await departmentService.GetDepartmentsAsync(centerId);
             return Ok(result);
         }
     }

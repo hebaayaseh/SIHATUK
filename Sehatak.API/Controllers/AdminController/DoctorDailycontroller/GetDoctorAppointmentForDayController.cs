@@ -6,7 +6,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.AdminController.DoctorDailycontroller
 {
     [ApiController]
-    [Route("api/DoctorOnly")]
+    [Route("api/[Controller]")]
     public class GetDoctorAppointmentForDayController : ControllerBase
     {
         private readonly IDoctorAppointment appointment;
@@ -16,7 +16,7 @@ namespace Sehatak.API.Controllers.AdminController.DoctorDailycontroller
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpPost("/{centerId}")]
+        [HttpPost("{centerId}")]
         public async Task<IActionResult> GetDoctorAppointmentsForDay(int centerId ,[FromBody] DateOnly date)
         {
             var userId = int.Parse(

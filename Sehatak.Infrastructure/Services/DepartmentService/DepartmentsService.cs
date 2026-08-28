@@ -13,11 +13,11 @@ using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.DepartmentService
 {
-    public class AddDepartmentsService : IDepartmentService
+    public class DepartmentsService : IDepartmentService
     {
         private readonly TenantDbContextFactory contextFactory;
         private readonly SharedDbContext sharedDbContext;
-        public AddDepartmentsService(TenantDbContextFactory contextFactory, SharedDbContext sharedDbContext)
+        public DepartmentsService(TenantDbContextFactory contextFactory, SharedDbContext sharedDbContext)
         {
             this.contextFactory = contextFactory;
             this.sharedDbContext = sharedDbContext;
@@ -127,6 +127,30 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
             await db.SaveChangesAsync();
 
             return "Department.Removed";
+        }
+
+        public async Task<GetDepartmentResponseDto> GetDepartmentsAsync(int centerId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FindAsync(centerId);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var departments = await db.Departments
+                .Select(a => new DepartmentSummaryDto
+                {
+                    Id = a.Id,
+                    departmentDescription=a.Description,
+                    departmentName=a.Name,
+                }).ToListAsync();
+
+            return new GetDepartmentResponseDto
+            {
+                Departments = departments
+            };
         }
     }
 }

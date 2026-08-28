@@ -4,10 +4,10 @@ using Sehatak.Application.DTOs.FeatureDto;
 using Sehatak.Application.Interfaces.Features;
 using Sehatak.Domain.Entities.SharedEntities;
 
-namespace Sehatak.API.Controllers.SuperAdminController.FeatureOperation
+namespace Sehatak.API.Controllers.SuperAdminController.Emails
 {
     [ApiController]
-    [Route("api/SuperAdminOnly")]
+    [Route("api/[Controller]")]
     public class feactureController : ControllerBase
     {
         private readonly IFeatureService featureService;

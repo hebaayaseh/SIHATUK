@@ -1,17 +1,9 @@
-﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.IdentityModel.Tokens;
-using Sehatak.API.Hubs;
 using Sehatak.API.Hubs;
 using Sehatak.API.Middleware;
-using Sehatak.API.Middleware;
-using Sehatak.Application.Interfaces;
 using Sehatak.Application.Interfaces.AddDoctorDailyHours;
 using Sehatak.Application.Interfaces.AddFeatureToCenter;
 using Sehatak.Application.Interfaces.ApointmentInterface;
@@ -30,14 +22,13 @@ using Sehatak.Application.Interfaces.GetSttafInterFace;
 using Sehatak.Application.Interfaces.IAuth;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.IFinancialReports;
+using Sehatak.Application.Interfaces.IMedicalRecord;
 using Sehatak.Application.Interfaces.IPatientCenter;
 using Sehatak.Application.Interfaces.IProfileInterface;
 using Sehatak.Application.Interfaces.IProfileInterface.ProfileAdmin;
 using Sehatak.Application.Interfaces.IShiftSchedule;
 using Sehatak.Application.Interfaces.IStaffAttendance;
 using Sehatak.Application.Interfaces.ISubscriptionPaymentService;
-using Sehatak.Application.Interfaces.MedicalCenter;
-using Sehatak.Application.Interfaces.MedicalCenter;
 using Sehatak.Application.Interfaces.MedicalCenter;
 using Sehatak.Application.Interfaces.Plans;
 using Sehatak.Application.Interfaces.RemoveFeatureFromCenter;
@@ -47,12 +38,8 @@ using Sehatak.Application.Interfaces.ServicePriceInterface;
 using Sehatak.Application.Interfaces.SignUp;
 using Sehatak.Application.Interfaces.StaffLogin;
 using Sehatak.Application.Interfaces.SuperAdminInterface;
-using Sehatak.Domain.Entities.TenantEntities;
-using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.CalculateSlot;
 using Sehatak.Infrastructure.Data;
-using Sehatak.Infrastructure.Data;
-using Sehatak.Infrastructure.Security;
 using Sehatak.Infrastructure.Security;
 using Sehatak.Infrastructure.Services;
 using Sehatak.Infrastructure.Services.AddStaff;
@@ -82,10 +69,8 @@ using Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentServi
 using Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth;
 using Sehatak.Infrastructure.Services.tokenService;
 using Serilog;
-using Serilog;
 using System;
 using System.Text;
-using System.Threading.RateLimiting;
 using System.Threading.RateLimiting;
 
 namespace Sehatak.API
@@ -109,7 +94,10 @@ namespace Sehatak.API
                 ));
 
             // 1. CONTROLLERS
-            builder.Services.AddControllers()
+            builder.Services.AddControllers(options =>
+            {
+                options.Filters.Add<Sehatak.API.Security.CenterAccessFilter>();
+            })
             .AddJsonOptions(options =>
             {
               options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
@@ -307,6 +295,13 @@ namespace Sehatak.API
                 
             });
 
+            builder.Services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
+
             // 11. SERVICES
             builder.Services.AddSingleton<JwtTokenGenerator>();
             builder.Services.AddScoped<IAuditLogService, AuditLogService>();
@@ -339,7 +334,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IFinancialReport, FinancialReportService>();
             builder.Services.AddScoped<IEditPlan, EditPlanService>();
             builder.Services.AddScoped<ICenterRegistration, CenterRegistirationRequestService>();
-            builder.Services.AddScoped<IDepartmentService, AddDepartmentsService>();
+            builder.Services.AddScoped<IDepartmentService, DepartmentsService>();
             builder.Services.AddScoped<IAddDoctorToDepartment, DoctorToDepartment>();
             builder.Services.AddScoped<IRemoveStaff, RemoveStaffFromCenter>();
             builder.Services.AddScoped<IListOfPlan, ListOfPlanService>();

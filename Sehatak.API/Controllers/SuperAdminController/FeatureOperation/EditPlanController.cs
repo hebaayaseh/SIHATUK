@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.Plans;
 namespace Sehatak.API.Controllers.SuperAdminController.FeatureOperation
 {
     [ApiController]
-    [Route("api/SuperAdminOnly")]
+    [Route("api/[Controller]")]
     public class EditPlanController : ControllerBase 
     {
         private readonly IEditPlan editPlan;

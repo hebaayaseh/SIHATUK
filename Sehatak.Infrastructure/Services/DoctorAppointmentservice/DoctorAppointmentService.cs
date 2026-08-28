@@ -50,6 +50,8 @@ namespace Sehatak.Infrastructure.Services.DoctorAppointmentservice
                 .OrderBy(a => a.timeSlot)
                 .Select(a => new AppointmentSummaryDto
                 {
+                    appointmentId = a.Id,
+                    patientId = a.patientId,
                     patientName = $"{a.Patient.user.firstName} {a.Patient.user.lastName}",
                     date = a.appointmentDate,
                     timeSlot = (TimeOnly) a.timeSlot,

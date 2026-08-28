@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.StaffAttendanse
 {
     [ApiController]
-    [Route("api/StaffShift")]
+    [Route("api/[Controller]")]
     public class StaffAttendanceController : ControllerBase
     {
         private readonly IStaffAttendance staffAttendance;
@@ -17,7 +17,7 @@ namespace Sehatak.API.Controllers.StaffAttendanse
         }
 
         [Authorize(Policy = "StaffShift")]
-        [HttpPost("chickin-time{centerId}")]
+        [HttpPost("chickin-time/{centerId}")]
         public async Task<IActionResult> ChickInTimeAsync(int centerId , [FromBody] StaffAttendanceCheckInRequestDto request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -26,7 +26,7 @@ namespace Sehatak.API.Controllers.StaffAttendanse
         }
 
         [Authorize(Policy = "StaffShift")]
-        [HttpPost("chickout-time{centerId}")]
+        [HttpPost("chickout-time/{centerId}")]
         public async Task<IActionResult> ChickOutTimeAsync(int centerId, [FromBody] StaffAttendanceCheckInRequestDto request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -35,7 +35,7 @@ namespace Sehatak.API.Controllers.StaffAttendanse
         }
 
         [Authorize(Policy = "StaffShift")]
-        [HttpPost("onleave{centerId}")]
+        [HttpPost("onleave/{centerId}")]
         public async Task<IActionResult> OnLeaveAsync(int centerId, [FromBody] StaffOnLeaveRequestDto request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -44,7 +44,7 @@ namespace Sehatak.API.Controllers.StaffAttendanse
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpPost("absent{centerId}")]
+        [HttpPost("absent/{centerId}")]
         public async Task<IActionResult> StaffAbsentAsync(int centerId, [FromBody] StaffAbsentRequestDto request)
         {
             var result = await staffAttendance.AbsentStaffAsync(centerId, request);

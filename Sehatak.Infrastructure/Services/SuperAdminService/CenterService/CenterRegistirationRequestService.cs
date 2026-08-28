@@ -87,7 +87,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
                 AdminFirstName = request.AdminFirstName,
                 AdminLastName = request.AdminLastName,
                 PlanId = request.PlanId,
-                PasswordHash = request.PasswordHash,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.PasswordHash),
                 RequestedAt = request.RequestedAt,
 
             };
@@ -381,7 +381,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
                     city = request.CenterAddress,
                     phoneNumber = request.AdminPhone,
                     email = request.AdminEmail,
-                    passwordHash = BCrypt.Net.BCrypt.HashPassword(request.PasswordHash),
+                    passwordHash = request.PasswordHash,
                     role = userRole.Admin,
                     isActive = true,
                     createdAt = DateTime.UtcNow

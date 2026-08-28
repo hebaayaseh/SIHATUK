@@ -6,11 +6,6 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.ShiftService
 {
@@ -24,7 +19,7 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             this.contextFactory = contextFactory;
         }
 
-        public async Task<ShiftScheduleResponse> AddShiftSchedule(int userId,int centerId, ShiftScheduleRequest request)
+        public async Task<ShiftScheduleResponse> AddShiftSchedule(int centerId, ShiftScheduleRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -35,16 +30,9 @@ namespace Sehatak.Infrastructure.Services.ShiftService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            var admin = await db.Users
-                .FirstOrDefaultAsync(a => a.Id == userId
-                                     && a.isActive
-                                     && a.role == userRole.Admin);
-
-            if (admin == null)
-                throw new BusinessException("Auth.Forbidden");
-
             var exists = await db.shiftSchedules
                  .AnyAsync(s => s.ShiftName == request.ShiftName);
+
             if (exists)
                 throw new BusinessException("ShiftSchedule.AlreadyExists");
 
@@ -67,7 +55,7 @@ namespace Sehatak.Infrastructure.Services.ShiftService
 
         }
 
-        public async Task<string> AssignShiftToStaffAsync(int userId, int centerId, AssignShiftToStaffRequestDto request)
+        public async Task<string> AssignShiftToStaffAsync(int centerId, AssignShiftToStaffRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -78,17 +66,10 @@ namespace Sehatak.Infrastructure.Services.ShiftService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            var admin = await db.Users
-                .FirstOrDefaultAsync(a => a.Id == userId
-                                     && a.isActive
-                                     && a.role == userRole.Admin);
-
-            if (admin == null)
-                throw new BusinessException("Auth.Forbidden");
 
             var scheduleExists = await db.shiftSchedules
-                .AnyAsync(s => s.ShiftName == request.ShiftName);
-            if (!scheduleExists)
+                .FirstOrDefaultAsync(s => s.ShiftName == request.ShiftName);
+            if (scheduleExists == null)
                 throw new BusinessException("ShiftSchedule.NotConfigured");
 
             var user = await db.Users
@@ -101,11 +82,11 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             if (user == null)
                 throw new BusinessException("Staff.NotFound");
 
-
-
+            
             var alreadyAssigned = await db.StaffShifts
                .AnyAsync(s => s.UserId == request.UserId &&
                          s.ShiftDate == request.ShiftDate 
+                         && s.ShiftName == request.ShiftName
                          && s.IsActive);
 
             if (alreadyAssigned)
@@ -120,9 +101,178 @@ namespace Sehatak.Infrastructure.Services.ShiftService
 
             };
             await db.AddAsync(StaffShift);
+
+            await db.Notifications.AddAsync(new Notification
+            {
+                UserId = request.UserId,
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false,
+                Type = NotificationType.Shift,
+                Message = $"دوامك لليوم : \n {request.ShiftDate} " +
+                $"\n{request.ShiftName.ToString()} " +
+                $"{scheduleExists.StartTime} - {scheduleExists.EndTime}" 
+            });
             await db.SaveChangesAsync();
 
             return "تمت العملية بنجاح.";
+        }
+
+        public async Task<string> DeleteShiftSchedualeAsync(int centerId, int ShiftId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var shift = await db.shiftSchedules
+                .FirstOrDefaultAsync(s => s.Id == ShiftId);
+
+            if (shift == null)
+                throw new BusinessException("Shift.NotFound");
+
+            var staffs = await db.StaffShifts
+                .Where(s => s.ShiftName == shift.ShiftName)
+                .ToListAsync();
+
+            db.shiftSchedules.Remove(shift);
+
+            if (staffs.Any())
+            {
+                foreach (var staff in staffs)
+                {
+                    await db.Notifications.AddRangeAsync(new Notification
+                    {
+                        UserId = staff.UserId,
+                        Type = NotificationType.Shift,
+                        Message = $"تم حذف جدول الدوام انتظروا التعديل ",
+                        IsRead = false
+                    });
+                    staff.IsActive = false;
+                }
+            }
+            await db.SaveChangesAsync();
+            return "تم الحذف بنجاح.";
+        }
+
+        public async Task<GetShiftsScheduleResponseDto> GetShiftsSchedulesAsync(int centerId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var shifts = await db.shiftSchedules
+                .Select(s => new ShiftScheduleResponse
+                {
+                    Id = s.Id,
+                    ShiftName = s.ShiftName,
+                    StartTime = s.StartTime,
+                    EndTime = s.EndTime
+                }).ToListAsync();
+
+            return new GetShiftsScheduleResponseDto
+            {
+                ShiftsSchedule = shifts
+            };
+        }
+
+        public async Task<List<GetStaffsShitfResponseDto>> GetStaffsAsync(int centerId, ShiftGroup shift)
+        {
+            var center = await sharedDbContext.MedicalCenters
+               .FirstOrDefaultAsync(c => c.Id == centerId
+                                    && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var staffs = await db.StaffAttendances
+                .Include(s=>s.Shift)
+                .Where(s => s.Shift.ShiftName == shift
+                       && s.Shift.ShiftDate <= DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)))
+                .Select(n => new GetStaffsShitfResponseDto
+                {
+                    userId = n.UserId,
+                    email = n.Staff.email,
+                    phoneNumber = n.Staff.phoneNumber,
+                    name = $"{n.Staff.firstName} {n.Staff.lastName}",
+                    role = n.Staff.role.ToString(),
+                    isActive = n.Shift.IsActive,
+                    status = n.attendanceStatus,
+                    address = n.Staff.address,
+                    city = n.Staff.city,
+                    userIsActive = n.Staff.isActive
+                }).ToListAsync();
+
+            return staffs;
+        }
+
+        public async Task<ShiftScheduleResponse> UpdateShiftScheduleAsync(int centerId, UpdateShiftSchedualRequestDto request)
+        {
+            var center = await sharedDbContext.MedicalCenters
+               .FirstOrDefaultAsync(c => c.Id == centerId
+                                    && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var shift = await db.shiftSchedules
+                .FirstOrDefaultAsync(s => s.Id == request.ShiftId);
+
+            if (shift == null)
+                throw new BusinessException("Shift.NotFound");
+
+            var staffs = await db.StaffShifts
+                .Where(s => s.ShiftName == shift.ShiftName
+                       && s.IsActive
+                       && s.ShiftDate>= DateOnly.FromDateTime(DateTime.UtcNow))
+                .ToListAsync();
+
+
+            if (request.StartTime != null)
+                shift.StartTime = (TimeOnly)request.StartTime;
+
+            if (request.EndTime != null)
+                shift.EndTime = (TimeOnly)request.EndTime;
+
+            if (request.ShiftName != null)
+                shift.ShiftName = (ShiftGroup)request.ShiftName;
+
+            if (staffs.Any())
+            {
+                foreach (var staff in staffs)
+                {
+                    await db.Notifications.AddRangeAsync(new Notification
+                    {
+                        UserId = staff.UserId,
+                        Type = NotificationType.Shift,
+                        Message =$"تم تعديل موعد الدوام الى " +
+                        $"\n{shift.StartTime} - {shift.EndTime}",
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false
+                    });
+                }
+            }
+
+            await db.SaveChangesAsync();
+            return new ShiftScheduleResponse
+            {
+                Id = shift.Id,
+                ShiftName = shift.ShiftName,
+                StartTime = shift.StartTime,
+                EndTime = shift.EndTime
+            };
         }
     }
 }

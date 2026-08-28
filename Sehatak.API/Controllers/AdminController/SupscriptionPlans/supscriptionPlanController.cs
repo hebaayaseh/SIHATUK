@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.Plans;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SupscriptionPlans
 {
     [ApiController]
-    [Route("api/SuperAdminOnly")]
+    [Route("api/[Controller]")]
     public class supscriptionPlanController : ControllerBase
     {
         private readonly ISubscriptionPlan supscriptionPlan;

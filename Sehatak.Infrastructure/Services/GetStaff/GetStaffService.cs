@@ -135,6 +135,11 @@ namespace Sehatak.Infrastructure.Services.GetStaff
             {
                 UserId = user.Id,
                 UserName = $"{user.firstName} {user.lastName}",
+                PhoneNumber = user.phoneNumber,
+                Address = user.address,
+                Email = user.email,
+                IsActive = user.isActive,
+                Role = user.role.ToString(),
                 StaffShift = shift.Select(a => new SummaryShiftDto
                 {
                     ShiftName = a.ShiftName,

@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SubscriptionPayment
 {
     [ApiController]
-    [Route("api/SuperAdminOnly")]
+    [Route("api/[Controller]")]
     public class SubscriptionPaymentController : ControllerBase
     {
         private readonly ISubscriptionPayment subscriptionPayment;

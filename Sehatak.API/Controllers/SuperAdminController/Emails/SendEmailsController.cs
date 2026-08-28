@@ -12,7 +12,7 @@ using Sehatak.Infrastructure.Services.SuperAdminService.Background;
 namespace Sehatak.API.Controllers.SuperAdminController.Emails
 {
     [ApiController]
-    [Route("api/SuperAdminOnly")]
+    [Route("api/[Controller]")]
     public class SendEmailsController : ControllerBase
     {
         private readonly IAdminBulkEmailService _adminBulkEmailService;

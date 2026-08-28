@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Sehatak.Application.DTOs.SuperAdminDto;
 using Sehatak.Application.Interfaces.SuperAdminInterface;
@@ -6,7 +7,7 @@ using Sehatak.Application.Interfaces.SuperAdminInterface;
 namespace Sehatak.API.Controllers.SuperAdminController.AuthSuperAdmin
 {
     [ApiController]
-    [Route("api/SuperAdminOnly")]
+    [Route("api/[Controller]")]
     public class SuperAdminController : ControllerBase
     {
         private readonly ISuperAdminAuthService superAdminAuthService;
@@ -14,14 +15,14 @@ namespace Sehatak.API.Controllers.SuperAdminController.AuthSuperAdmin
         {
             this.superAdminAuthService = superAdminAuthService;
         }
-
+        [AllowAnonymous]
         [HttpPost("Register_SuperAdmin")]
         public async Task<IActionResult> RegisterSuperAdmin([FromForm]RegisterSuperAdminRequestDto superAdminDto)
         {
             var result = await superAdminAuthService.RegisterAsync(superAdminDto);
             return Ok(result);
         }
-
+        [AllowAnonymous]
         [HttpPost("SuperAdmin_Login")]
         public async Task<IActionResult> SuperAdminLogin(SuperAdminLoginRequestDto superAdminDto)
         {

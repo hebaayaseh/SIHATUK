@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.AddDoctorDaiktcontroller
 {
     [ApiController]
-    [Route("api/AdminOrDoctor")]
+    [Route("api/[Controller]")]
     public class DoctorDailyController : ControllerBase
     {
         private readonly IDoctorDailyHours addHours;

@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Sehatak.Application.Interfaces.GetSttafInterFace;
 
-namespace Sehatak.API.Controllers.PatientController.GetStaffcontroller
+namespace Sehatak.API.Controllers.AdminController.GetStaffcontroller
 {
     [ApiController]
-    [Route("api/AdminOnly")]
+    [Route("api/[Controller]")]
     public class GetDoctorsWithDepartmentController : ControllerBase
     {
         private readonly IGetStaff getStaff;

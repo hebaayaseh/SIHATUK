@@ -6,7 +6,7 @@ using Sehatak.Domain.Enums.SharedEnums;
 namespace Sehatak.API.Controllers.SuperAdminController.CenterStatusController
 {
     [ApiController]
-    [Route("api/SuperAdminOnly")]
+    [Route("api/[Controller]")]
     public class CenterStatusController : ControllerBase
     {
         private readonly ICentersStatus centerStatusService;

@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.SearchDoctor;
 namespace Sehatak.API.Controllers.PatientController.SearchDoctor
 {
     [ApiController]
-    [Route("api/PatientOnly")]
+    [Route("api/[Controller]")]
     public class SearchDoctorControlle : ControllerBase
     {
         private readonly ISearchDoctor searchDoctor;
@@ -14,7 +14,7 @@ namespace Sehatak.API.Controllers.PatientController.SearchDoctor
         {
             this.searchDoctor = searchDoctor;
         }
-
+        [AllowAnonymous]
         [HttpPost("search-doctor-name/{centerId}")]
         public async Task<IActionResult> SearchDoctor(int centerId , [FromBody] SearchDoctorRequest request)
         {

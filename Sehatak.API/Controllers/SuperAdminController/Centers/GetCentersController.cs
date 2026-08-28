@@ -5,7 +5,7 @@ using Sehatak.Application.Interfaces.Centers;
 namespace Sehatak.API.Controllers.SuperAdminController.Centers
 {
     [ApiController]
-    [Route("api/SuperAdminOnly")]
+    [Route("api/[Controller]")]
     public class GetCentersController : ControllerBase
     {
         private readonly IListOfCenters centerService;

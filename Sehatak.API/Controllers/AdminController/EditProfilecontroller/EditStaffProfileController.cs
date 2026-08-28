@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.EditProfilecontroller
 {
     [ApiController]
-    [Route("api/MedicalStaff")]
+    [Route("api/[Controller]")]
     public class EditStaffProfileController : ControllerBase
     {
         private readonly IprofileStaff iprofile;
