@@ -640,8 +640,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         }
 
-        public async Task<List<GetPatientWaitListDto>> GetPatientWaitListsAsync(int centerId, int doctorId,DateOnly date)
+        public async Task<List<GetPatientWaitListDto>> GetPatientsWaitListsAsync(int centerId, int doctorId,DateOnly date)
         {
+
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
                                      && c.CenterStatus == CenterStatus.Active);
@@ -677,6 +678,55 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .ToList();
 
             return patients;
+        }
+
+        public async Task<GetPatientWaitListDto> GetPatientWaitListsAsync(int centerId, int doctorId, int userId, DateOnly date)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.Id == doctorId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var patient = await db.Patients
+                .Include(p => p.user)
+                .FirstOrDefaultAsync(p => p.userId == userId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            var waitList =await db.Waitlists
+                .Include(p => p.Patient)
+                .Where(w => w.PatientId == patient.patientId
+                                     && w.DoctorId == doctorId
+                                     && w.PreferredDate == date)
+                .Select(n => new GetPatientWaitListDto
+                {
+                    WaitLisId = n.Id,
+                    PatientId = n.PatientId,
+                    PatientName = $"{n.Patient.user.firstName} {n.Patient.user.lastName}",
+                    PhoneNumber = n.Patient.user.phoneNumber,
+                    date = n.PreferredDate,
+                    Email = n.Patient.user.email,
+                    status = n.Status
+                }).FirstOrDefaultAsync();
+
+            if (waitList == null)
+                throw new BusinessException("WaitList.NotFound");
+
+            return waitList;
         }
     }
 }

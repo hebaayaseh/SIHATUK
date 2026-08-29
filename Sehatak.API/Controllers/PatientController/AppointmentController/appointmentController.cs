@@ -71,11 +71,21 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
 
         [HttpGet("view-waitlist/{centerId}/{doctorId}")]
         [Authorize(Policy = "WaitListViewrs")]
-        public async Task<IActionResult> ViewWaitLis(int centerId, int doctorId,DateOnly date)
+        public async Task<IActionResult> ViewPatientsWaitList(int centerId, int doctorId,DateOnly date)
         {
-            var result = await slotService.GetPatientWaitListsAsync(centerId, doctorId, date);
+            var result = await slotService.GetPatientsWaitListsAsync(centerId, doctorId, date);
             return Ok(result);
         }
+
+        [HttpGet("view-my-waitlist/{centerId}/{doctorId}")]
+        [Authorize(Policy = "PatientOnly")]
+        public async Task<IActionResult> ViewWaitLis(int centerId, int doctorId, DateOnly date)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await slotService.GetPatientWaitListsAsync(centerId, doctorId,userId ,date);
+            return Ok(result);
+        }
+
 
     }
 }
