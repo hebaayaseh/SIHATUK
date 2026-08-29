@@ -20,6 +20,7 @@ using Sehatak.Application.Interfaces.DoctorAppointment;
 using Sehatak.Application.Interfaces.Features;
 using Sehatak.Application.Interfaces.GetSttafInterFace;
 using Sehatak.Application.Interfaces.IAuth;
+using Sehatak.Application.Interfaces.IDashBoard;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.IFinancialReports;
 using Sehatak.Application.Interfaces.IMedicalRecord;
@@ -45,6 +46,7 @@ using Sehatak.Infrastructure.Services;
 using Sehatak.Infrastructure.Services.AddStaff;
 using Sehatak.Infrastructure.Services.AppointmentService;
 using Sehatak.Infrastructure.Services.Consultationservice;
+using Sehatak.Infrastructure.Services.DashBoardService;
 using Sehatak.Infrastructure.Services.DepartmentService;
 using Sehatak.Infrastructure.Services.DoctorAppointmentservice;
 using Sehatak.Infrastructure.Services.EditProfileService;
@@ -350,6 +352,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IShift, ShiftScheduleService>();
             builder.Services.AddScoped<IStaffAttendance, StaffAttendanceService>();
             builder.Services.AddScoped<IMedicalRecord, MedicalRecordService>();
+            builder.Services.AddScoped<IApointmentDashBoard, AppointmentDashBoard>();
 
             var app = builder.Build();
 
