@@ -2,6 +2,7 @@
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.AddDoctorDailyHour;
+using Sehatak.Application.DTOs.AddDoctorDailyHourDto;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.AddDoctorDailyHours;
 using Sehatak.Domain.Entities.TenantEntities;
@@ -9,13 +10,6 @@ using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.PostponeEnums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Umbraco.Core.Services.Implement;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Sehatak.Infrastructure.Services.AddStaff
 {
@@ -184,6 +178,46 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             return appointments.Any()
                 ? "تم إلغاء مواعيد اليوم بنجاح ومنع الحجز الجديد لهذا التاريخ."
                 : "تم حظر هذا اليوم من الحجز بنجاح.";
+        }
+
+        public async Task<List<GetDoctorDailyHoursResponse>> GetDoctorDailyHoursAsync(int centerId, int doctorId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId 
+                                     && c.CenterStatus == CenterStatus.Active);
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(d => d.user)
+                .FirstOrDefaultAsync(d => d.Id == doctorId && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var doctorSchedual = await db.DoctorSchedules
+                .FirstOrDefaultAsync(d => d.DoctorId == doctorId);
+
+            if (doctorSchedual == null)
+                throw new BusinessException("Schedule.NotFound");
+
+            var Scheduales = await db.DoctorSchedules
+                .Where(d => d.DoctorId == doctorId)
+                .Select(n=>new GetDoctorDailyHoursResponse
+                {
+                    Id = n.Id,
+                    DayOfWeek = n.DayOfWeek,
+                    IsActive = n.IsActive,
+                    DoctorId = n.DoctorId,
+                    EndTime = n.EndTime,
+                    StartTime = n.StartTime,
+                    SlotDurationMinutes = n.SlotDurationMinutes,
+                }).ToListAsync();
+
+            return Scheduales;
+
         }
 
         public async Task<UpdateDoctorDailyHoursResponse> UpdateDoctorDailyHoursAsync(

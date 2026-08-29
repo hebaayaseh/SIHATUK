@@ -51,5 +51,14 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.AddDoctorDaiktcontroller
             return Ok(result);
         }
 
+        [Authorize(Policy = "AdminOnly")]
+        [HttpGet("get-doctor-hours/{centerId}/{doctorId}")]
+        public async Task<IActionResult> GetDoctorDailyHours(int centerId, int doctorId)
+        {
+
+            var result = await addHours.GetDoctorDailyHoursAsync(centerId, doctorId);
+            return Ok(result);
+        }
+
     }
 }
