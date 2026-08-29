@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.AppointmentDto;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.ApointmentInterface;
@@ -8,16 +9,6 @@ using Sehatak.Domain.Enums.PostponeEnums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.CalculateSlot;
 using Sehatak.Infrastructure.Data;
-using Sehatak.Infrastructure.Data.Migrations.TenantMigrations;
-using System;
-using System.CodeDom;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Sehatak.Infrastructure.Services.AppointmentService
 {
@@ -647,6 +638,45 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             await db.SaveChangesAsync();
             return "تم إضافتك لقائمة الانتظار، سيتم إعلامك عند توفر موعد.";
 
+        }
+
+        public async Task<List<GetPatientWaitListDto>> GetPatientWaitListsAsync(int centerId, int doctorId,DateOnly date)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.Id == doctorId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var patients = db.Waitlists
+                .Include(p=>p.Patient)
+                .Where(d => d.DoctorId == doctor.Id
+                       && d.PreferredDate == date)
+                .Select(w => new GetPatientWaitListDto
+                {
+                    WaitLisId = w.Id,
+                    PatientId = w.PatientId,
+                    PatientName = $"{w.Patient.user.firstName} {w.Patient.user.firstName}",
+                    PhoneNumber = w.Patient.user.phoneNumber,
+                    Email = w.Patient.user.email,
+                    status = w.Status,
+                    date = w.PreferredDate
+
+                }).OrderBy(d=>d.date)
+                .ToList();
+
+            return patients;
         }
     }
 }

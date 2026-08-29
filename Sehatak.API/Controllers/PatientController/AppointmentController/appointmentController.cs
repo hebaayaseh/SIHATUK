@@ -25,7 +25,7 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         }
 
         [HttpPost("book/{centerId}/{doctorId}")]
-        [Authorize(Roles = "Patient")]
+        [Authorize(Policy = "Patient")]
         public async Task<IActionResult> BookAppointment(int centerId, int doctorId, [FromBody] BookAppointmentRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -34,7 +34,7 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         }
 
         [HttpPost("cancel-appointment/{centerId}/{doctorId}")]
-        [Authorize(Roles = "Patient")]
+        [Authorize(Policy = "Patient")]
         public async Task<IActionResult> CancelAppointment(int centerId, int doctorId, [FromBody] CancelAppointmentRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -52,7 +52,7 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         }
 
         [HttpPost("reschedule-appointment/{centerId}/{doctorId}")]
-        [Authorize(Roles = "Patient")]
+        [Authorize(Policy = "Patient")]
         public async Task<IActionResult> RescheduleAppointment(int centerId, int doctorId, [FromBody] RescheduleAppointmentRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -61,11 +61,19 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         }
 
         [HttpPost("join-waitlist/{centerId}/{doctorId}")]
-        [Authorize(Roles = "Patient")]
+        [Authorize(Policy = "Patient")]
         public async Task<IActionResult> JoinWaitLis(int centerId, int doctorId, [FromBody] DateOnly date)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await slotService.JoinWaitListAsync(centerId, doctorId, userId, date);
+            return Ok(result);
+        }
+
+        [HttpGet("view-waitlist/{centerId}/{doctorId}")]
+        [Authorize(Policy = "WaitListViewrs")]
+        public async Task<IActionResult> ViewWaitLis(int centerId, int doctorId,DateOnly date)
+        {
+            var result = await slotService.GetPatientWaitListsAsync(centerId, doctorId, date);
             return Ok(result);
         }
 
