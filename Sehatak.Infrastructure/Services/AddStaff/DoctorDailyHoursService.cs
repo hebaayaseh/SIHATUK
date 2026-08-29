@@ -104,6 +104,14 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
+            var schedule = await db.DoctorSchedules
+                .FirstOrDefaultAsync(d => d.DoctorId == doctorId
+                                     && d.IsActive
+                                     && d.DayOfWeek == date.DayOfWeek);
+
+            if (schedule == null)
+                throw new BusinessException("Schedule.NotFound");
+
 
             var alreadyBlocked = await db.DoctorBlockedDays
                 .AnyAsync(d => d.doctorId == doctorId && d.date == date && d.isBlocked);

@@ -8,6 +8,7 @@ using Sehatak.Domain.Enums.PostponeEnums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.CalculateSlot;
 using Sehatak.Infrastructure.Data;
+using Sehatak.Infrastructure.Data.Migrations.TenantMigrations;
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
@@ -84,14 +85,17 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                        .Select(a => a.timeSlot)
                        .ToListAsync();
 
-
-            var availableSlots = theoreticalSlots
-                .Where(slot => slot.HasValue)
-                .Select(slot => slot!.Value)
-                .Except(bookedSlots.Where(b => b.HasValue).Select(b => b!.Value))
-                .Except(isDayBlocked)
-                .OrderBy(s => s)
-                .ToList();
+            var isWholeDayBlocked = await db.DoctorBlockedDays
+                .AnyAsync(bd => bd.doctorId == doctorId && bd.isBlocked && bd.date == date && bd.timeSlot == null);
+            var availableSlots = isWholeDayBlocked
+                ? new List<TimeOnly>()
+               :theoreticalSlots
+               .Where(slot => slot.HasValue)
+               .Select(slot => slot!.Value)
+               .Except(bookedSlots.Where(b => b.HasValue).Select(b => b!.Value))
+               .Except(isDayBlocked)
+               .OrderBy(s => s)
+               .ToList();
 
             if (date == today)
             {
@@ -141,7 +145,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                        && bd.date == request.dateOnly 
                        && bd.timeSlot.HasValue)
                 .Select(bd => bd.timeSlot!.Value)
-                 .ToListAsync();
+                .ToListAsync();
 
 
             var schedule = await db.DoctorSchedules
@@ -178,8 +182,14 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                       .Select(a => a.timeSlot)
                       .ToListAsync();
 
-            
-            
+            var isWholeDayBlocked = await db.DoctorBlockedDays
+               .AnyAsync(bd => bd.doctorId == doctorId
+                         && bd.isBlocked && bd.date == request.dateOnly 
+                         && bd.timeSlot == null);
+
+            if (isWholeDayBlocked)
+                throw new BusinessException("Doctor.DayBlocked");
+
             var availableSlots = theoreticalSlots
                 .Where(slot => slot.HasValue)
                 .Select(slot => slot!.Value)
@@ -280,6 +290,14 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
+            var schedule = await db.DoctorSchedules
+                .FirstOrDefaultAsync(d => d.DoctorId == doctor.Id
+                                     && d.IsActive
+                                     && d.DayOfWeek == request.date.DayOfWeek);
+
+            if (schedule == null)
+                throw new BusinessException("Schedule.NotFound");
+
             var doctorId = doctor.Id;
 
             var alreadyBlocked = await db.DoctorBlockedDays
@@ -354,6 +372,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
+
 
             var patient = await db.Patients
                 .Include(u => u.user)
