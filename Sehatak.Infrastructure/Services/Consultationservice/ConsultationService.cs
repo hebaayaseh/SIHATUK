@@ -142,7 +142,8 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             var doctor = await db.Doctors
                 .Include(u => u.user)
-                .FirstOrDefaultAsync(d => d.userId == doctorId);
+                .FirstOrDefaultAsync(d => d.userId == doctorId
+                                     && d.user.isActive);
 
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
@@ -218,7 +219,8 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 throw new BusinessException("Consultation.NotFound");
 
             var paymentExists = await db.Payments
-                .AnyAsync(p => p.ConsultationId == consultationId);
+                .AnyAsync(p => p.ConsultationId == consultationId
+                          && p.Status != PaymentStatus.Failed);
 
             if (paymentExists)
                 throw new BusinessException("Payment.Exists");
@@ -354,6 +356,8 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                        && c.Status == ConsultationStatus.Accepted)
                 .Select(n => new ConsultationResponseDto
                 {
+                    patientId = n.PatientId,
+                    VideoLink = n.VideoLink,
                     ConsultationId = n.Id,
                     patientName = $"{n.Patient.user.firstName} {n.Patient.user.lastName}",
                     SchedualeDate = n.ScheduledAt 
@@ -593,6 +597,9 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                                      && c.PatientId == patient.patientId)
                 .Select(p => new ConsultationResponse
                 {
+                    patientId = p.PatientId,
+                    VideoLink=p.VideoLink,
+                    ScheduledAt = p.ScheduledAt,
                     Id = p.Id,
                     Status = p.Status,
                     PaymentStatus = p.Payment != null ? p.Payment.Status : (PaymentStatus?)null,
@@ -625,6 +632,9 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 .Select(p => new ConsultationResponse
                 {
                     Id = p.Id,
+                    patientId = p.PatientId,
+                    VideoLink = p.VideoLink,
+                    ScheduledAt = p.ScheduledAt,
                     Status = p.Status,
                     PaymentStatus = p.Payment != null ? p.Payment.Status : (PaymentStatus?)null,
                 }).ToListAsync();

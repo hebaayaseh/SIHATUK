@@ -46,7 +46,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "PatientOnly")]
-        [HttpPost("get-consultations/{centerId}")]
+        [HttpPost("get-patient-consultation/{centerId}")]
         public async Task<IActionResult> GetConsultations(int centerId, [FromBody] ConsultationStatus status)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -119,7 +119,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpGet("complete-consultation/{centerId}/{consultationId}")]
+        [HttpPut("complete-consultation/{centerId}/{consultationId}")]
         public async Task<IActionResult> CompleteConsultationAsync(int centerId, int consultationId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -128,7 +128,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpGet("get-consultation/{centerId}")]
+        [HttpGet("get-doctor-consultation/{centerId}")]
         public async Task<IActionResult> GetConsultationsSchedualeAsync(int centerId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
