@@ -1,14 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.MedicalRecordDto;
+using Sehatak.Application.Interfaces.DoctorAppointment;
 using Sehatak.Application.Interfaces.IMedicalRecord;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
+using Sehatak.Domain.Enums.PaymentEnums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,8 +27,13 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
             this.contextFactory = contextFactory;
         }
 
-        public async Task<MedicalRecordResponseDto> AddMedicalRecordAsync(int centerId,int userId, MedicalReqordRequestDto request)
+        public async Task<MedicalRecordDetailResponseDto> AddMedicalRecordAsync(int centerId, int userId, MedicalRecordDetailRequestDto request)
         {
+            if (request.AppointmentId == null && request.ConsultationId == null)
+                throw new BusinessException("MedicalRecord.MustLinkToAppointmentOrConsultation");
+            if (request.AppointmentId != null && request.ConsultationId != null)
+                throw new BusinessException("MedicalRecord.CannotLinkToBoth");
+
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
                                      && c.CenterStatus == CenterStatus.Active);
@@ -36,115 +44,156 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
             using var db = contextFactory.CreateForCenter(centerId);
 
             var doctor = await db.Doctors
-                .Include(u => u.user)
-                .FirstOrDefaultAsync(d => d.userId == userId
-                                     && d.user.isActive);
-
+               .Include(u => u.user)
+               .FirstOrDefaultAsync(d => d.userId == userId 
+                                    && d.user.isActive);
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
-            if (request.AppointmentId == null && request.ConsultationId == null)
-                throw new BusinessException("MedicalRecord.MustLinkToAppointmentOrConsultation");
-
-            if (request.AppointmentId != null && request.ConsultationId != null)
-                throw new BusinessException("MedicalRecord.CannotLinkToBoth");
-
-            if(request.AppointmentId!=null)
+            var totalCost = 0.0;
+            var billAmount = 0.0;
+            DateTime Create;
+            if (request.AppointmentId != null)
             {
-                var appointment = await db.Appointments
-                    .FirstOrDefaultAsync(d => d.Id == request.AppointmentId
-                                         && d.doctorId == doctor.Id
-                                         && (d.appointmentStatus == AppointmentStatus.CheckedIn
-                                         || d.appointmentStatus == AppointmentStatus.Confirmed));
-                if (appointment == null)
+                var doctorAppointment = await db.Appointments
+                .FirstOrDefaultAsync(d => d.patientId == request.PatientId
+                                     && d.doctorId == doctor.Id
+                                     && d.Id == request.AppointmentId
+                                     && d.appointmentStatus != AppointmentStatus.Cancelled);
+
+                if (doctorAppointment == null)
                     throw new BusinessException("Appointment.NotFound");
-                decimal consultationPrice;
-                if (request.CustomConsultationPrice !=null)
-                {
-                    consultationPrice = (decimal)request.CustomConsultationPrice ; 
-                }
-                else
-                {
-                    var defaultAppointmentPrice = await db.ServicePrices
-                        .FirstOrDefaultAsync(s => s.Type == ServiceType.Appointment && s.IsActive);
-                    if (defaultAppointmentPrice == null)
-                        throw new BusinessException("ServicePrice.NotFound");
 
-                    consultationPrice = defaultAppointmentPrice.Price;
-                }
-                appointment.ConsultationCost = consultationPrice;
-                decimal itemsTotal = 0;
-                int itemsQuantityTotal = 0;
+                var record = new MedicalRecord
+                {
+                    Diagnosis = request.Diagnosis,
+                    Notes = request.Notes,
+                    Prescription = request.Prescription,
+                    AppointmentId = request.AppointmentId,
+                    CreatedAt = DateTime.UtcNow,
+                    DoctorId = doctor.Id,
+                    PatientId = request.PatientId,
+                    UpdatedAt = DateTime.UtcNow,
+                };
+                
+                await db.MedicalRecords.AddAsync(record);
+                Create = record.CreatedAt;
+                if (request.ConsultationCost > 0)
+                    doctorAppointment.ConsultationCost = (decimal)request.ConsultationCost;
 
-                if (request.Items != null && request.Items.Any())
+                if (request.Items != null)
                 {
                     foreach (var item in request.Items)
                     {
-                        var service = await db.ServicePrices
-                            .FirstOrDefaultAsync(s => s.Id == item.ServicePriceId && s.IsActive);
-                        if (service == null)
-                            throw new BusinessException("ServicePrice.NotFound");
-
-                        var quantity = item.Quantity > 0 ? item.Quantity : 1;
-                        var lineTotal = service.Price * quantity;
-
-                        await db.AppointmentItems.AddAsync(new AppointmentItem
+                        var Item = new AppointmentItem
                         {
-                            AppointmentId = appointment.Id,
-                            ServicePriceId = item.ServicePriceId,
-                            Quantity = quantity,
-                            UnitPrice = service.Price,
-                            TotalPrice = lineTotal
-                        });
+                            ServicePriceId = item.Id,
+                            UnitPrice = item.UnitPrice,
+                            Quantity = item.Quantity,
+                            TotalPrice = item.UnitPrice * item.Quantity,
+                            AppointmentId = doctorAppointment.Id,
+                        };
+                        await db.AppointmentItems.AddAsync(Item);
+                        totalCost += (double)Item.TotalPrice;
 
-                        itemsTotal += lineTotal;
-                        itemsQuantityTotal += quantity;
                     }
-                }
 
-                appointment.BillAmount = consultationPrice + itemsTotal;
-                appointment.ItemsTotal = itemsQuantityTotal;
-                appointment.appointmentStatus = AppointmentStatus.InProgress;
+                    billAmount = (double)((decimal)totalCost + doctorAppointment.ConsultationCost);
+
+                }
+                else
+                {
+                    var serviceCost = await db.ServicePrices
+                        .FirstOrDefaultAsync(s => s.Type == ServiceType.Appointment
+                                             && s.IsActive);
+
+                    if (serviceCost == null)
+                        throw new BusinessException("ServicePrice.NotFound");
+                    billAmount = totalCost + (double)serviceCost.Price;
+                    
+                }
+                var payment = new Payment
+                {
+                    Amount = (decimal)billAmount,
+                    PatientId = request.PatientId,
+                    Type = PaymentType.Appointment,
+                    Status = PaymentStatus.Pending,
+                    AppointmentId = doctorAppointment.Id
+                };
+                await db.Payments.AddAsync(payment);
+                doctorAppointment.BillAmount = (decimal?)billAmount;
             }
-                
             else
             {
-                var consultation = await db.Consultations
-                   .FirstOrDefaultAsync(c => c.Id == request.ConsultationId
-                                        && c.DoctorId == doctor.Id
-                                        && c.Status == ConsultationStatus.Accepted);
-                 if (consultation == null)
+                var doctorConsultation = await db.Consultations
+                  .FirstOrDefaultAsync(c => c.DoctorId == doctor.Id
+                          && c.PatientId == request.PatientId
+                          && c.Id == request.ConsultationId
+                          && c.Status != ConsultationStatus.Rejected);
+
+                if (doctorConsultation == null)
                     throw new BusinessException("Consultation.NotFound");
+
+                var record = new MedicalRecord
+                {
+                    Diagnosis = request.Diagnosis,
+                    Notes = request.Notes,
+                    Prescription = request.Prescription,
+                    ConsultationId = request.ConsultationId,
+                    CreatedAt = DateTime.UtcNow,
+                    DoctorId = doctor.Id,
+                    PatientId = request.PatientId,
+                    UpdatedAt = DateTime.UtcNow,
+
+                };
+                await db.MedicalRecords.AddAsync(record);
+                Create = record.CreatedAt;
+
+                var serviceCost = await db.ServicePrices
+                    .FirstOrDefaultAsync(s => s.Type == ServiceType.ConsultationCost
+                                         && s.IsActive);
+
+                if (serviceCost == null)
+                    throw new BusinessException("ServicePrice.NotFound");
+
+                billAmount = (double)serviceCost.Price; 
             }
 
-            
-            var record = new MedicalRecord
+            await db.SaveChangesAsync();
+
+            return new MedicalRecordDetailResponseDto
             {
+
                 PatientId = request.PatientId,
-                DoctorId = doctor.Id,
+                DoctorId = userId,
+                Diagnosis = request.Diagnosis,
+                BillAmount = (decimal?)billAmount,
+                DoctorName = $"{doctor.user.firstName} {doctor.user.lastName}",
                 AppointmentId = request.AppointmentId,
+                ConsultationCost = request.ConsultationCost,
                 ConsultationId = request.ConsultationId,
                 Prescription = request.Prescription,
                 Notes = request.Notes,
-                Diagnosis = request.Diagnosis,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = Create,
+                Items = request.Items?.Select(p => new MedicalRecordItemDto
+                {
+                    TotalPrice = (decimal)totalCost,
+                    UnitPrice = p.UnitPrice,
+                    Quantity = p.Quantity,
+                    ServiceName = p.ServiceName,
+                    Id = p.Id,
+                }).ToList(),
+                UpdateAt = DateTime.UtcNow,
             };
-
-            await db.MedicalRecords.AddAsync(record);
-            await db.SaveChangesAsync();
-
-            return new MedicalRecordResponseDto 
-            { 
-                Diagnosis = record.Diagnosis,
-                Notes = record.Notes,
-                Prescription = record.Prescription,
-            };
-
         }
 
-        public async Task<string> EditMedicalRecordAsync(int centerId, int userId, UpdateMedicalRecordRequestDto request)
+        public async Task<MedicalRecordDetailResponseDto> EditMedicalRecordAsync(int centerId, int userId, UpdateMedicalRecordRequestDto request)
         {
+            if (request.AppointmentId == null && request.ConsultationId == null)
+                throw new BusinessException("MedicalRecord.MustLinkToAppointmentOrConsultation");
+            if (request.AppointmentId != null && request.ConsultationId != null)
+                throw new BusinessException("MedicalRecord.CannotLinkToBoth");
+
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
                                      && c.CenterStatus == CenterStatus.Active);
@@ -154,109 +203,263 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            if (request.AppointmentId == null && request.ConsultationId == null)
-                throw new BusinessException("MedicalRecord.MustLinkToAppointmentOrConsultation");
-
-            if (request.AppointmentId != null && request.ConsultationId != null)
-                throw new BusinessException("MedicalRecord.CannotLinkToBoth");
-
 
             var doctor = await db.Doctors
                 .Include(u => u.user)
-                .FirstOrDefaultAsync(d => d.userId == userId
-                                     && d.user.isActive);
-
+                .FirstOrDefaultAsync(d => d.userId == userId && d.user.isActive);
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
             var record = await db.MedicalRecords
-                    .FirstOrDefaultAsync(a => a.Id == request.MedicalRecordId
-                                         && a.DoctorId == doctor.Id
-                                         && a.PatientId == request.PatientId
-                                         && (a.AppointmentId == request.AppointmentId
-                                         || a.ConsultationId == request.ConsultationId));
+                .FirstOrDefaultAsync(m => m.Id == request.MedicalRecordId);
 
             if (record == null)
-                throw new BusinessException("MedicalRecord.NotFound");
+                throw new BusinessException("Medical.NotFound");
 
+            var billAmount = 0.0;
+            var totalCost = 0.0;
+            DateTime Create;
             if (request.AppointmentId != null)
             {
                 var appointment = await db.Appointments
-                    .FirstOrDefaultAsync(d => d.Id == request.AppointmentId
-                                         && d.doctorId == doctor.Id
-                                         && (d.appointmentStatus == AppointmentStatus.InProgress
-                                         || d.appointmentStatus == AppointmentStatus.CheckedIn
-                                         || d.appointmentStatus == AppointmentStatus.Confirmed));
+                    .FirstOrDefaultAsync(a => a.Id == request.AppointmentId
+                                         && a.patientId == request.PatientId
+                                         && a.doctorId == doctor.Id
+                                         && a.appointmentStatus != AppointmentStatus.Cancelled);
 
                 if (appointment == null)
                     throw new BusinessException("Appointment.NotFound");
 
-                if (request.RemoveItemIds != null && request.RemoveItemIds.Any())
-                {
-                    var itemsToRemove = await db.AppointmentItems
-                        .Where(i => request.RemoveItemIds.Contains(i.Id)
-                               && i.AppointmentId == appointment.Id)
-                        .ToListAsync();
+                billAmount = (double)appointment.BillAmount;
 
-                    db.AppointmentItems.RemoveRange(itemsToRemove);
+                if (request.Prescription != null)
+                    record.Prescription = request.Prescription;
+
+                if (request.Diagnosis != null)
+                    record.Diagnosis = request.Diagnosis;
+
+                if (request.RecordNotes != null)
+                    record.Notes = request.RecordNotes;
+
+                var appointmentItem = await db.AppointmentItems
+                    .Where(a => a.AppointmentId == request.AppointmentId)
+                    .ToListAsync();
+
+                if (request.RemoveItemIds != null && appointmentItem != null)
+                {
+                    foreach (var removeItemId in request.RemoveItemIds)
+                    {
+                        var itemToRemove = appointmentItem.FirstOrDefault(ai => ai.Id == removeItemId);
+                        if (itemToRemove != null)
+                        {
+                            db.AppointmentItems.Remove(itemToRemove);
+                            billAmount -= (double)(itemToRemove.UnitPrice * itemToRemove.Quantity);
+                        }
+                    }
                 }
 
-                if (request.CustomConsultationPrice != null)
+                if (request.CustomConsultationPrice > 0)
                 {
-                    appointment.ConsultationCost = request.CustomConsultationPrice.Value;
+                    if (appointment.ConsultationCost != null)
+                    {
+                        billAmount -= (double)appointment.ConsultationCost;
+                    }
+                    appointment.ConsultationCost = (decimal)request.CustomConsultationPrice;
+                    billAmount += (double)appointment.ConsultationCost;
                 }
 
-                if (request.Items != null && request.Items.Any())
+                if (request.Items != null)
                 {
                     foreach (var item in request.Items)
                     {
-                        var service = await db.ServicePrices
-                            .FirstOrDefaultAsync(s => s.Id == item.ServicePriceId 
-                                                 && s.IsActive);
-
-                        if (service == null)
-                            throw new BusinessException("ServicePrice.NotFound");
-
-                        var quantity = item.Quantity > 0 ? item.Quantity : 1;
-
-                        await db.AppointmentItems.AddAsync(new AppointmentItem
+                        var Item = new AppointmentItem
                         {
+                            ServicePriceId = item.Id,
+                            UnitPrice = item.UnitPrice,
+                            Quantity = item.Quantity,
+                            TotalPrice = item.UnitPrice * item.Quantity,
                             AppointmentId = appointment.Id,
-                            ServicePriceId = item.ServicePriceId,
-                            Quantity = quantity,
-                            UnitPrice = service.Price,
-                            TotalPrice = service.Price * quantity
-                        });
+                        };
+                        await db.AppointmentItems.AddAsync(Item);
+                        billAmount += (double)Item.TotalPrice;
                     }
                 }
-                await db.SaveChangesAsync();
+                var payment = await db.Payments
+                    .FirstOrDefaultAsync(p => p.AppointmentId == request.AppointmentId);
 
-                var remainingItems = await db.AppointmentItems
-                     .Where(i => i.AppointmentId == appointment.Id)
-                     .ToListAsync();
+                if (payment == null)
+                    throw new BusinessException("Payment.NotFound");
 
-                var itemsTotal = remainingItems.Sum(i => i.TotalPrice);
-                var itemsQuantityTotal = remainingItems.Sum(i => i.Quantity);
+                payment.Amount = (decimal)billAmount;
+                if (request.PaymentNotes != null)
+                    payment.Notes = request.PaymentNotes;
 
-                appointment.BillAmount = appointment.ConsultationCost + itemsTotal;
-                appointment.ItemsTotal = itemsQuantityTotal;
-                appointment.appointmentStatus = AppointmentStatus.InProgress;
+                appointment.BillAmount = (decimal?)billAmount;
+                Create = record.CreatedAt;
             }
-            if (request.Prescription != null)
-                record.Prescription = request.Prescription;
 
-            if (request.Notes != null)
-                record.Notes = request.Notes;
+            else 
+            {
+                var consultation = await db.Consultations
+                    .FirstOrDefaultAsync(c => c.Id == request.ConsultationId
+                                         && c.DoctorId == doctor.Id
+                                         && c.PatientId == request.PatientId
+                                         && c.Status != ConsultationStatus.Rejected);
 
-            if (request.Diagnosis != null)
-                record.Diagnosis = request.Diagnosis;
+                if (consultation == null)
+                    throw new BusinessException("Consultation.NotFound");
 
-            record.UpdatedAt = DateTime.UtcNow;
+                if (request.Prescription != null)
+                    record.Prescription = request.Prescription;
 
+                if (request.Diagnosis != null)
+                    record.Diagnosis = request.Diagnosis;
+
+                if (request.RecordNotes != null)
+                    record.Notes = request.RecordNotes;
+                Create = record.CreatedAt;
+            }
             await db.SaveChangesAsync();
 
-            return "تم التعديل بنجاح";
+            return new MedicalRecordDetailResponseDto
+            {
+
+                PatientId = request.PatientId,
+                DoctorId = userId,
+                Diagnosis = request.Diagnosis,
+                BillAmount = (decimal?)billAmount,
+                DoctorName = $"{doctor.user.firstName} {doctor.user.lastName}",
+                AppointmentId = request.AppointmentId,
+                ConsultationCost = request.CustomConsultationPrice,
+                ConsultationId = request.ConsultationId,
+                Prescription = record.Prescription,
+                Notes = record.Notes,
+                CreatedAt = Create,
+                UpdateAt = DateTime.UtcNow,
+                Items = request.Items?.Select(p => new MedicalRecordItemDto
+                {
+                    TotalPrice = (decimal)totalCost,
+                    UnitPrice = p.UnitPrice,
+                    Quantity = p.Quantity,
+                    ServiceName = p.ServiceName,
+                    Id = p.Id,
+                }).ToList(),
+
+            };
 
         }
+
+        public async Task<List<MedicalRecordDetailResponseDto>> GetPatientMedicalHistoryAsync(int centerId, int userId, int patientId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.userId == userId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var patientExists = await db.Patients
+                .AnyAsync(p => p.patientId == patientId
+                          && p.user.isActive);
+
+            if (!patientExists)
+                throw new BusinessException("Patient.NotFound");
+
+            var records = await db.MedicalRecords
+                .Include(r => r.Doctor).ThenInclude(d => d.user)
+                .Include(r => r.Appointment)
+                .ThenInclude(a => a!.Items)
+                .ThenInclude(i => i.ServicePrice)
+                .Where(r => r.PatientId == patientId)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+            return records.Select(record => new MedicalRecordDetailResponseDto
+            {
+                Id = record.Id,
+                PatientId = record.PatientId,
+                DoctorId = record.DoctorId,
+                DoctorName = $"{record.Doctor.user.firstName} {record.Doctor.user.lastName}",
+                AppointmentId = record.AppointmentId,
+                ConsultationId = record.ConsultationId,
+                Diagnosis = record.Diagnosis,
+                Prescription = record.Prescription,
+                Notes = record.Notes,
+                ConsultationCost = record.Appointment?.ConsultationCost,
+                BillAmount = record.Appointment?.BillAmount,
+                Items = record.Appointment?.Items?.Select(i => new MedicalRecordItemDto
+                {
+                    Id = i.Id,
+                    ServiceName = i.ServicePrice.ServiceName,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice,
+                    TotalPrice = i.TotalPrice
+                }).ToList(),
+                CreatedAt = record.CreatedAt,
+                UpdateAt = record.UpdatedAt,
+            }).ToList();
+        }
+
+        public async Task<MedicalRecordDetailResponseDto> GetMedicalRecordByIdAsync(int centerId, int userId, int medicalRecordId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.userId == userId 
+                                     && d.user.isActive);
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var record = await db.MedicalRecords
+                .Include(r => r.Doctor)
+                .ThenInclude(d => d.user)
+                .Include(r => r.Appointment)
+                .ThenInclude(a => a!.Items)
+                .ThenInclude(i => i.ServicePrice)
+                .FirstOrDefaultAsync(r => r.Id == medicalRecordId);
+
+            if (record == null)
+                throw new BusinessException("MedicalRecord.NotFound");
+
+            return new MedicalRecordDetailResponseDto
+            {
+                Id = record.Id,
+                PatientId = record.PatientId,
+                DoctorId = record.DoctorId,
+                DoctorName = $"{record.Doctor.user.firstName} {record.Doctor.user.lastName}",
+                AppointmentId = record.AppointmentId,
+                ConsultationId = record.ConsultationId,
+                Diagnosis = record.Diagnosis,
+                Prescription = record.Prescription,
+                Notes = record.Notes,
+                ConsultationCost = record.Appointment?.ConsultationCost,
+                BillAmount = record.Appointment?.BillAmount,
+                Items = record.Appointment?.Items?.Select(i => new MedicalRecordItemDto
+                {
+                    Id = i.Id,
+                    ServiceName = i.ServicePrice.ServiceName,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice,
+                    TotalPrice = i.TotalPrice
+                }).ToList(),
+                CreatedAt = record.CreatedAt,
+                UpdateAt = record.UpdatedAt,
+            };
+        }
     }
+
 }

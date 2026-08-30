@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Sehatak.Application.DTOs.MedicalRecordDto;
 using Sehatak.Application.Interfaces.IMedicalRecord;
+using Sehatak.Domain.Entities.TenantEntities;
 using System.Security.Claims;
 
 namespace Sehatak.API.Controllers.MedicalRecordController
@@ -18,7 +19,7 @@ namespace Sehatak.API.Controllers.MedicalRecordController
 
         [Authorize("DoctorOnly")]
         [HttpPost("add-medicalrecord/{centerId}")]
-        public async Task<IActionResult> AddMedicakRecor(int centerId,[FromBody]MedicalReqordRequestDto request)
+        public async Task<IActionResult> AddMedicakRecor(int centerId,[FromBody]MedicalRecordDetailRequestDto request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await medical.AddMedicalRecordAsync(centerId, userId, request);
@@ -31,6 +32,24 @@ namespace Sehatak.API.Controllers.MedicalRecordController
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await medical.EditMedicalRecordAsync(centerId, userId, request);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "DoctorOnly")]
+        [HttpGet("patient-history/{centerId}/{patientId}")]
+        public async Task<IActionResult> GetPatientMedicalHistory(int centerId, int patientId)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await medical.GetPatientMedicalHistoryAsync(centerId, userId, patientId);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "DoctorOnly")]
+        [HttpGet("record/{centerId}/{medicalRecordId}")]
+        public async Task<IActionResult> GetMedicalRecordById(int centerId, int medicalRecordId)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await medical.GetMedicalRecordByIdAsync(centerId, userId, medicalRecordId);
             return Ok(result);
         }
     }

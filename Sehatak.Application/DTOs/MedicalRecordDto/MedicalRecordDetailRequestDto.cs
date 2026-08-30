@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 
 namespace Sehatak.Application.DTOs.MedicalRecordDto
 {
-    public class MedicalReqordRequestDto
+    public class MedicalRecordDetailRequestDto
     {
         public int PatientId { get; set; }
         public int? AppointmentId { get; set; }
         public int? ConsultationId { get; set; }
-        public string Prescription { get; set; }
-        public string Notes { get; set; }
         public string? Diagnosis { get; set; }
-        public List<AppointmentItemRequestDto>? Items { get; set; }
-        public decimal? CustomConsultationPrice  { get; set; }
+        public string Prescription { get; set; } = string.Empty;
+        public string Notes { get; set; } = string.Empty;
+        public decimal? ConsultationCost { get; set; }
+        public List<MedicalRecordItemDto>? Items { get; set; }
     }
 }
