@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SubscriptionPayment
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     public class SubscriptionPaymentController : ControllerBase
     {
         private readonly ISubscriptionPayment subscriptionPayment;
@@ -17,7 +17,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SubscriptionPayment
         }
 
         [Authorize(Policy = "AdminOrAbove")]
-        [HttpPost("record-payment/{centerId}")]
+        [HttpPost("admin-record-payment/{centerId}")]
         public async Task<IActionResult> RecordPayment(int centerId, [FromForm] PaymentRequestExist request)
         {
             var result = await subscriptionPayment.RecordPaymentAsync(request, centerId);
@@ -25,7 +25,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SubscriptionPayment
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPost("confirm-payment/{paymentId}")]
+        [HttpPost("superAdmin-confirm-payment/{paymentId}")]
         public async Task<IActionResult> ConfirmPayment(int paymentId)
         {
             var superAdminId = int.Parse(
@@ -37,7 +37,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SubscriptionPayment
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpGet("center-payment/{centerId}")]
+        [HttpGet("superAdmin-center-payment/{centerId}")]
         public async Task<IActionResult> GetCenterPayment(int centerId)
         {
             var result = await subscriptionPayment.GetCenterPaymentsAsync(centerId);
@@ -45,7 +45,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SubscriptionPayment
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpGet("pending-payment")]
+        [HttpGet("superAdmin-pending-payment")]
         public async Task<IActionResult> GetPendingPayment()
         {
             var result = await subscriptionPayment.GetPendingPaymentsAsync();

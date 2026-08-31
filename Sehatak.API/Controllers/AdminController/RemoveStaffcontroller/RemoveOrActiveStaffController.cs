@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.DepartmentInterface;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.RemoveStaffcontroller
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     public class RemoveOrActiveStaffController : ControllerBase
     {
         private readonly IRemoveStaff removeStaff;
@@ -15,7 +15,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.RemoveStaffcontroller
             this.removeStaff = removeStaff;
         }
         [Authorize(Policy = "AdminOrAbove")]
-        [HttpPost("remove-staff-from-center/{centerId}")]
+        [HttpPost("admin-remove-staff-from-center/{centerId}")]
         public async Task<IActionResult> RmeoveStaff(int centerId, [FromBody] RemoveStaffRequestDto request)
         {
             var result = await removeStaff.RemoveStaffAsync(centerId, request);
@@ -23,7 +23,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.RemoveStaffcontroller
         }
 
         [Authorize(Policy = "AdminOrAbove")]
-        [HttpPost("active-staff-from-center/{centerId}")]
+        [HttpPost("admin-active-staff-from-center/{centerId}")]
         public async Task<IActionResult> ActiveStaff(int centerId, [FromBody] RemoveStaffRequestDto request)
         {
             var result = await removeStaff.ActiveStaffAsync(centerId, request);

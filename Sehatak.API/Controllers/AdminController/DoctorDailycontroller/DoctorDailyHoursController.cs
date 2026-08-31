@@ -2,22 +2,23 @@
 using Microsoft.AspNetCore.Mvc;
 using Sehatak.Application.DTOs.AddDoctorDailyHour;
 using Sehatak.Application.Interfaces.AddDoctorDailyHours;
+using Sehatak.Domain.Entities.TenantEntities;
 using System.Security.Claims;
 
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.AddDoctorDaiktcontroller
 {
     [ApiController]
-    [Route("api/[Controller]")]
-    public class DoctorDailyController : ControllerBase
+    [Route("[Controller]")]
+    public class DoctorDailyHoursController : ControllerBase
     {
         private readonly IDoctorDailyHours addHours;
-        public DoctorDailyController(IDoctorDailyHours addHours)
+        public DoctorDailyHoursController(IDoctorDailyHours addHours)
         {
             this.addHours = addHours;
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpPost("add-doctor-hours/{centerId}/{doctorId}")]
+        [HttpPost("admin-add-doctor-hours/{centerId}/{doctorId}")]
         public async Task<IActionResult> AddDoctorDailyHours(int centerId , int doctorId,
             [FromBody] AddDoctorDailyHoursRequest request)
         {
@@ -29,7 +30,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.AddDoctorDaiktcontroller
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpPost("update-doctor-hours/{centerId}/{doctorId}")]
+        [HttpPost("admin-update-doctor-hours/{centerId}/{doctorId}")]
         public async Task<IActionResult> UpdateDoctorDailyHours(int centerId, int doctorId,
             [FromBody] UpdateDoctorDailyHousrRequest request)
         {
@@ -41,7 +42,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.AddDoctorDaiktcontroller
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpPost("Cancel-doctor-day/{centerId}")]
+        [HttpPost("doctor-Cancel-doctor-day/{centerId}")]
         public async Task<IActionResult> CancelDoctorDay(int centerId, DateOnly date)
         {
             var doctorId = int.Parse(
@@ -52,13 +53,22 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.AddDoctorDaiktcontroller
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpGet("get-doctor-hours/{centerId}/{doctorId}")]
+        [HttpGet("admin-get-doctor-hours/{centerId}/{doctorId}")]
         public async Task<IActionResult> GetDoctorDailyHours(int centerId, int doctorId)
         {
 
             var result = await addHours.GetDoctorDailyHoursAsync(centerId, doctorId);
             return Ok(result);
         }
+        [Authorize(Policy = "DoctorOnly")]
+        [HttpPost("doctor-get-appointments-for-day{centerId}")]
+        public async Task<IActionResult> GetDoctorAppointmentsForDay(int centerId, [FromBody] DateOnly date)
+        {
+            var userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
+            var result = await addHours.GetDoctorAppointmentsForDayAsync(centerId, userId, date);
+            return Ok(result);
+        }
     }
 }

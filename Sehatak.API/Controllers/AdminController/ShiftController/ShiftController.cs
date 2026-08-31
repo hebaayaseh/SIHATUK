@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.AdminController.ShiftController
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     public class ShiftController : ControllerBase
     {
         private readonly IShift shiftSchedule;
@@ -17,7 +17,7 @@ namespace Sehatak.API.Controllers.AdminController.ShiftController
             this.shiftSchedule = shiftSchedule;
         }
         [Authorize(Policy = "AdminOnly")]
-        [HttpPost("add-shif-schedule/{centerId}")]
+        [HttpPost("admin-add-shif-schedule/{centerId}")]
         public async Task<IActionResult> AddShifSchedule(int centerId , [FromBody] ShiftScheduleRequest request)
         {
             var result = await shiftSchedule.AddShiftSchedule(centerId, request);
@@ -25,7 +25,7 @@ namespace Sehatak.API.Controllers.AdminController.ShiftController
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpPost("add-staff-shift/{centerId}")]
+        [HttpPost("admin-add-staff-shift/{centerId}")]
         public async Task<IActionResult> AddStaffShift(int centerId, [FromBody] AssignShiftToStaffRequestDto request)
         {
             var result = await shiftSchedule.AssignShiftToStaffAsync(centerId, request);
@@ -41,7 +41,7 @@ namespace Sehatak.API.Controllers.AdminController.ShiftController
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpPost("update-shift-schedule/{centerId}")]
+        [HttpPost("admin-update-shift-schedule/{centerId}")]
         public async Task<IActionResult> UpdateShift(int centerId, [FromBody] UpdateShiftSchedualRequestDto request)
         {
             var result = await shiftSchedule.UpdateShiftScheduleAsync(centerId, request);
@@ -49,7 +49,7 @@ namespace Sehatak.API.Controllers.AdminController.ShiftController
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpDelete("delete-shift-schedule/{centerId}/{shiftId}")]
+        [HttpDelete("admin-delete-shift-schedule/{centerId}/{shiftId}")]
         public async Task<IActionResult> DeleteShift(int centerId,int shiftId)
         {
             var result = await shiftSchedule.DeleteShiftSchedualeAsync(centerId, shiftId);
@@ -57,7 +57,7 @@ namespace Sehatak.API.Controllers.AdminController.ShiftController
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpGet("get-staffs-schedule/{centerId}")]
+        [HttpGet("admin-get-staffs-schedule/{centerId}")]
         public async Task<IActionResult> GetStaffsWithShift(int centerId, ShiftGroup shift, int? year = null, int? month = null)
         {
             var result = await shiftSchedule.GetStaffsWithShiftAsync(centerId, shift,year,month);
@@ -65,7 +65,7 @@ namespace Sehatak.API.Controllers.AdminController.ShiftController
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpGet("get-all-staffs/{centerId}")]
+        [HttpGet("admin-get-all-staffs/{centerId}")]
         public async Task<IActionResult> GetAllSTaffs(int centerId)
         {
             var result = await shiftSchedule.GetAllStaffAsync(centerId);

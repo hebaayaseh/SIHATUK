@@ -6,7 +6,7 @@ using Sehatak.Infrastructure.Services;
 namespace Sehatak.API.Controllers.SuperAdminController.Migrate
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     public class MigrateTenantController : ControllerBase
     {
         private readonly TenantMigrationRunner _migrationRunner;
@@ -19,7 +19,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.Migrate
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPost("migrate-all-tenants")]
+        [HttpPost("superAdmin-migrate-all-tenants")]
         public async Task<IActionResult> MigrateAllTenants()
         {
             var results = await _migrationRunner.MigrateAllTenantsAsync();
@@ -38,7 +38,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.Migrate
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPost("migrate-tenant/{centerId}")]
+        [HttpPost("superAdmin-migrate-tenant/{centerId}")]
         public async Task<IActionResult> MigrateSingleTenant(int centerId)
         {
             var result = await dbContextFactory.MigrateSingleTenantAsync(centerId);

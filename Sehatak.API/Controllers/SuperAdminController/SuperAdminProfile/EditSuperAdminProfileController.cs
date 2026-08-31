@@ -7,17 +7,17 @@ using Sehatak.Application.Interfaces.IProfileInterface;
 namespace Sehatak.API.Controllers.SuperAdminController.SuperAdminProfile
 {
     [ApiController]
-    [Route("api/[Controller]")]
-    public class SuperAdminProfileController : ControllerBase
+    [Route("[Controller]")]
+    public class EditSuperAdminProfileController : ControllerBase
     {
         private readonly IProfile profile;
-        public SuperAdminProfileController(IProfile profile)
+        public EditSuperAdminProfileController(IProfile profile)
         {
             this.profile = profile;
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpGet("super-admin-view-profile/{superAdminId}")]
+        [HttpGet("superAdmin--view-profile/{superAdminId}")]
 
         public async Task<IActionResult> superAdminViewProfile(int superAdminId)
         {
@@ -26,7 +26,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.SuperAdminProfile
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPost("super-admin-edit-email/{superAdminId}")]
+        [HttpPost("superAdmin--edit-email/{superAdminId}")]
         public async Task<IActionResult> RequestEditEmail(int superAdminId, [FromBody] EditEmailRequest request)
         {
             await profile.RequestEditEmail(superAdminId, request);
@@ -34,7 +34,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.SuperAdminProfile
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPost("super-admin-confirm-edit-email/{superAdminId}")]
+        [HttpPost("superAdmin--confirm-edit-email/{superAdminId}")]
         public async Task<IActionResult> ConfirmEditEmail(int superAdminId, [FromBody] ConfirmEditEmailRequest request)
         {
             var result = await profile.ConfirmEditEmail(superAdminId, request);
@@ -43,7 +43,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.SuperAdminProfile
 
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPost("super-admin-edit-password/{superAdminId}")]
+        [HttpPost("superAdmin--edit-password/{superAdminId}")]
         public async Task<IActionResult> RequestEditPassword(int superAdminId, [FromBody] EditPasswordRequest request)
         {
             await profile.RequestEditPassword(superAdminId, request);
@@ -51,7 +51,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.SuperAdminProfile
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPost("super-admin-confirm-edit-password/{superAdminId}")]
+        [HttpPost("superAdmin--confirm-edit-password/{superAdminId}")]
         public async Task<IActionResult> ConfirmEditPassword(int superAdminId, [FromBody] ConfirmEditPasswordRequest request)
         {
             var result = await profile.ConfirmEditPassword(superAdminId, request);
@@ -59,7 +59,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.SuperAdminProfile
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPut("super-admin-edit-name/{superAdminId}")]
+        [HttpPut("superAdmin--edit-name/{superAdminId}")]
         public async Task<IActionResult> EditName(int superAdminId, [FromBody] EditNameRequest request)
         {
             var result = await profile.EditName(superAdminId, request);
@@ -67,7 +67,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.SuperAdminProfile
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPut("super-admin-edit-profile-image/{superAdminId}")]
+        [HttpPut("superAdmin--edit-profile-image/{superAdminId}")]
         public async Task<IActionResult> EditProfileImage(int superAdminId, [FromForm] EditProfileImageRequest request)
         {
             var result = await profile.EditProfileImage(superAdminId, request);

@@ -7,11 +7,11 @@ using Sehatak.Application.Interfaces.SuperAdminInterface;
 namespace Sehatak.API.Controllers.SuperAdminController.AuthSuperAdmin
 {
     [ApiController]
-    [Route("api/[Controller]")]
-    public class SuperAdminController : ControllerBase
+    [Route("[Controller]")]
+    public class AuthController : ControllerBase
     {
         private readonly ISuperAdminAuthService superAdminAuthService;
-        public SuperAdminController(ISuperAdminAuthService superAdminAuthService)
+        public AuthController(ISuperAdminAuthService superAdminAuthService)
         {
             this.superAdminAuthService = superAdminAuthService;
         }

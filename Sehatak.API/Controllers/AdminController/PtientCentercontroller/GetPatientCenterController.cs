@@ -7,7 +7,7 @@ using Sehatak.Domain.Enums;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.PtientCentercontroller
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     public class GetPatientCenterController : ControllerBase
     {
         private readonly IGetpatientCenter getpatient;
@@ -17,14 +17,14 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.PtientCentercontroller
         }
 
         [Authorize(Policy = "AdminOrAbove")]
-        [HttpPost("get-patients-from-center/{centerId}")]
+        [HttpPost("admin-get-patients-from-center/{centerId}")]
         public async Task<IActionResult> GetPatientsAsync(int centerId,[FromBody]AppointmentStatus status)
         {
             var result = await getpatient.GetPatientesAsync(centerId,status);
             return Ok(result);
         }
         [Authorize(Policy = "AdminOrAbove")]
-        [HttpPost("get-patient-from-center/{centerId}")]
+        [HttpPost("admin-get-patient-from-center/{centerId}")]
         public async Task<IActionResult> GetPatientAsync(int centerId, [FromBody] GetPatientRequestDto request)
         {
             var result = await getpatient.GetPatientAsync(centerId , request);

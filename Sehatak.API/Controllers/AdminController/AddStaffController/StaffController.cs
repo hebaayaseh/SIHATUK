@@ -7,16 +7,16 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.AdminController.AddStaffController
 {
     [ApiController]
-    [Route("api/[Controller]")]
-    public class AddStaffController : ControllerBase
+    [Route("[Controller]")]
+    public class StaffController : ControllerBase
     {
         private readonly ISignup signup;
-        public AddStaffController(ISignup signup)
+        public StaffController(ISignup signup)
         {
             this.signup = signup;
         }
         [Authorize(Policy = "AdminOnly")]
-        [HttpPost("add-staff/{centerId}")]
+        [HttpPost("admin-add-staff/{centerId}")]
         public async Task<IActionResult> AddSttaf(int centerId, [FromForm] AddStaffRequestDto request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);

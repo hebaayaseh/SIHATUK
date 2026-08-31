@@ -7,10 +7,10 @@ namespace Sehatak.API.Controllers.StaffLogin
 {
     [ApiController]
     [Route("api/[Controller]")]
-    public class StaffLoginController : ControllerBase
+    public class AuthController : ControllerBase
     {
         private readonly IStaffLogin staffLogin;
-        public StaffLoginController(IStaffLogin staffLogin)
+        public AuthController(IStaffLogin staffLogin)
         {
             this.staffLogin = staffLogin;
         }

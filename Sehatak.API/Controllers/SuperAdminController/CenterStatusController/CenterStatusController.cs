@@ -6,7 +6,7 @@ using Sehatak.Domain.Enums.SharedEnums;
 namespace Sehatak.API.Controllers.SuperAdminController.CenterStatusController
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     public class CenterStatusController : ControllerBase
     {
         private readonly ICentersStatus centerStatusService;
@@ -16,7 +16,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.CenterStatusController
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPatch("suspened-center/{centerId}")]
+        [HttpPatch("superAdmin-suspened-center/{centerId}")]
         public async Task<IActionResult> SuspendedCenter(int centerId)
         {
             var result = await centerStatusService.SuspendedCenter(centerId);
@@ -25,7 +25,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.CenterStatusController
 
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpPatch("active-center/{centerId}")]
+        [HttpPatch("superAdmin-active-center/{centerId}")]
         public async Task<IActionResult> ActiveCenter(int centerId)
         {
             var result = await centerStatusService.ActiveCenter(centerId);

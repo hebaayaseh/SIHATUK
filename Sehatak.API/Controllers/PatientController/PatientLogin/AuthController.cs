@@ -9,7 +9,7 @@ using Sehatak.Application.Interfaces.AuthPatient;
 namespace Sehatak.API.Controllers.PatientController.Patient
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService authService;
@@ -19,15 +19,13 @@ namespace Sehatak.API.Controllers.PatientController.Patient
             
         }
         [EnableRateLimiting("LoginPolicy")]
-        [AllowAnonymous]
-        [HttpPost("register-patient/{centerId}")]
+        [HttpPost("patient-register-patient/{centerId}")]
         public async Task<IActionResult> RegisterPatient (int centerId,[FromForm] RegisterRequestDto registerRequestDto)
         {
             var result = await authService.RegisterAsync(centerId,registerRequestDto);
             return Ok(result);
         }
-        [AllowAnonymous]
-        [HttpPost("verify-code/{centerId}")]
+        [HttpPost("patient-verify-code/{centerId}")]
         public async Task<IActionResult> VerifyCode(int centerId,[FromBody] VerifyOtpRequestDto request)
         {
             var result = await authService.VerifyOtpAsync(centerId,request);
@@ -40,7 +38,7 @@ namespace Sehatak.API.Controllers.PatientController.Patient
 
         [EnableRateLimiting("LoginPolicy")]
         [AllowAnonymous]
-        [HttpPost("login-patient/{centerId}")]
+        [HttpPost("patient-login-patient/{centerId}")]
         public async Task<IActionResult> LoginPatient(int centerId, [FromBody] PatientRequestDto registerRequestDto)
         {
             var result = await authService.LoginPatientAsync(centerId, registerRequestDto);

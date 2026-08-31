@@ -9,7 +9,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.Consultationcontroller
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     public class ConsultationController : ControllerBase
     {
         private readonly IConsultation consultation;
@@ -19,7 +19,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
 
-        [HttpGet("get-doctors/{centerId}")]
+        [HttpGet("patient-get-doctors/{centerId}")]
         public async Task<IActionResult> GetDoctors(int centerId)
         {
             var result = await consultation.GetDoctorEnableConsultation(centerId);
@@ -37,7 +37,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "PatientOnly")]
-        [HttpGet("get-consultation/{centerId}/{doctorId}")]
+        [HttpGet("patient-get-consultation/{centerId}/{doctorId}")]
         public async Task<IActionResult> GetConsultation(int centerId, int doctorId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -46,7 +46,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "PatientOnly")]
-        [HttpPost("get-patient-consultation/{centerId}")]
+        [HttpPost("patient-get-patient-consultation/{centerId}")]
         public async Task<IActionResult> GetConsultations(int centerId, [FromBody] ConsultationStatus status)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -55,7 +55,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "PatientOnly")]
-        [HttpPost("record-payment/{centerId}/{consultationId}")]
+        [HttpPost("patient-record-payment/{centerId}/{consultationId}")]
         public async Task<IActionResult> ConsultationRecordPaymentAsync(int centerId, int consultationId, [FromBody] PaymentRequestDto request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -65,7 +65,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
 
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpPost("confirm-payment/{centerId}/{paymentId}")]
+        [HttpPost("doctor-confirm-payment/{centerId}/{paymentId}")]
         public async Task<IActionResult> ConfirmPayment(int centerId, int paymentId, [FromBody] ConfirmPaymentRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -74,7 +74,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpPost("reject-payment/{centerId}/{paymentId}")]
+        [HttpPost("doctor-reject-payment/{centerId}/{paymentId}")]
         public async Task<IActionResult> RejectConsultationPayment(int centerId, int paymentId, [FromBody] RejectReasonRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -83,7 +83,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpPost("reject-request/{centerId}/{consultationId}")]
+        [HttpPost("doctor-reject-request/{centerId}/{consultationId}")]
         public async Task<IActionResult> RejectConsultationRequest(int centerId, int consultationId, [FromBody] RejectReasonRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -92,7 +92,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpGet("pending-payments/{centerId}")]
+        [HttpGet("doctor-pending-payments/{centerId}")]
         public async Task<IActionResult> GetPendingPayments(int centerId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -101,7 +101,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpGet("pending-payments/{centerId}/{paymentId}")]
+        [HttpGet("doctor-pending-payments/{centerId}/{paymentId}")]
         public async Task<IActionResult> GetPendingPayment(int centerId, int paymentId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -110,7 +110,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "PatientOnly")]
-        [HttpPut("cancel/{centerId}/{consultationId}")]
+        [HttpPut("patient-cancel/{centerId}/{consultationId}")]
         public async Task<IActionResult> CancelConsultationAsync(int centerId , int consultationId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -119,7 +119,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpPut("complete-consultation/{centerId}/{consultationId}")]
+        [HttpPut("doctor-complete-consultation/{centerId}/{consultationId}")]
         public async Task<IActionResult> CompleteConsultationAsync(int centerId, int consultationId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -128,7 +128,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpGet("get-doctor-consultation/{centerId}")]
+        [HttpGet("doctor-get-doctor-consultation/{centerId}")]
         public async Task<IActionResult> GetConsultationsSchedualeAsync(int centerId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);

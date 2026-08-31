@@ -6,7 +6,7 @@ using Sehatak.Application.Interfaces.IFinancialReports;
 namespace Sehatak.API.Controllers.SuperAdminController.FinancialReport
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     public class FinancialReportController : ControllerBase
     {
         private readonly IFinancialReport financialReport;
@@ -15,7 +15,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.FinancialReport
             this.financialReport = financialReport;
         }
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpGet("financial-report")]
+        [HttpGet("superAdmin-financial-report")]
         public async Task<IActionResult> ExportReport([FromQuery] int year, [FromQuery] int? month)
         {
             var request = new FinancialReportRequestDto { Year = year, Month = month };

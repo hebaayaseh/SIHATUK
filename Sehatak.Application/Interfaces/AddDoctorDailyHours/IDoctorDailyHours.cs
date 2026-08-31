@@ -1,5 +1,6 @@
 ﻿using Sehatak.Application.DTOs.AddDoctorDailyHour;
 using Sehatak.Application.DTOs.AddDoctorDailyHourDto;
+using Sehatak.Application.DTOs.DoctorDto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,5 +15,6 @@ namespace Sehatak.Application.Interfaces.AddDoctorDailyHours
         Task<UpdateDoctorDailyHoursResponse> UpdateDoctorDailyHoursAsync(int centerId, int userId, int doctorId, UpdateDoctorDailyHousrRequest request);
         Task<string> CancleDailyHoursAsync(int centerId, int doctorId, DateOnly date);
         Task<List<GetDoctorDailyHoursResponse>> GetDoctorDailyHoursAsync(int centerId, int doctorId);
+        Task<DoctorAppointmentResponse> GetDoctorAppointmentsForDayAsync(int centerId, int userId, DateOnly? date);
     }
 }

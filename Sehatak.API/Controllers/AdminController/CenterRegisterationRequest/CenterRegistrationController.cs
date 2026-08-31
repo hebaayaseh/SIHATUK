@@ -7,7 +7,7 @@ using Sehatak.Application.Interfaces.CenterRegistrationRequest;
 namespace Sehatak.API.Controllers.CenterRegistration
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     public class CenterRegistrationController : ControllerBase
     {
         private readonly ICenterRegistration _registrationService;
@@ -18,7 +18,7 @@ namespace Sehatak.API.Controllers.CenterRegistration
         }
 
 
-        [HttpPost("request")]
+        [HttpPost("center-registration")]
         public async Task<IActionResult> CenterRequest([FromForm] CenterRegistrationRequestDto request)
         {
             var result = await _registrationService.CenterRequestAsync(request);
@@ -33,7 +33,7 @@ namespace Sehatak.API.Controllers.CenterRegistration
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
-        [HttpGet("pending-payments")]
+        [HttpGet("superAdmin-pending-payments")]
         public async Task<IActionResult> GetPendingRegistrationPayments()
         {
             var result = await _registrationService.GetPendingRegistrationPaymentsAsync();

@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.SuperAdminAndAdmin.ServicePricecontroller
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     public class ServicePriceController : ControllerBase
     {
         private readonly IServicePrice servicePrice;
@@ -18,7 +18,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.ServicePricecontroller
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpPost("add-service-price/{centerId}")]
+        [HttpPost("admin-add-service-price/{centerId}")]
         public async Task<IActionResult> AddSrevicePrice(int centerId,[FromBody]ServicePriceRequest request)
         {
             var userId = int.Parse(
@@ -28,7 +28,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.ServicePricecontroller
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpPost("update-service-price/{centerId}")]
+        [HttpPost("admin-update-service-price/{centerId}")]
         public async Task<IActionResult> UpdateSrevicePrice(int centerId,[FromForm] UpdateServicePrice request)
         {
             var userId = int.Parse(
@@ -38,7 +38,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.ServicePricecontroller
         }
 
         [Authorize(Policy = "AdminOnly")]
-        [HttpPost("remove-service-price/{centerId}/{servicePriceId}")]
+        [HttpPost("admin-remove-service-price/{centerId}/{servicePriceId}")]
         public async Task<IActionResult> RemoveSrevicePrice(int centerId, int servicePriceId)
         {
             var userId = int.Parse(

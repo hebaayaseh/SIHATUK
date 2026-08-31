@@ -7,16 +7,16 @@ using Sehatak.Application.Interfaces.IProfileInterface;
 namespace Sehatak.API.Controllers.PatientController.EditProfile
 {
     [ApiController]
-    [Route("api/[Controller]")]
-    public class EditProfileController : ControllerBase
+    [Route("[Controller]")]
+    public class EditPatientProfileController : ControllerBase
     {
         private readonly IProfilePatient profilePatient;
-        public EditProfileController(IProfilePatient profilePatient)
+        public EditPatientProfileController(IProfilePatient profilePatient)
         {
             this.profilePatient = profilePatient;
         }
         [Authorize(Policy = "Patient")]
-        [HttpPut("edit-patient-information/{centerId}")]
+        [HttpPut("patient-edit-patient-information/{centerId}")]
         public async Task<IActionResult> EditPatientInformation(int centerId, [FromForm] EditPatientInformationRequest request)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
@@ -24,7 +24,7 @@ namespace Sehatak.API.Controllers.PatientController.EditProfile
             return Ok(result);
         }
         [Authorize("Patient")]
-        [HttpPost("edit-patient-email/{centerId}")]
+        [HttpPost("patient-edit-patient-email/{centerId}")]
         public async Task<IActionResult> EditPatientEmail(int centerId, [FromForm] EditEmailRequest request)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
@@ -32,7 +32,7 @@ namespace Sehatak.API.Controllers.PatientController.EditProfile
             return Ok(result);
         }
         [Authorize("Patient")]
-        [HttpPost("confirm-edit-patient-email/{centerId}")]
+        [HttpPost("patient-confirm-edit-patient-email/{centerId}")]
         public async Task<IActionResult> ConfirmEditPatientEmail(int centerId, [FromForm] ConfirmEditEmailRequest request)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
@@ -40,7 +40,7 @@ namespace Sehatak.API.Controllers.PatientController.EditProfile
             return Ok(result);
         }
         [Authorize("Patient")]
-        [HttpPost("edit-patient-password/{centerId}")]
+        [HttpPost("patient-edit-patient-password/{centerId}")]
         public async Task<IActionResult> EditPatientPassword(int centerId, [FromForm] EditPasswordRequest request)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
@@ -48,7 +48,7 @@ namespace Sehatak.API.Controllers.PatientController.EditProfile
             return Ok(result);
         }
         [Authorize("Patient")]
-        [HttpPost("confirm-edit-patient-password/{centerId}")]
+        [HttpPost("patient-confirm-edit-patient-password/{centerId}")]
         public async Task<IActionResult> ConfirmEditPatientPassword(int centerId, [FromForm] ConfirmEditPasswordRequest request)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
@@ -56,7 +56,7 @@ namespace Sehatak.API.Controllers.PatientController.EditProfile
             return Ok(result);
         }
         [Authorize("Patient")]
-        [HttpGet("view-patient-information/{centerId}")]
+        [HttpGet("patient-view-patient-information/{centerId}")]
         public async Task<IActionResult> ViewPatientInformation(int centerId)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
