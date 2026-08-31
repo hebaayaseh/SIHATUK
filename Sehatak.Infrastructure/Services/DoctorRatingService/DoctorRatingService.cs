@@ -98,6 +98,53 @@ namespace Sehatak.Infrastructure.Services.DoctorRaitingService
             };
         }
 
-        
+        public async Task<DoctorRatingResponse> UpdateDoctorRatingAsync(int centerId, int userId, UpdateDoctorRatingRequest request)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(p => p.userId == userId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            var rating = await db.DoctorRatings
+                .FirstOrDefaultAsync(r => r.Id == request.RatingId
+                                     && r.PatientId == patient.patientId);
+
+            if (rating == null)
+                throw new BusinessException("Rating.NotFound");
+
+            if (request.Rating != null)
+                rating.Rating = (int)request.Rating;
+
+            if(request.Review != null)
+                rating.Review = request.Review;
+
+            rating.UpdateAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+
+            return new DoctorRatingResponse
+            {
+                Id = rating.Id,
+                PatientId = rating.PatientId,
+                PatientName = $"{patient.user.firstName} {patient.user.lastName}",
+                AppointmentId = rating.AppointmentId,
+                Rating = rating.Rating,
+                Review = rating.Review,
+                CreatedAt = rating.CreatedAt,
+                UpdateAt = rating.UpdateAt,
+                DoctorId = rating.DoctorId
+            };
+        }
     }
 }
