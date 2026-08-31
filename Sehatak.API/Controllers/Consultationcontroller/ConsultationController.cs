@@ -28,7 +28,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
 
 
         [Authorize(Policy = "PatientOnly")]
-        [HttpPost("request/{centerId}/{doctorId}")]
+        [HttpPost("patient-request/{centerId}/{doctorId}")]
         public async Task<IActionResult> RequestConsultation(int centerId, int doctorId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);

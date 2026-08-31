@@ -19,7 +19,7 @@ using EmailVerificationCode = Sehatak.Domain.Entities.General.EmailVerificationC
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
 {
-    public class SuperAdminAuthService : ISuperAdminAuthService
+    public class SuperAdminAuthService : ISuperAdminAuth
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly ITokenService tokenService;

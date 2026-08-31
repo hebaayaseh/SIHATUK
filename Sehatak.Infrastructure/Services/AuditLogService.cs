@@ -9,7 +9,7 @@ using Sehatak.Infrastructure.Data;
 
 
 namespace Sehatak.Infrastructure.Services;
-    public class AuditLogService : IAuditLogService
+    public class AuditLogService : IAuditLog
     {
         private readonly TenantDbContextAccessor _tenantDbAccessor;
         private readonly IHttpContextAccessor _httpContextAccessor;

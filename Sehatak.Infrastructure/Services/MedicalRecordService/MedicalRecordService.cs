@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.MedicalRecordDto;
-using Sehatak.Application.Interfaces.DoctorAppointment;
 using Sehatak.Application.Interfaces.IMedicalRecord;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;

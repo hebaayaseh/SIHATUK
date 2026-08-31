@@ -25,7 +25,7 @@ using Volo.Abp;
 
 
 namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
-    public class AuthService : IAuthService
+    public class AuthService : IAuth
     {
     private readonly SharedDbContext sharedDbContext;
     private readonly TenantDbContextFactory tenantFactory;

@@ -12,8 +12,8 @@ namespace Sehatak.API.Controllers.PatientController.Patient
     [Route("[Controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly IAuthService authService;
-        public AuthController(IAuthService authService)
+        private readonly IAuth authService;
+        public AuthController(IAuth authService)
         {
             this.authService = authService;
             

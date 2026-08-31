@@ -6,7 +6,7 @@ using Sehatak.Infrastructure.Services;
 namespace Sehatak.API.Controllers.Chat
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     [Authorize(Policy = "MedicalStaff")]
     public class ChatController : ControllerBase
     {

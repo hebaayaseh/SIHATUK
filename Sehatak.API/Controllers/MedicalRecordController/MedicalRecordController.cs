@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace Sehatak.API.Controllers.MedicalRecordController
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("[Controller]")]
     public class MedicalRecordController :ControllerBase
     {
         private readonly IMedicalRecord medical;
@@ -18,7 +18,7 @@ namespace Sehatak.API.Controllers.MedicalRecordController
         }
 
         [Authorize("DoctorOnly")]
-        [HttpPost("add-medicalrecord/{centerId}")]
+        [HttpPost("doctor-add-medicalrecord/{centerId}")]
         public async Task<IActionResult> AddMedicakRecor(int centerId,[FromBody]MedicalRecordDetailRequestDto request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -27,7 +27,7 @@ namespace Sehatak.API.Controllers.MedicalRecordController
         }
 
         [Authorize("DoctorOnly")]
-        [HttpPost("update-medicalrecord/{centerId}")]
+        [HttpPost("doctor-update-medicalrecord/{centerId}")]
         public async Task<IActionResult> UpdateMedicakRecor(int centerId, [FromBody] UpdateMedicalRecordRequestDto request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -36,7 +36,7 @@ namespace Sehatak.API.Controllers.MedicalRecordController
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpGet("patient-history/{centerId}/{patientId}")]
+        [HttpGet("doctor-patient-history/{centerId}/{patientId}")]
         public async Task<IActionResult> GetPatientMedicalHistory(int centerId, int patientId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -45,7 +45,7 @@ namespace Sehatak.API.Controllers.MedicalRecordController
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpGet("record/{centerId}/{medicalRecordId}")]
+        [HttpGet("doctor-record/{centerId}/{medicalRecordId}")]
         public async Task<IActionResult> GetMedicalRecordById(int centerId, int medicalRecordId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
