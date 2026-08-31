@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Sehatak.Application.DTOs.CentersDto
 {
-    public class ListOfCentersResponse
+    public class ListOfCentersResponseDto
     {
         public int Id { get; set; }
 

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Sehatak.Application.DTOs.AppointmentDto
 {
-    public class GetPatientWaitListDto
+    public class GetPatientWaitList
     {
         public int WaitLisId {  get; set; }
         public int PatientId { get; set; }

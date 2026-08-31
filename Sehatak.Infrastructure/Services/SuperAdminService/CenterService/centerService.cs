@@ -224,10 +224,10 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
             };
 
         }
-        public async Task<List<ListOfCentersResponse>> GetListOfCenters()
+        public async Task<List<ListOfCentersResponseDto>> GetListOfCenters()
         {
             var centers = await sharedDbContext.MedicalCenters
-                .Select(c => new ListOfCentersResponse
+                .Select(c => new ListOfCentersResponseDto
                 {
                     Id = c.Id,
                     Name = c.Name,

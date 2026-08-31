@@ -15,7 +15,7 @@ namespace Sehatak.Application.Interfaces.ApointmentInterface
         Task<string> CancelAppointmentAsync(int centerId , int doctor ,int userId , CancelAppointmentRequest request);
         Task<BookAppointmentRespesponse> RescheduleAppointmentAsync(int centerId , int doctorId , int userId , RescheduleAppointmentRequest request);
         Task<string> JoinWaitListAsync(int centerId, int doctorId, int userId, DateOnly date);
-        Task<List<GetPatientWaitListDto>> GetPatientsWaitListsAsync(int centerId,int doctorId,DateOnly date);
-        Task<GetPatientWaitListDto> GetPatientWaitListsAsync(int centerId, int doctorId, int userId ,DateOnly date);
+        Task<List<GetPatientWaitList>> GetPatientsWaitListsAsync(int centerId,int doctorId,DateOnly date);
+        Task<GetPatientWaitList> GetPatientWaitListsAsync(int centerId, int doctorId, int userId ,DateOnly date);
     }
 }

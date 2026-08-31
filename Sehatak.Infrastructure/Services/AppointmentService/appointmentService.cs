@@ -640,7 +640,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         }
 
-        public async Task<List<GetPatientWaitListDto>> GetPatientsWaitListsAsync(int centerId, int doctorId,DateOnly date)
+        public async Task<List<GetPatientWaitList>> GetPatientsWaitListsAsync(int centerId, int doctorId,DateOnly date)
         {
 
             var center = await sharedDbContext.MedicalCenters
@@ -664,7 +664,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .Include(p=>p.Patient)
                 .Where(d => d.DoctorId == doctor.Id
                        && d.PreferredDate == date)
-                .Select(w => new GetPatientWaitListDto
+                .Select(w => new GetPatientWaitList
                 {
                     WaitLisId = w.Id,
                     PatientId = w.PatientId,
@@ -680,7 +680,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             return patients;
         }
 
-        public async Task<GetPatientWaitListDto> GetPatientWaitListsAsync(int centerId, int doctorId, int userId, DateOnly date)
+        public async Task<GetPatientWaitList> GetPatientWaitListsAsync(int centerId, int doctorId, int userId, DateOnly date)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -712,7 +712,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .Where(w => w.PatientId == patient.patientId
                                      && w.DoctorId == doctorId
                                      && w.PreferredDate == date)
-                .Select(n => new GetPatientWaitListDto
+                .Select(n => new GetPatientWaitList
                 {
                     WaitLisId = n.Id,
                     PatientId = n.PatientId,

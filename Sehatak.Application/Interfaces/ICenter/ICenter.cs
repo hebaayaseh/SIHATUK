@@ -13,7 +13,7 @@ namespace Sehatak.Application.Interfaces.MedicalCenter
         Task<CenterResponseDto> CreateCenterAsync(createCenterRequestDto request);
         Task<CreateAdminResponseDto> CreateAdminAsync(int centerId, CreateAdminRequestDto request);
         Task<SpasificCenterResponseDto> GetSpasificCenterById(int centerId);
-        Task<List<ListOfCentersResponse>> GetListOfCenters();
+        Task<List<ListOfCentersResponseDto>> GetListOfCenters();
         Task<bool> SuspendedCenter(int centerId);
         Task<bool> ActiveCenter(int centerId);
     }
