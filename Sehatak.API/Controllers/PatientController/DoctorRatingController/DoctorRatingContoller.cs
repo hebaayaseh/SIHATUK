@@ -35,5 +35,14 @@ namespace Sehatak.API.Controllers.PatientController.DoctorRaitingController
             return Ok(result);
         }
 
+        [Authorize(Policy = "PatientOnly")]
+        [HttpPost("patient-remove-doctor-rating/{centerId}/{ratingId}")]
+        public async Task<IActionResult> RemoveDoctorRatingAsync(int centerId,int ratingId)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await rating.RemoveDoctorRatingAsync(centerId, userId, ratingId);
+            return Ok(result);
+        }
+
     }
 }

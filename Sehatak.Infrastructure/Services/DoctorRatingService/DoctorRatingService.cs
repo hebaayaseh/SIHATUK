@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DocumentFormat.OpenXml.Office2016.Excel;
+using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.DoctorRaitingDto;
 using Sehatak.Application.DTOs.DoctorRatingDto;
 using Sehatak.Application.DTOs.Exceptions;
@@ -98,6 +99,37 @@ namespace Sehatak.Infrastructure.Services.DoctorRaitingService
             };
         }
 
+        public async Task<string> RemoveDoctorRatingAsync(int centerId, int userId, int ratingId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(p => p.userId == userId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            var rating = await db.DoctorRatings
+                .FirstOrDefaultAsync(r => r.Id == ratingId
+                                     && r.PatientId == patient.patientId);
+
+            if (rating == null)
+                throw new BusinessException("Rating.NotFound");
+
+            db.Remove(rating);
+            await db.SaveChangesAsync();
+            return "تم الحذف بنجاح";
+        }
+
         public async Task<DoctorRatingResponse> UpdateDoctorRatingAsync(int centerId, int userId, UpdateDoctorRatingRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
@@ -125,7 +157,7 @@ namespace Sehatak.Infrastructure.Services.DoctorRaitingService
                 throw new BusinessException("Rating.NotFound");
 
             if (request.Rating != null)
-                rating.Rating = (int)request.Rating;
+                rating.Rating = (int)request.Rating.Value;
 
             if(request.Review != null)
                 rating.Review = request.Review;
