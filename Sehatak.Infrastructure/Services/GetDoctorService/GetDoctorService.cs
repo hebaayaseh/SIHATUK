@@ -87,6 +87,7 @@ namespace Sehatak.Infrastructure.Services.GetStaff
 
             using var db = contextFactory.CreateForCenter(centerId);
 
+
             return await db.Departments
                 .Select(p => new GetDoctorsResponseDto
                 {
@@ -100,12 +101,13 @@ namespace Sehatak.Infrastructure.Services.GetStaff
                         DoctorId = a.Id,
                         DoctorName = a.user.firstName+" "+a.user.lastName,
                         isActive = a.user.isActive,
-                        
+                        AvrageRating = a.doctorRatings.Any() ? a.doctorRatings.Average(r => r.Rating) : 0,
+                        Reviews = a.doctorRatings.Select(r => r.Review).ToList()
+
                     }).ToList()
                 }).ToListAsync();
 
         }
 
-        
     }
 }
