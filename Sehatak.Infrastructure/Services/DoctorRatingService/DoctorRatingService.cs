@@ -45,8 +45,8 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             if (appointment == null)
                 throw new BusinessException("Appointment.NotFound");
 
-            //if (appointment.appointmentStatus != AppointmentStatus.Completed)
-            //    throw new BusinessException("DoctorRating.AppointmentNotCompleted");
+            if (appointment.appointmentStatus != AppointmentStatus.Completed)
+                throw new BusinessException("DoctorRating.AppointmentNotCompleted");
 
             if (appointment.Rating != null)
                 throw new BusinessException("DoctorRating.AlreadyRated");

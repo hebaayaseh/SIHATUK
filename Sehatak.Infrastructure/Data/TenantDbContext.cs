@@ -2,6 +2,7 @@
 using Sehatak.Domain.Entities;
 using Sehatak.Domain.Entities.General;
 using Sehatak.Domain.Entities.TenantEntities;
+using Sehatak.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -133,7 +134,7 @@ namespace Sehatak.Infrastructure.Data
             {
                 entity.ToTable("patients");
                 entity.HasKey(e => e.patientId);
-
+                entity.HasIndex(e => e.userId).IsUnique();
                 entity.Property(e => e.Gender)
                       .HasConversion<string>();
 
@@ -160,6 +161,7 @@ namespace Sehatak.Infrastructure.Data
             {
                 entity.ToTable("doctor_schedules");
                 entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.DoctorId);
 
                 // DayOfWeek ينحفظ كـ string بالداتا بيس
                 entity.Property(e => e.DayOfWeek)
@@ -176,7 +178,7 @@ namespace Sehatak.Infrastructure.Data
             {
                 entity.ToTable("staff_shifts");
                 entity.HasKey(e => e.Id);
-
+                entity.HasIndex(e => e.UserId);
                 entity.Property(e => e.ShiftDate)
                       .HasConversion<string>();
 
@@ -194,6 +196,8 @@ namespace Sehatak.Infrastructure.Data
             {
                 entity.ToTable("appointments");
                 entity.HasKey(e => e.Id);
+                entity.HasIndex(e => new { e.patientId, e.appointmentStatus });
+                entity.HasIndex(e => new { e.doctorId, e.appointmentDate });
 
                 entity.Property(e => e.prepayment)
                       .HasPrecision(10, 2);
@@ -482,6 +486,7 @@ namespace Sehatak.Infrastructure.Data
             {
                 entity.ToTable("doctor_ratings");
                 entity.HasKey(e => e.Id);
+                entity.HasIndex(e => new { e.DoctorId, e.PatientId });
 
                 // كل موعد ما ينقيّم أكثر من مرة
                 entity.HasIndex(e => e.AppointmentId).IsUnique();
