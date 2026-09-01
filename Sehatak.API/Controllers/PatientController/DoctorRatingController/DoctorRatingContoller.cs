@@ -44,5 +44,14 @@ namespace Sehatak.API.Controllers.PatientController.DoctorRaitingController
             return Ok(result);
         }
 
+        [Authorize(Policy = "PatientOnly")]
+        [HttpPost("patient-get-ratings/{centerId}")]
+        public async Task<IActionResult> PatientGetRatingsAsync(int centerId)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await rating.PatientGetRatingsAsync(centerId, userId);
+            return Ok(result);
+        }
+
     }
 }

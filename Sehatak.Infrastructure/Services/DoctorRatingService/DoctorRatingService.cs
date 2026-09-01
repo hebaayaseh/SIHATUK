@@ -99,6 +99,45 @@ namespace Sehatak.Infrastructure.Services.DoctorRaitingService
             };
         }
 
+        
+
+        public async Task<List<GetMyRatingsResponse>> PatientGetRatingsAsync(int centerId,int userId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(p => p.userId == userId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            return await db.DoctorRatings
+                .Include(r=> r.Doctor)
+                .Where(r => r.PatientId == patient.patientId)
+                .Select(r => new GetMyRatingsResponse
+                {
+                    ratingId = r.Id,
+                    doctorId = r.DoctorId,
+                    doctorName = $"{r.Doctor.user.firstName} {r.Doctor.user.lastName}",
+                    AppointmentId = r.AppointmentId,
+                    Rating = r.Rating,
+                    Review = r.Review,
+                    CreatedAt = r.CreatedAt,
+                    UpdateAt = r.UpdateAt
+                })
+                .ToListAsync();
+
+        }
+
         public async Task<string> RemoveDoctorRatingAsync(int centerId, int userId, int ratingId)
         {
             var center = await sharedDbContext.MedicalCenters
@@ -178,5 +217,6 @@ namespace Sehatak.Infrastructure.Services.DoctorRaitingService
                 DoctorId = rating.DoctorId
             };
         }
+
     }
 }
