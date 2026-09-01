@@ -3,15 +3,8 @@ using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.GetStaffDto;
 using Sehatak.Application.DTOs.SearchDoctorDto;
 using Sehatak.Application.Interfaces.SearchDoctor;
-using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using Sehatak.Infrastructure.Services.GetStaff;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.SearchDoctorService
 {

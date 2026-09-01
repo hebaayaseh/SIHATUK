@@ -9,6 +9,7 @@ namespace Sehatak.Application.Interfaces.ApointmentInterface
 {
     public interface IAppointment
     {
+        Task<GetDoctorSummaryResponse> GetDoctorAsync(int centerId, int doctorId);
         Task<AvailableDoctorSlot> GetAvailableDoctorSlot(int centerId, int doctorId,DateOnly date);
         Task<BookAppointmentRespesponse> BookAppointmentAsync(int centerId , int doctorId ,int userId , BookAppointmentRequest request);
         Task<string> DeleteDoctorSlotAsync(int centerId, int userId, DeleteDoctorSlotRequest request);

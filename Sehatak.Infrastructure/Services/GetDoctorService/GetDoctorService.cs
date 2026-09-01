@@ -106,8 +106,6 @@ namespace Sehatak.Infrastructure.Services.GetStaff
 
                     }).ToList()
                 }).ToListAsync();
-
         }
-
     }
 }

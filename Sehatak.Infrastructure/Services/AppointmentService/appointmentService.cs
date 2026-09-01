@@ -728,5 +728,35 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             return waitList;
         }
+
+        public async Task<GetDoctorSummaryResponse> GetDoctorAsync(int centerId, int doctorId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.Id == doctorId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            return new GetDoctorSummaryResponse
+            {
+                DoctorId = doctorId,
+                DoctorName = $"{doctor.user.firstName} {doctor.user.lastName}",
+                Bio = doctor.Bio,
+                Specialization = doctor.Specialization,
+                AvrageRating = doctor.doctorRatings.Any() ? doctor.doctorRatings.Average(r => r.Rating) : 0,
+                Reviews = doctor.doctorRatings.Select(r => r.Review).ToList()
+            };
+        }
     }
 }
