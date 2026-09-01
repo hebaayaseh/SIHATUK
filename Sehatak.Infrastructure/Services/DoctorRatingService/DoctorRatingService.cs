@@ -99,7 +99,44 @@ namespace Sehatak.Infrastructure.Services.DoctorRaitingService
             };
         }
 
-        
+        public async Task<DoctorGetRatingResponse> DoctorGetRatingsAsync(int centerId, int userId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.userId == userId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var ratings = await db.DoctorRatings
+                .Include(p => p.Patient)
+                .Where(p => p.DoctorId == doctor.Id)
+                .ToListAsync();
+
+            return new DoctorGetRatingResponse
+            {
+                AvrageRating = doctor.doctorRatings.Any() ? doctor.doctorRatings.Average(r => r.Rating) : 0,
+                PatientRatings = ratings.Select(p => new PatientSummaryRating
+                {
+                    patientId = p.PatientId,
+                    patientName = $"{p.Patient.user.firstName} {p.Patient.user.lastName}",
+                    AppointmentId = p.AppointmentId,
+                    Rating = p.Rating,
+                    Review = p.Review
+                }).ToList() 
+            };
+
+        }
 
         public async Task<List<GetMyRatingsResponse>> PatientGetRatingsAsync(int centerId,int userId)
         {
