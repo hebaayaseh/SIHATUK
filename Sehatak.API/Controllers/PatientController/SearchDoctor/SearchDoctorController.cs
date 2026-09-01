@@ -14,7 +14,7 @@ namespace Sehatak.API.Controllers.PatientController.SearchDoctor
         {
             this.searchDoctor = searchDoctor;
         }
-        [HttpPost("patient-search-doctor-name/{centerId}")]
+        [HttpPost("search-doctor-name/{centerId}")]
         public async Task<IActionResult> SearchDoctor(int centerId , [FromBody] SearchDoctorRequest request)
         {
             var result = await searchDoctor.SearchDoctorAsync(centerId, request);
