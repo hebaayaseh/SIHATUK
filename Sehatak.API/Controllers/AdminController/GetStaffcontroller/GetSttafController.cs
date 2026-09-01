@@ -13,8 +13,8 @@ namespace Sehatak.API.Controllers.AdminController.GetStaffcontroller
         {
             this.getStaff = getStaff;
         }
-
-        [HttpGet("get-doctors/{centerId}")]
+        [Authorize("AdminOnly")]
+        [HttpGet("admin-get-doctors/{centerId}")]
         public async Task<IActionResult> GetDoctorsWithDepartments(int centerId)
         {
             var result = await getStaff.GetDoctorsAsync(centerId);

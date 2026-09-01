@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sehatak.Application.DTOs.DoctorRaitingDto
+namespace Sehatak.Application.DTOs.DoctorRatingDto
 {
     public class AddDoctorRatingRequest
     {

@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Sehatak.Application.DTOs.DoctorRaitingDto;
 using Sehatak.Application.DTOs.DoctorRatingDto;
 using Sehatak.Application.Interfaces.IDoctorRating;
 using System.Security.Claims;

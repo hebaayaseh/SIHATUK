@@ -81,7 +81,6 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
             return Ok(result);
         }
 
-        [Authorize(Policy = "PatientOnly")]
         [HttpGet("patient-get-doctor/{centerId}/{doctorId}")]
         public async Task<IActionResult> GetDoctor(int centerId, int doctorId)
         {
@@ -89,6 +88,15 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
             var result = await slotService.GetDoctorAsync(centerId, doctorId);
             return Ok(result);
         }
+
+        [HttpGet("patient-get-doctors/{centerId}")]
+        public async Task<IActionResult> GetDoctors(int centerId)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await slotService.GetDoctorsAsync(centerId);
+            return Ok(result);
+        }
+
 
 
     }

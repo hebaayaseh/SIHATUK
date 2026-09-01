@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.AppointmentDto;
 using Sehatak.Application.DTOs.Exceptions;
+using Sehatak.Application.DTOs.GetStaffDto;
 using Sehatak.Application.Interfaces.ApointmentInterface;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
@@ -757,6 +758,40 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 AvrageRating = doctor.doctorRatings.Any() ? doctor.doctorRatings.Average(r => r.Rating) : 0,
                 Reviews = doctor.doctorRatings.Select(r => r.Review).ToList()
             };
+        }
+
+        public async Task<List<GetDoctorsResponseDto>> GetDoctorsAsync(int centerId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                 .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctors = await db.Doctors
+                .Include(d => d.user)
+                .Where(d => d.user.isActive)
+                .ToListAsync();
+
+            return await db.Departments
+                .Select(p => new GetDoctorsResponseDto
+                {
+                    DepartmentId = p.Id,
+                    DepartmentName = p.Name,
+                    DepartmentDescription = p.Description,
+                    DepartmentImageUrl = p.ImageUrl,
+                    Doctors = doctors
+                    .Select(a => new DoctorsSummaryDto
+                    {
+                        DoctorId = a.Id,
+                        DoctorName = a.user.firstName + " " + a.user.lastName,
+                        isActive = a.user.isActive,
+                        AvrageRating = a.doctorRatings.Any() ? a.doctorRatings.Average(r => r.Rating) : 0
+
+                    }).ToList()
+                }).ToListAsync();
         }
     }
 }

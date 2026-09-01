@@ -2,8 +2,6 @@
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.GetStaffDto;
 using Sehatak.Application.Interfaces.GetSttafInterFace;
-using Sehatak.Domain.Entities.TenantEntities;
-using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
 

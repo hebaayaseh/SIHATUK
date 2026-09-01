@@ -43,7 +43,7 @@ using Sehatak.Infrastructure.Services.AppointmentService;
 using Sehatak.Infrastructure.Services.Consultationservice;
 using Sehatak.Infrastructure.Services.DashBoardService;
 using Sehatak.Infrastructure.Services.DepartmentService;
-using Sehatak.Infrastructure.Services.DoctorRaitingService;
+using Sehatak.Infrastructure.Services.DoctorRatingService;
 using Sehatak.Infrastructure.Services.EditProfileService;
 using Sehatak.Infrastructure.Services.FinancialReportServices;
 using Sehatak.Infrastructure.Services.GetStaff;

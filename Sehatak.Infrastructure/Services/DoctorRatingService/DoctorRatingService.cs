@@ -1,6 +1,4 @@
-﻿using DocumentFormat.OpenXml.Office2016.Excel;
-using Microsoft.EntityFrameworkCore;
-using Sehatak.Application.DTOs.DoctorRaitingDto;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.DoctorRatingDto;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.IDoctorRating;
@@ -8,13 +6,8 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Sehatak.Infrastructure.Services.DoctorRaitingService
+namespace Sehatak.Infrastructure.Services.DoctorRatingService
 {
     public class DoctorRatingService : IDoctorRating
     {
@@ -72,30 +65,18 @@ namespace Sehatak.Infrastructure.Services.DoctorRaitingService
             await db.DoctorRatings.AddAsync(rating);
             await db.SaveChangesAsync();
 
-            var newRating = new DoctorRating
-            {
-                PatientId = patient.patientId,
-                DoctorId = appointment.doctorId,
-                Rating = request.Rating,
-                Review = request.Review,
-                CreatedAt = DateTime.UtcNow,
-                UpdateAt = DateTime.UtcNow
-            };
-
-            await db.AddAsync(newRating);
-            await db.SaveChangesAsync();
-
+            
             return new DoctorRatingResponse
             {
-                Id = newRating.Id,
+                Id = rating.Id,
                 PatientId = patient.patientId,
                 PatientName = $"{patient.user.firstName} {patient.user.lastName}",
-                AppointmentId = newRating.AppointmentId,
-                DoctorId = newRating.DoctorId,
-                CreatedAt = newRating.CreatedAt,
-                UpdateAt = newRating.UpdateAt,
-                Rating = newRating.Rating,
-                Review = newRating.Review
+                AppointmentId = rating.AppointmentId,
+                DoctorId = rating.DoctorId,
+                CreatedAt = rating.CreatedAt,
+                UpdateAt = rating.UpdateAt,
+                Rating = rating.Rating,
+                Review = rating.Review
             };
         }
 
@@ -125,7 +106,7 @@ namespace Sehatak.Infrastructure.Services.DoctorRaitingService
 
             return new DoctorGetRatingResponse
             {
-                AvrageRating = doctor.doctorRatings.Any() ? doctor.doctorRatings.Average(r => r.Rating) : 0,
+                AvrageRating = ratings.Any() ? ratings.Average(r => r.Rating) : 0,
                 PatientRatings = ratings.Select(p => new PatientSummaryRating
                 {
                     patientId = p.PatientId,

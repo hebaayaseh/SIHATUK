@@ -1,4 +1,5 @@
-﻿using Sehatak.Application.DTOs.GetStaffDto;
+﻿using Sehatak.Application.Common;
+using Sehatak.Application.DTOs.GetStaffDto;
 using Sehatak.Application.DTOs.SearchDoctorDto;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,6 @@ namespace Sehatak.Application.Interfaces.SearchDoctor
 {
     public interface ISearchDoctor
     {
-        Task<List<DoctorSummaryDto>> SearchDoctorAsync(int centerId, SearchDoctorRequest request);
+        Task<PagedResult<DoctorSummaryDto>> SearchDoctorAsync(int centerId, SearchDoctorRequest request);
     }
 }

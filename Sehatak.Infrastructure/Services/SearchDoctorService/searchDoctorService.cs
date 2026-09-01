@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.GetStaffDto;
 using Sehatak.Application.DTOs.SearchDoctorDto;
@@ -18,19 +19,18 @@ namespace Sehatak.Infrastructure.Services.SearchDoctorService
             this.contextFactory = contextFactory;
         }
 
-        public async Task<List<DoctorSummaryDto>> SearchDoctorAsync(int centerId, SearchDoctorRequest request)
+        public async Task<PagedResult<DoctorSummaryDto>> SearchDoctorAsync(int centerId, SearchDoctorRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                  .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
-
             if (center == null)
                 throw new BusinessException("Cente.NotFound");
+
             using var db = contextFactory.CreateForCenter(centerId);
             var query = db.Doctors
                 .Include(d => d.user)
                 .Where(d => d.user.isActive)
                 .AsQueryable();
-
 
             if (!string.IsNullOrWhiteSpace(request.doctorName))
             {
@@ -48,28 +48,29 @@ namespace Sehatak.Infrastructure.Services.SearchDoctorService
                 query = query.Where(s => s.Specialization.ToLower().Trim().Contains(search));
             }
 
-            var result = await query.Select(a => new DoctorSummaryDto
-            {
-                DoctorId = a.Id,
-                DoctorName = a.user.firstName + " " + a.user.lastName,
-                Specialization = a.Specialization,
-                ProfileImageUrl = a.user.ProfileImageUrl,
-                OnlineEnabled = a.OnlineEnabled,
-                Bio = a.Bio,
-                doctorSchedule = a.doctorschedules
-                .Where(s => s.IsActive)
-                .Select(d => new SummarySchedualDto
+            var projected = query
+                .OrderBy(a => a.user.firstName)          
+                .Select(a => new DoctorSummaryDto
                 {
-                    Id = d.Id,
-                    StartTime = d.StartTime,
-                    EndTime = d.EndTime,
-                    SlotDurationMinutes = d.SlotDurationMinutes,
-                    IsActive = d.IsActive,
-                }).ToList(),
+                    DoctorId = a.Id,
+                    DoctorName = a.user.firstName + " " + a.user.lastName,
+                    Specialization = a.Specialization,
+                    ProfileImageUrl = a.user.ProfileImageUrl,
+                    OnlineEnabled = a.OnlineEnabled,
+                    Bio = a.Bio,
+                    doctorSchedule = a.doctorschedules
+                        .Where(s => s.IsActive)
+                        .Select(d => new SummarySchedualDto
+                        {
+                            Id = d.Id,
+                            StartTime = d.StartTime,
+                            EndTime = d.EndTime,
+                            SlotDurationMinutes = d.SlotDurationMinutes,
+                            IsActive = d.IsActive,
+                        }).ToList(),
+                });
 
-            }).ToListAsync();
-
-            return result;
+            return await projected.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
     }
 }
