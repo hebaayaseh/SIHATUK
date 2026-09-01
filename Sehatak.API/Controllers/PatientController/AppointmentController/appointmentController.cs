@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AppointmentDto;
 using Sehatak.Application.Interfaces.ApointmentInterface;
 using Sehatak.Infrastructure.Services.AppointmentService;
@@ -90,10 +91,10 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         }
 
         [HttpGet("patient-get-doctors/{centerId}")]
-        public async Task<IActionResult> GetDoctors(int centerId)
+        public async Task<IActionResult> GetDoctors(int centerId,[FromQuery] PagedRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await slotService.GetDoctorsAsync(centerId);
+            var result = await slotService.GetDoctorsAsync(centerId,request);
             return Ok(result);
         }
 

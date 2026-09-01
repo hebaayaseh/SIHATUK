@@ -1,5 +1,7 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
+﻿using DocumentFormat.OpenXml.Office2016.Excel;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AppointmentDto;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.GetStaffDto;
@@ -760,38 +762,35 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             };
         }
 
-        public async Task<List<GetDoctorsResponseDto>> GetDoctorsAsync(int centerId)
+        public async Task<PagedResult<GetDoctorsResponseDto>> GetDoctorsAsync(int centerId, PagedRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                  .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
-
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            var doctors = await db.Doctors
-                .Include(d => d.user)
-                .Where(d => d.user.isActive)
-                .ToListAsync();
-
-            return await db.Departments
+            var query = db.Departments
+                .OrderBy(d => d.Name)
                 .Select(p => new GetDoctorsResponseDto
                 {
                     DepartmentId = p.Id,
                     DepartmentName = p.Name,
                     DepartmentDescription = p.Description,
                     DepartmentImageUrl = p.ImageUrl,
-                    Doctors = doctors
-                    .Select(a => new DoctorsSummaryDto
-                    {
-                        DoctorId = a.Id,
-                        DoctorName = a.user.firstName + " " + a.user.lastName,
-                        isActive = a.user.isActive,
-                        AvrageRating = a.doctorRatings.Any() ? a.doctorRatings.Average(r => r.Rating) : 0
+                    Doctors = p.Doctors
+                        .Where(a => a.user.isActive)
+                        .Select(a => new DoctorsSummaryDto
+                        {
+                            DoctorId = a.Id,
+                            DoctorName = a.user.firstName + " " + a.user.lastName,
+                            isActive = a.user.isActive,
+                            AvrageRating = a.doctorRatings.Any() ? a.doctorRatings.Average(r => r.Rating) : 0
+                        }).ToList()
+                });
 
-                    }).ToList()
-                }).ToListAsync();
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
     }
 }

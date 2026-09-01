@@ -1,10 +1,5 @@
-﻿using Sehatak.Application.DTOs.DoctorRaitingDto;
-using Sehatak.Application.DTOs.DoctorRatingDto;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Sehatak.Application.DTOs.DoctorRatingDto;
+
 
 namespace Sehatak.Application.Interfaces.IDoctorRating
 {
