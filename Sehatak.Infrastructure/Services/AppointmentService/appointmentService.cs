@@ -743,24 +743,26 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            var doctor = await db.Doctors
-                .Include(u => u.user)
-                .FirstOrDefaultAsync(d => d.Id == doctorId
-                                     && d.user.isActive);
+            var result = await db.Doctors
+        .Include(u => u.user)
+        .Where(d => d.Id == doctorId && d.user.isActive)
+        .Select(doctor => new GetDoctorSummaryResponse
+        {
+            DoctorId = doctor.Id,
+            DoctorName = doctor.user.firstName + " " + doctor.user.lastName,
+            Bio = doctor.Bio,
+            Specialization = doctor.Specialization,
+            AvrageRating = doctor.doctorRatings.Any() ? doctor.doctorRatings.Average(r => r.Rating) : 0,
+            Reviews = doctor.doctorRatings.Select(r => r.Review).ToList()
+        })
+        .FirstOrDefaultAsync();
 
-            if (doctor == null)
+            if (result == null)
                 throw new BusinessException("Doctor.NotFound");
 
-            return new GetDoctorSummaryResponse
-            {
-                DoctorId = doctorId,
-                DoctorName = $"{doctor.user.firstName} {doctor.user.lastName}",
-                Bio = doctor.Bio,
-                Specialization = doctor.Specialization,
-                AvrageRating = doctor.doctorRatings.Any() ? doctor.doctorRatings.Average(r => r.Rating) : 0,
-                Reviews = doctor.doctorRatings.Select(r => r.Review).ToList()
-            };
+            return result;
         }
+        
 
         public async Task<PagedResult<GetDoctorsResponseDto>> GetDoctorsAsync(int centerId, PagedRequest request)
         {

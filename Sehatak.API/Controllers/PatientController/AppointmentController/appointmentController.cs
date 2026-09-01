@@ -85,7 +85,6 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         [HttpGet("patient-get-doctor/{centerId}/{doctorId}")]
         public async Task<IActionResult> GetDoctor(int centerId, int doctorId)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await slotService.GetDoctorAsync(centerId, doctorId);
             return Ok(result);
         }
@@ -93,7 +92,6 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         [HttpGet("patient-get-doctors/{centerId}")]
         public async Task<IActionResult> GetDoctors(int centerId,[FromQuery] PagedRequest request)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await slotService.GetDoctorsAsync(centerId,request);
             return Ok(result);
         }

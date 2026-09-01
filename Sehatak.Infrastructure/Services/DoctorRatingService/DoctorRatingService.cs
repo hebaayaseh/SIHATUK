@@ -45,8 +45,8 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             if (appointment == null)
                 throw new BusinessException("Appointment.NotFound");
 
-            if (appointment.appointmentStatus != AppointmentStatus.Completed)
-                throw new BusinessException("DoctorRating.AppointmentNotCompleted");
+            //if (appointment.appointmentStatus != AppointmentStatus.Completed)
+            //    throw new BusinessException("DoctorRating.AppointmentNotCompleted");
 
             if (appointment.Rating != null)
                 throw new BusinessException("DoctorRating.AlreadyRated");
@@ -101,6 +101,7 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
 
             var ratings = await db.DoctorRatings
                 .Include(p => p.Patient)
+                .ThenInclude(u=>u.user)
                 .Where(p => p.DoctorId == doctor.Id)
                 .ToListAsync();
 
