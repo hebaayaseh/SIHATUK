@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AssignFeaturesWithPlan;
 using Sehatak.Application.DTOs.Plans;
 using Sehatak.Application.DTOs.PlansDto;
@@ -20,9 +21,9 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SupscriptionPlans
 
         [Authorize(Policy = "AdminOrAbove")]
         [HttpGet("list-of-plan")]
-        public async Task<IActionResult> ListOfPlan()
+        public async Task<IActionResult> ListOfPlan([FromQuery] PagedRequest request)
         {
-            var result = await listOfPlan.ListOfPlanAsync();
+            var result = await listOfPlan.ListOfPlanAsync(request);
             return Ok(result);
         }
 
@@ -44,9 +45,9 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SupscriptionPlans
 
         [Authorize(Policy = "AdminOrAbove")]
         [HttpGet("superAdminOrAdmin-get-features/{planId}")]
-        public async Task<IActionResult> GetFeatures(int planId)
+        public async Task<IActionResult> GetFeatures(int planId, [FromQuery] PagedRequest request)
         {
-            var result = await listOfPlan.GetPlanFeaturesAsync(planId);
+            var result = await listOfPlan.GetPlanFeaturesAsync(planId,request);
             return Ok(result);
         }
 

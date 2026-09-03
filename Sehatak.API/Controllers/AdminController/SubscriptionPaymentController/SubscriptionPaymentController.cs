@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.RecordPaymentRequestDto;
 using Sehatak.Application.Interfaces.ISubscriptionPaymentService;
 using System.Security.Claims;
@@ -38,17 +39,17 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.SubscriptionPayment
 
         [Authorize(Policy = "SuperAdminOnly")]
         [HttpGet("superAdmin-center-payment/{centerId}")]
-        public async Task<IActionResult> GetCenterPayment(int centerId)
+        public async Task<IActionResult> GetCenterPayment(int centerId, [FromQuery] PagedRequest request)
         {
-            var result = await subscriptionPayment.GetCenterPaymentsAsync(centerId);
+            var result = await subscriptionPayment.GetCenterPaymentsAsync(centerId,request);
             return Ok(result);
         }
 
         [Authorize(Policy = "SuperAdminOnly")]
         [HttpGet("superAdmin-pending-payment")]
-        public async Task<IActionResult> GetPendingPayment()
+        public async Task<IActionResult> GetPendingPayment([FromQuery] PagedRequest request)
         {
-            var result = await subscriptionPayment.GetPendingPaymentsAsync();
+            var result = await subscriptionPayment.GetPendingPaymentsAsync(request);
             return Ok(result);
         }
 

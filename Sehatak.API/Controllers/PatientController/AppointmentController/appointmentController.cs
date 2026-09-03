@@ -68,9 +68,9 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
 
         [Authorize(Policy = "ReceptionistOnly")]
         [HttpGet("Receptionist-view-waitlist/{centerId}/{doctorId}")]
-        public async Task<IActionResult> ViewPatientsWaitList(int centerId, int doctorId,DateOnly date)
+        public async Task<IActionResult> ViewPatientsWaitList(int centerId, int doctorId,DateOnly date,[FromQuery] PagedRequest request)
         {
-            var result = await slotService.GetPatientsWaitListsAsync(centerId, doctorId, date);
+            var result = await slotService.GetPatientsWaitListsAsync(centerId, doctorId, date, request);
             return Ok(result);
         }
         [Authorize(Policy = "PatientOnly")]

@@ -1,4 +1,5 @@
-﻿using Sehatak.Application.DTOs.GetStaffDto;
+﻿using Sehatak.Application.Common;
+using Sehatak.Application.DTOs.GetStaffDto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace Sehatak.Application.Interfaces.GetSttafInterFace
 {
     public interface IGetStaff
     {
-        Task<List<GetDoctorsResponseDto>> GetDoctorsAsync(int centerId);
+        Task<PagedResult<GetDoctorsResponseDto>> GetDoctorsAsync(int centerId, PagedRequest request);
         Task<DoctorSummaryDto> GetDoctorAsync(int centerId, int doctorId,int? year = null, int? month = null);
         
         

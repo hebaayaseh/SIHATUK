@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.MedicalRecordDto;
 using Sehatak.Application.Interfaces.IMedicalRecord;
@@ -7,12 +8,7 @@ using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.PaymentEnums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Dynamic.Core;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.MedicalRecordService
 {
@@ -348,7 +344,8 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
 
         }
 
-        public async Task<List<MedicalRecordDetailResponseDto>> GetPatientMedicalHistoryAsync(int centerId, int userId, int patientId)
+        public async Task<Application.Common.PagedResult<MedicalRecordDetailResponseDto>> GetPatientMedicalHistoryAsync(
+        int centerId, int userId, int patientId, PagedRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
@@ -359,52 +356,47 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
 
             var doctor = await db.Doctors
                 .Include(u => u.user)
-                .FirstOrDefaultAsync(d => d.userId == userId
-                                     && d.user.isActive);
-
+                .FirstOrDefaultAsync(d => d.userId == userId && d.user.isActive);
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
             var patientExists = await db.Patients
-                .AnyAsync(p => p.patientId == patientId
+                .AnyAsync(p => p.patientId == patientId 
                           && p.user.isActive);
-
             if (!patientExists)
                 throw new BusinessException("Patient.NotFound");
 
-            var records = await db.MedicalRecords
-                .Include(r => r.Doctor).ThenInclude(d => d.user)
-                .Include(r => r.Appointment)
-                .ThenInclude(a => a!.Items)
-                .ThenInclude(i => i.ServicePrice)
+            var query = db.MedicalRecords
                 .Where(r => r.PatientId == patientId)
                 .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
-
-            return records.Select(record => new MedicalRecordDetailResponseDto
-            {
-                Id = record.Id,
-                PatientId = record.PatientId,
-                DoctorId = record.DoctorId,
-                DoctorName = $"{record.Doctor.user.firstName} {record.Doctor.user.lastName}",
-                AppointmentId = record.AppointmentId,
-                ConsultationId = record.ConsultationId,
-                Diagnosis = record.Diagnosis,
-                Prescription = record.Prescription,
-                Notes = record.Notes,
-                ConsultationCost = record.Appointment?.ConsultationCost,
-                BillAmount = record.Appointment?.BillAmount,
-                Items = record.Appointment?.Items?.Select(i => new MedicalRecordItemDto
+                .Select(record => new MedicalRecordDetailResponseDto
                 {
-                    Id = i.Id,
-                    ServiceName = i.ServicePrice.ServiceName,
-                    Quantity = i.Quantity,
-                    UnitPrice = i.UnitPrice,
-                    TotalPrice = i.TotalPrice
-                }).ToList(),
-                CreatedAt = record.CreatedAt,
-                UpdateAt = record.UpdatedAt,
-            }).ToList();
+                    Id = record.Id,
+                    PatientId = record.PatientId,
+                    DoctorId = record.DoctorId,
+                    DoctorName = record.Doctor.user.firstName + " " + record.Doctor.user.lastName,
+                    AppointmentId = record.AppointmentId,
+                    ConsultationId = record.ConsultationId,
+                    Diagnosis = record.Diagnosis,
+                    Prescription = record.Prescription,
+                    Notes = record.Notes,
+                    ConsultationCost = record.Appointment != null ? record.Appointment.ConsultationCost : null,
+                    BillAmount = record.Appointment != null ? record.Appointment.BillAmount : null,
+                    Items = record.Appointment != null && record.Appointment.Items != null
+                        ? record.Appointment.Items.Select(i => new MedicalRecordItemDto
+                        {
+                            Id = i.Id,
+                            ServiceName = i.ServicePrice.ServiceName,
+                            Quantity = i.Quantity,
+                            UnitPrice = i.UnitPrice,
+                            TotalPrice = i.TotalPrice
+                        }).ToList()
+                        : null,
+                    CreatedAt = record.CreatedAt,
+                    UpdateAt = record.UpdatedAt,
+                });
+
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
 
         public async Task<MedicalRecordDetailResponseDto> GetMedicalRecordByIdAsync(int centerId, int userId, int medicalRecordId)

@@ -643,7 +643,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         }
 
-        public async Task<List<GetPatientWaitList>> GetPatientsWaitListsAsync(int centerId, int doctorId,DateOnly date)
+        public async Task<PagedResult<GetPatientWaitList>> GetPatientsWaitListsAsync(int centerId, int doctorId,DateOnly date,PagedRequest request)
         {
 
             var center = await sharedDbContext.MedicalCenters
@@ -663,10 +663,11 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
-            var patients = db.Waitlists
+            var query = db.Waitlists
                 .Include(p=>p.Patient)
                 .Where(d => d.DoctorId == doctor.Id
                        && d.PreferredDate == date)
+                .OrderByDescending(d => d.PreferredDate)
                 .Select(w => new GetPatientWaitList
                 {
                     WaitLisId = w.Id,
@@ -677,10 +678,10 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                     status = w.Status,
                     date = w.PreferredDate
 
-                }).OrderBy(d=>d.date)
-                .ToList();
+                });
 
-            return patients;
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+
         }
 
         public async Task<GetPatientWaitList> GetPatientWaitListsAsync(int centerId, int doctorId, int userId, DateOnly date)

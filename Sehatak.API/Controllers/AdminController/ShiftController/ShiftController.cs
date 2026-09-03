@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.ShiftDto;
 using Sehatak.Application.Interfaces.IShiftSchedule;
 using Sehatak.Domain.Enums;
@@ -58,17 +59,17 @@ namespace Sehatak.API.Controllers.AdminController.ShiftController
 
         [Authorize(Policy = "AdminOnly")]
         [HttpGet("admin-get-staffs-schedule/{centerId}")]
-        public async Task<IActionResult> GetStaffsWithShift(int centerId, ShiftGroup shift, int? year = null, int? month = null)
+        public async Task<IActionResult> GetStaffsWithShift(int centerId, ShiftGroup shift,[FromQuery]PagedRequest request, int? year = null, int? month = null)
         {
-            var result = await shiftSchedule.GetStaffsWithShiftAsync(centerId, shift,year,month);
+            var result = await shiftSchedule.GetStaffsWithShiftAsync(centerId, shift,request,year,month);
             return Ok(result);
         }
 
         [Authorize(Policy = "AdminOnly")]
         [HttpGet("admin-get-all-staffs/{centerId}")]
-        public async Task<IActionResult> GetAllSTaffs(int centerId)
+        public async Task<IActionResult> GetAllSTaffs(int centerId,[FromQuery]PagedRequest request)
         {
-            var result = await shiftSchedule.GetAllStaffAsync(centerId);
+            var result = await shiftSchedule.GetAllStaffAsync(centerId,request);
             return Ok(result);
         }
 

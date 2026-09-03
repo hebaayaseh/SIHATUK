@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.CentersDto;
 using Sehatak.Application.DTOs.CreateCenterRequestDto;
 using Sehatak.Application.DTOs.Exceptions;
@@ -12,6 +13,7 @@ using Sehatak.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -224,9 +226,10 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
             };
 
         }
-        public async Task<List<ListOfCentersResponseDto>> GetListOfCenters()
+        public async Task<Application.Common.PagedResult<ListOfCentersResponseDto>> GetListOfCenters(PagedRequest request)
         {
-            var centers = await sharedDbContext.MedicalCenters
+            var query = sharedDbContext.MedicalCenters
+                .OrderByDescending(c=>c.CreatedAt)
                 .Select(c => new ListOfCentersResponseDto
                 {
                     Id = c.Id,
@@ -238,10 +241,9 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
                     AddedBySuperAdminId = c.AddedBySuperAdminId,
                     AdminWhatsappNumber = c.AdminWhatsappNumber
 
-                })
-                .ToListAsync();
+                });
 
-            return centers;
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
 
         }
         public async Task<bool> SuspendedCenter(int centerId)

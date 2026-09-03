@@ -1,4 +1,5 @@
-﻿using Sehatak.Application.DTOs.AddDoctorDailyHour;
+﻿using Sehatak.Application.Common;
+using Sehatak.Application.DTOs.AddDoctorDailyHour;
 using Sehatak.Application.DTOs.AddDoctorDailyHourDto;
 using Sehatak.Application.DTOs.DoctorDto;
 using System;
@@ -14,7 +15,7 @@ namespace Sehatak.Application.Interfaces.AddDoctorDailyHours
         Task<AddDoctorDailyHoursResponse> AddDoctorDailyHoursAsync(int centerId , int userId , int doctorId ,AddDoctorDailyHoursRequest request);
         Task<UpdateDoctorDailyHoursResponse> UpdateDoctorDailyHoursAsync(int centerId, int userId, int doctorId, UpdateDoctorDailyHousrRequest request);
         Task<string> CancleDailyHoursAsync(int centerId, int doctorId, DateOnly date);
-        Task<List<GetDoctorDailyHoursResponse>> GetDoctorDailyHoursAsync(int centerId, int doctorId);
+        Task<PagedResult<GetDoctorDailyHoursResponse>> GetDoctorDailyHoursAsync(int centerId, int doctorId, PagedRequest request);
         Task<DoctorAppointmentResponse> GetDoctorAppointmentsForDayAsync(int centerId, int userId, DateOnly? date);
     }
 }

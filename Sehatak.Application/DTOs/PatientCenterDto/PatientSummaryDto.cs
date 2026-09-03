@@ -9,7 +9,7 @@ namespace Sehatak.Application.DTOs.PatientCenter
 {
     public class PatientSummaryDto
     {
-        public TimeOnly timeSlot {  get; set; }
+        public TimeOnly? timeSlot {  get; set; }
         public DateOnly date {  get; set; }
         public AppointmentStatus status { get; set; }
         public string DoctorName { get; set; }

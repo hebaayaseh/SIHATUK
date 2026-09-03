@@ -1,5 +1,6 @@
 ﻿using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.ConsultationDto;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.PaymentDto;
@@ -9,11 +10,6 @@ using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.PaymentEnums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.Consultationservice
 {
@@ -333,7 +329,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
         }
 
-        public async Task<List<ConsultationResponseDto>> GetConsultationsScheduale(int centerId, int userId )
+        public async Task<PagedResult<ConsultationResponseDto>> GetConsultationsScheduale(int centerId, int userId, PagedRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -351,9 +347,10 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
-            return await db.Consultations
+            var query =  db.Consultations
                 .Where(c => c.DoctorId == doctor.Id
                        && c.Status == ConsultationStatus.Accepted)
+                .OrderByDescending(c => c.ScheduledAt)
                 .Select(n => new ConsultationResponseDto
                 {
                     patientId = n.PatientId,
@@ -361,11 +358,12 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                     ConsultationId = n.Id,
                     patientName = $"{n.Patient.user.firstName} {n.Patient.user.lastName}",
                     SchedualeDate = n.ScheduledAt 
-                }).ToListAsync();
+                });
 
+            return  await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
 
-        public async Task<List<DoctorEnableResponse>> GetDoctorEnableConsultation(int centerId)
+        public async Task<PagedResult<DoctorEnableResponse>> GetDoctorEnableConsultation(int centerId, PagedRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -375,9 +373,10 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            return await db.Doctors
+            var query =  db.Doctors
                 .Where(d => d.user.isActive
                        && d.OnlineEnabled)
+                .OrderBy(d => d.user.firstName)
                 .Select(r => new DoctorEnableResponse {
                     doctorId = r.Id,
                     doctorName = $"{r.user.firstName} {r.user.lastName}",
@@ -385,11 +384,12 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                     depatrmentName = r.department.Name,
                     Specialization = r.Specialization,
                     profileImage = r.user.ProfileImageUrl != null ? r.user.ProfileImageUrl :  null,
-                }).ToListAsync();
+                });
 
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
 
-        public async Task<List<PaymentResponseDto>> GetPaymentPinding(int centerId, int userId)
+        public async Task<PagedResult<PaymentResponseDto>> GetPaymentPinding(int centerId, int userId, PagedRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
@@ -406,11 +406,12 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
-            return await db.Payments
+            var query = db.Payments
                 .Where(p => p.ConsultationId != null
                     && p.Consultation.DoctorId == doctor.Id
                     && p.Consultation.Status == ConsultationStatus.Pending
                     && p.Status == PaymentStatus.Pending)
+                .OrderByDescending(p => p.PaidAt)
                 .Select(n => new PaymentResponseDto
                 {
                     Id = n.Id,
@@ -418,7 +419,8 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                     PaidAt = n.PaidAt,
                     ReceiptImageUrl = n.ReceiptImageUrl,
                     ReferenceNumber = n.ReferenceNumber
-                }).ToListAsync();
+                });
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
 
         public async Task<PaymentResponseDto> GetPaymentPinding(int centerId, int userId, int paymentId)
@@ -565,7 +567,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
         }
 
-        public async Task<ConsultationResponse?> ViewConsultation(int centerId, int doctorId, int userId)
+        public async Task<ConsultationResponse?> ViewConsultation(int centerId, int doctorId, int userId, int consultationId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -594,7 +596,8 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             return await db.Consultations
                 .Where(c => c.DoctorId == doctor.Id
-                                     && c.PatientId == patient.patientId)
+                                     && c.PatientId == patient.patientId
+                                     && c.Id == consultationId)
                 .Select(p => new ConsultationResponse
                 {
                     patientId = p.PatientId,
@@ -607,7 +610,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
         }
 
-        public async Task<List<ConsultationResponse>> ViewConsultations(int centerId, int userId ,  ConsultationStatus status)
+        public async Task<PagedResult<ConsultationResponse>> ViewConsultations(int centerId, int userId ,  ConsultationStatus status, PagedRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -626,9 +629,10 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
-            return await db.Consultations
+            var query =  db.Consultations
                 .Where(c => c.PatientId == patient.patientId
                        && c.Status == status)
+                .OrderByDescending(c=>c.ScheduledAt)
                 .Select(p => new ConsultationResponse
                 {
                     Id = p.Id,
@@ -637,7 +641,10 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                     ScheduledAt = p.ScheduledAt,
                     Status = p.Status,
                     PaymentStatus = p.Payment != null ? p.Payment.Status : (PaymentStatus?)null,
-                }).ToListAsync();
+                });
+
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+
         }
     }
 }

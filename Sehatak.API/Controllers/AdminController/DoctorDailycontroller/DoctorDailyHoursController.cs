@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AddDoctorDailyHour;
 using Sehatak.Application.Interfaces.AddDoctorDailyHours;
 using Sehatak.Domain.Entities.TenantEntities;
@@ -54,10 +55,10 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.AddDoctorDaiktcontroller
 
         [Authorize(Policy = "AdminOnly")]
         [HttpGet("admin-get-doctor-hours/{centerId}/{doctorId}")]
-        public async Task<IActionResult> GetDoctorDailyHours(int centerId, int doctorId)
+        public async Task<IActionResult> GetDoctorDailyHours(int centerId, int doctorId, [FromQuery] PagedRequest request)
         {
 
-            var result = await addHours.GetDoctorDailyHoursAsync(centerId, doctorId);
+            var result = await addHours.GetDoctorDailyHoursAsync(centerId, doctorId,request);
             return Ok(result);
         }
         [Authorize(Policy = "DoctorOnly")]

@@ -1,4 +1,5 @@
-﻿using Sehatak.Application.DTOs.FeatureCenterDto;
+﻿using Sehatak.Application.Common;
+using Sehatak.Application.DTOs.FeatureCenterDto;
 using Sehatak.Application.DTOs.FeatureDto;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace Sehatak.Application.Interfaces.Features
          Task<FeatureResponseDto> AddFeatureAsync(CreateFeatureRequestDto requestDto);
         Task<bool> AddFeatureToCenterAsync(int centerId, AddFeatureToCenterRequest request);
         Task<bool> ActiveFeaturAsync(int centerId, ActiveFetureRequest request);
-        Task<List<FeatureResponseDto>> GetAllFeatureAsync();
+        Task<PagedResult<FeatureResponseDto>> GetAllFeatureAsync(PagedRequest request);
         Task<bool> RemoveFeatureFromCenterAsync(int centerId, RemoveFeatureFromCenterRequest request);
     }
 

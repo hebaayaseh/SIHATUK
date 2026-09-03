@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.CreateCenterRequestDto;
 using Sehatak.Application.Interfaces.MedicalCenter;
 
@@ -40,9 +41,9 @@ namespace Sehatak.API.Controllers.SuperAdminController.Centers
 
         [Authorize(Policy = "SuperAdminOnly")]
         [HttpGet("superAdmin-get-all-centers")]
-        public async Task<IActionResult> GetAllCenters()
+        public async Task<IActionResult> GetAllCenters([FromQuery] PagedRequest request)
         {
-            var result = await centerService.GetListOfCenters();
+            var result = await centerService.GetListOfCenters(request);
             return Ok(result);
         }
 

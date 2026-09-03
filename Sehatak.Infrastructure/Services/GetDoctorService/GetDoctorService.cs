@@ -1,9 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.GetStaffDto;
 using Sehatak.Application.Interfaces.GetSttafInterFace;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using System.Linq.Dynamic.Core;
 
 namespace Sehatak.Infrastructure.Services.GetStaff
 {
@@ -75,7 +77,7 @@ namespace Sehatak.Infrastructure.Services.GetStaff
             };
 }
 
-        public async Task<List<GetDoctorsResponseDto>> GetDoctorsAsync(int centerId)
+        public async Task<Application.Common.PagedResult<GetDoctorsResponseDto>> GetDoctorsAsync(int centerId, PagedRequest request)
         {
             var center = await SharedDbContext.MedicalCenters
                  .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
@@ -86,7 +88,8 @@ namespace Sehatak.Infrastructure.Services.GetStaff
             using var db = contextFactory.CreateForCenter(centerId);
 
 
-            return await db.Departments
+            var query = db.Departments
+                .OrderBy(d=>d.Name)
                 .Select(p => new GetDoctorsResponseDto
                 {
                     DepartmentId = p.Id,
@@ -103,7 +106,9 @@ namespace Sehatak.Infrastructure.Services.GetStaff
                         Reviews = a.doctorRatings.Select(r => r.Review).ToList()
 
                     }).ToList()
-                }).ToListAsync();
+                });
+
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
     }
 }

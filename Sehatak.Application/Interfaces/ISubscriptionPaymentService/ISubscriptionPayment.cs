@@ -1,4 +1,5 @@
-﻿using Sehatak.Application.DTOs.RecordPaymentRequestDto;
+﻿using Sehatak.Application.Common;
+using Sehatak.Application.DTOs.RecordPaymentRequestDto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,8 +12,8 @@ namespace Sehatak.Application.Interfaces.ISubscriptionPaymentService
     {
         Task<PaymentResponseDto> RecordPaymentAsync(PaymentRequestExist request, int centerId);
         Task<bool> ConfirmPaymentAsync(int paymentId, int superAdminId);
-        Task<List<PaymentResponseDto>> GetPendingPaymentsAsync();
-        Task<List<PaymentResponseDto>> GetCenterPaymentsAsync(int centerId);
+        Task<PagedResult<PaymentResponseDto>> GetPendingPaymentsAsync(PagedRequest request);
+        Task<PagedResult<PaymentResponseDto>> GetCenterPaymentsAsync(int centerId,PagedRequest request);
 
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.Interfaces.GetSttafInterFace;
 
 namespace Sehatak.API.Controllers.AdminController.GetStaffcontroller
@@ -15,9 +16,9 @@ namespace Sehatak.API.Controllers.AdminController.GetStaffcontroller
         }
         [Authorize("AdminOnly")]
         [HttpGet("admin-get-doctors/{centerId}")]
-        public async Task<IActionResult> GetDoctorsWithDepartments(int centerId)
+        public async Task<IActionResult> GetDoctorsWithDepartments(int centerId, [FromQuery] PagedRequest request)
         {
-            var result = await getStaff.GetDoctorsAsync(centerId);
+            var result = await getStaff.GetDoctorsAsync(centerId,request);
             return Ok(result);
         }
 

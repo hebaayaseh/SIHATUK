@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.DoctorRatingDto;
 using Sehatak.Application.Interfaces.IDoctorRating;
 using System.Security.Claims;
@@ -8,10 +9,10 @@ namespace Sehatak.API.Controllers.PatientController.DoctorRaitingController
 {
     [ApiController]
     [Route("[Controller]")]
-    public class DoctorRatingContoller : ControllerBase
+    public class DoctorRatingController : ControllerBase
     {
         private readonly IDoctorRating rating;
-        public DoctorRatingContoller(IDoctorRating rating)
+        public DoctorRatingController(IDoctorRating rating)
         {
             this.rating = rating;
         }
@@ -45,10 +46,10 @@ namespace Sehatak.API.Controllers.PatientController.DoctorRaitingController
 
         [Authorize(Policy = "PatientOnly")]
         [HttpPost("patient-get-ratings/{centerId}")]
-        public async Task<IActionResult> PatientGetRatingsAsync(int centerId)
+        public async Task<IActionResult> PatientGetRatingsAsync(int centerId, [FromQuery] PagedRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await rating.PatientGetRatingsAsync(centerId, userId);
+            var result = await rating.PatientGetRatingsAsync(centerId, userId,request);
             return Ok(result);
         }
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.FeatureCenterDto;
 using Sehatak.Application.DTOs.FeatureDto;
 using Sehatak.Application.Interfaces.Features;
@@ -43,9 +44,9 @@ namespace Sehatak.API.Controllers.SuperAdminController.FeatureOperation
 
         [Authorize(Policy = "AdminOrAbove")]
         [HttpGet("superAdminOrAdmin-get-all-feature")]
-        public async Task<IActionResult> GetAllFeature()
+        public async Task<IActionResult> GetAllFeature([FromQuery] PagedRequest request)
         {
-            var result = await featureService.GetAllFeatureAsync();
+            var result = await featureService.GetAllFeatureAsync(request);
             return Ok(result);
         }
 

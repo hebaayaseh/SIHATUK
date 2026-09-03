@@ -1,4 +1,5 @@
-﻿using Sehatak.Application.DTOs.DoctorRatingDto;
+﻿using Sehatak.Application.Common;
+using Sehatak.Application.DTOs.DoctorRatingDto;
 
 
 namespace Sehatak.Application.Interfaces.IDoctorRating
@@ -8,7 +9,7 @@ namespace Sehatak.Application.Interfaces.IDoctorRating
         Task<DoctorRatingResponse> AddDoctorRatingAsync(int centerId, int userId, AddDoctorRatingRequest request);
         Task<DoctorRatingResponse> UpdateDoctorRatingAsync(int centerId, int userId, UpdateDoctorRatingRequest request);
         Task<string> RemoveDoctorRatingAsync(int centerId, int userId , int ratingId);
-        Task<List<GetMyRatingsResponse>> PatientGetRatingsAsync(int centerId , int userId);
+        Task<PagedResult<GetMyRatingsResponse>> PatientGetRatingsAsync(int centerId , int userId, PagedRequest request);
         Task<DoctorGetRatingResponse> DoctorGetRatingsAsync(int centerId, int userId);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Sehatak.Application.DTOs.ShiftDto;
+﻿using Sehatak.Application.Common;
+using Sehatak.Application.DTOs.ShiftDto;
 using Sehatak.Domain.Enums;
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ namespace Sehatak.Application.Interfaces.IShiftSchedule
         Task<GetShiftsScheduleResponseDto> GetShiftsSchedulesAsync(int centerId);
         Task<ShiftScheduleResponse> UpdateShiftScheduleAsync(int centerId, UpdateShiftSchedualRequestDto request);
         Task<string> DeleteShiftSchedualeAsync(int centerId, int shiftId);
-        Task<List<GetStaffsShitfResponseDto>> GetStaffsWithShiftAsync(int centerId, ShiftGroup shift, int? year = null, int? month = null);
-        Task<List<StaffDirectoryResponseDto>> GetAllStaffAsync(int centerId);
+        Task<PagedResult<GetStaffsShitfResponseDto>> GetStaffsWithShiftAsync(int centerId, ShiftGroup shift,PagedRequest request, int? year = null, int? month = null );
+        Task<PagedResult<StaffDirectoryResponseDto>> GetAllStaffAsync(int centerId,PagedRequest request);
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.Extensions.Hosting;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.RecordPaymentRequestDto;
 using Sehatak.Application.Interfaces.IEmail;
@@ -12,6 +13,7 @@ using Sehatak.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -96,13 +98,13 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
 
         }
 
-        public async Task<List<PaymentResponseDto>> GetCenterPaymentsAsync(int centerId)
+        public async Task<Application.Common.PagedResult<PaymentResponseDto>> GetCenterPaymentsAsync(int centerId,PagedRequest request)
         {
             var center = await sharedDbContext.MedicalCenters.FirstOrDefaultAsync(c => c.Id == centerId);
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
-            return await sharedDbContext.subscriptionPayments
+            var query = sharedDbContext.subscriptionPayments
                 .Include(c => c.Center)
                 .Include(s => s.RecordedBy)
                 .Where(c => c.CenterId == centerId)
@@ -122,14 +124,16 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
                     Notes = p.Notes,
                     IsConfirmed = p.RecordedBySuperAdminId != null
 
-                }).ToListAsync();
+                });
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+
 
         }
 
-        public async Task<List<PaymentResponseDto>> GetPendingPaymentsAsync()
+        public async Task<Application.Common.PagedResult<PaymentResponseDto>> GetPendingPaymentsAsync(PagedRequest request)
         {
 
-            return await sharedDbContext.subscriptionPayments
+            var query = sharedDbContext.subscriptionPayments
             .Include(p => p.Center)
             .Include(p => p.Subscription).ThenInclude(s => s.Plan)
             .Where(p => p.RecordedBySuperAdminId == null && p.RequestId == null)
@@ -148,7 +152,10 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
                 Notes = p.Notes,
                 IsConfirmed = false
 
-            }).ToListAsync();
+            });
+
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+
 
         }
 

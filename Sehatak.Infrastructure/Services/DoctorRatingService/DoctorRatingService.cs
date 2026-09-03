@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.DoctorRatingDto;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.IDoctorRating;
@@ -6,6 +7,7 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using System.Linq.Dynamic.Core;
 
 namespace Sehatak.Infrastructure.Services.DoctorRatingService
 {
@@ -120,7 +122,7 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
 
         }
 
-        public async Task<List<GetMyRatingsResponse>> PatientGetRatingsAsync(int centerId,int userId)
+        public async Task<Application.Common.PagedResult<GetMyRatingsResponse>> PatientGetRatingsAsync(int centerId,int userId, PagedRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -139,9 +141,10 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
-            return await db.DoctorRatings
+            var query = db.DoctorRatings
                 .Include(r=> r.Doctor)
                 .Where(r => r.PatientId == patient.patientId)
+                .OrderByDescending(r => r.CreatedAt)
                 .Select(r => new GetMyRatingsResponse
                 {
                     ratingId = r.Id,
@@ -152,8 +155,8 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
                     Review = r.Review,
                     CreatedAt = r.CreatedAt,
                     UpdateAt = r.UpdateAt
-                })
-                .ToListAsync();
+                });
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
 
         }
 

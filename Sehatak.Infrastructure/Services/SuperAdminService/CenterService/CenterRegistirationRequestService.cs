@@ -1,5 +1,6 @@
 ﻿using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.CreateCenterRequestDto;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.RecordPaymentRequestDto;
@@ -181,9 +182,9 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
             return true;
         }
 
-        public async Task<List<PaymentResponseDto>> GetPendingRegistrationPaymentsAsync()
+        public async Task<Application.Common.PagedResult<PaymentResponseDto>> GetPendingRegistrationPaymentsAsync(PagedRequest request)
         {
-            return await sharedDbContext.subscriptionPayments
+            var query = sharedDbContext.subscriptionPayments
                 .Include(p => p.Request)
                 .Where(p => p.RequestId != null && p.RecordedBySuperAdminId == null)
                 .OrderByDescending(p => p.PaidAt)
@@ -198,7 +199,10 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
                     PaidAt = p.PaidAt,
                     Notes = p.Notes,
                     IsConfirmed = false
-                }).ToListAsync();
+                });
+
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+
         }
 
         public async Task<bool> ConfirmRegistrationPaymentAsync(int paymentId, int superAdminId)
@@ -222,9 +226,9 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
             return true;
         }
 
-        public async Task<List<CenterRegistrationResponseDto>> GetCentersRegisterationAsync()
+        public async Task<Application.Common.PagedResult<CenterRegistrationResponseDto>> GetCentersRegisterationAsync(PagedRequest request)
         {
-            return await sharedDbContext.centerRegistrationRequests
+            var query = sharedDbContext.centerRegistrationRequests
                 .Where(c => c.Status == CenterRegistrationStatus.Pending)
                 .OrderByDescending(r => r.RequestedAt)
                 .Select(c => new CenterRegistrationResponseDto
@@ -242,7 +246,9 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
                     Status = c.Status,
                     RejectionReason = c.RejectionReason
 
-                }).ToListAsync();
+                });
+
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
         public async Task<CenterRegistrationResponseDto?> GetCenterRegistrationAsync(int centerId)
         {

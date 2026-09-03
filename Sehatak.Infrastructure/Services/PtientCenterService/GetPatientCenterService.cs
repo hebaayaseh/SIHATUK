@@ -1,6 +1,7 @@
 ﻿using DocumentFormat.OpenXml.Office2016.Excel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.PatientCenter;
 using Sehatak.Application.Interfaces.ApointmentInterface;
@@ -71,36 +72,38 @@ namespace Sehatak.Infrastructure.Services.PtientCenterService
 
         }
 
-        public async Task<List<GetPatientResponseDto>> GetPatientesAsync(int centerId,AppointmentStatus status)
+        public async Task<PagedResult<GetPatientResponseDto>> GetPatientesAsync(
+    int centerId, AppointmentStatus status, PagedRequest request)
         {
             var center = await SharedDbContext.MedicalCenters
-                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
-
+                .FirstOrDefaultAsync(c => c.Id == centerId 
+                                     && c.CenterStatus == CenterStatus.Active);
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            return await db.Users
-                .Where(u => u.role == userRole.Patient && u.patient != null)
+            var query = db.Users
+                .Where(u => u.role == userRole.Patient && u.patient != null 
+                      && u.patient.appointments.Any(a => a.appointmentStatus == status))
+                .OrderBy(u => u.firstName)              
                 .Select(u => new GetPatientResponseDto
                 {
                     Id = u.Id,
-                    pateintName = u.firstName+" "+u.lastName,
+                    pateintName = u.firstName + " " + u.lastName,
                     appointments = db.Appointments
-                        .Include(p => p.Patient)
-                        .ThenInclude(u => u.user)
                         .Where(p => p.patientId == u.patient.patientId
                                && p.appointmentStatus == status)
                         .Select(p => new PatientSummaryDto
                         {
-                            timeSlot = (TimeOnly)p.timeSlot,
+                            timeSlot = p.timeSlot,
                             date = p.appointmentDate,
                             status = p.appointmentStatus,
-                            DoctorName = $"{p.Doctor.user.firstName} {p.Doctor.user.lastName}",
+                            DoctorName = p.Doctor.user.firstName + " " + p.Doctor.user.lastName,
                         }).ToList()
+                });
 
-                }).ToListAsync();
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
 
     }

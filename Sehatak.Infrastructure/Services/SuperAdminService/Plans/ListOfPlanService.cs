@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AssignFeaturesWithPlan;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.Plans;
@@ -9,6 +10,7 @@ using Sehatak.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,10 +24,11 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
             this.sharedDbContext = sharedDbContext;
         }
 
-        public async Task<List<ListOfPlanResponseDto>> ListOfPlanAsync()
+        public async Task<Application.Common.PagedResult<ListOfPlanResponseDto>> ListOfPlanAsync(PagedRequest request)
         {
-            return await sharedDbContext.SubscriptionPlans
+            var query = sharedDbContext.SubscriptionPlans
                 .Where(p => p.IsActive)
+                .OrderBy(r=>r.Name)
                 .Select(p => new ListOfPlanResponseDto
                 {
                     Id = p.Id,
@@ -33,8 +36,10 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
                     DurationDays = p.DurationDays,
                     Price = p.Price,
                     PlanFeatureId = p.PlanFeatures.Select(pf => pf.Feature.NameOfFeature).ToList()
-                })
-                .ToListAsync();
+                });
+
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+
         }
 
         public async Task<EditRespondeDto> EditPlanAsync(int planId, EditPalnRequestDto request)
@@ -99,17 +104,20 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
 
         }
 
-        public async Task<List<PlanFeatureResponseDto>> GetPlanFeaturesAsync(int planId)
+        public async Task<Application.Common.PagedResult<PlanFeatureResponseDto>> GetPlanFeaturesAsync(int planId, PagedRequest request)
         {
-            return await sharedDbContext.PlanFeatures
+            var query = sharedDbContext.PlanFeatures
                 .Where(pf => pf.PlanId == planId)
+                .OrderBy(f=>f.Feature.NameOfFeature)
                 .Select(pf => new PlanFeatureResponseDto
                 {
                     planId = pf.PlanId,
                     featureId = pf.FeatureId,
                     featureName = pf.Feature.NameOfFeature
-                })
-                .ToListAsync();
+                });
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+
+
         }
 
         public async Task<SubscriptionPlanResponseDto> AddSubscriptionPlan(SubscriptionPlanRequestDto request)

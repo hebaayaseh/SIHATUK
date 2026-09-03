@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.FeatureCenterDto;
 using Sehatak.Application.DTOs.FeatureDto;
@@ -8,6 +9,7 @@ using Sehatak.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -100,18 +102,17 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Features.FeatureServ
 
         }
 
-        public async Task<List<FeatureResponseDto>> GetAllFeatureAsync()
+        public async Task<Application.Common.PagedResult<FeatureResponseDto>> GetAllFeatureAsync(PagedRequest request)
         {
-            var listOfFeature = await sharedDbContext.PlatformFeatures
+            var query = sharedDbContext.PlatformFeatures
                 .Select(f => new FeatureResponseDto
                 {
                     Id = f.Id,
                     Name = f.NameOfFeature,
                     Description = f.Description
-                })
-                .ToListAsync();
+                });
 
-            return listOfFeature;
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
 
         public async Task<bool> RemoveFeatureFromCenterAsync(int centerId, RemoveFeatureFromCenterRequest request)

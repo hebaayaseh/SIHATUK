@@ -1,6 +1,7 @@
 ﻿using DocumentFormat.OpenXml.Office2016.Excel;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AddDoctorDailyHour;
 using Sehatak.Application.DTOs.AddDoctorDailyHourDto;
 using Sehatak.Application.DTOs.DoctorDto;
@@ -11,6 +12,7 @@ using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.PostponeEnums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using System.Linq.Dynamic.Core;
 
 namespace Sehatak.Infrastructure.Services.AddStaff
 {
@@ -181,7 +183,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 : "تم حظر هذا اليوم من الحجز بنجاح.";
         }
 
-        public async Task<List<GetDoctorDailyHoursResponse>> GetDoctorDailyHoursAsync(int centerId, int doctorId)
+        public async Task<Application.Common.PagedResult<GetDoctorDailyHoursResponse>> GetDoctorDailyHoursAsync(int centerId, int doctorId, PagedRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId 
@@ -204,8 +206,9 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             if (doctorSchedual == null)
                 throw new BusinessException("Schedule.NotFound");
 
-            var Scheduales = await db.DoctorSchedules
+            var query =  db.DoctorSchedules
                 .Where(d => d.DoctorId == doctorId)
+                .OrderBy(d => d.DayOfWeek)
                 .Select(n=>new GetDoctorDailyHoursResponse
                 {
                     Id = n.Id,
@@ -215,9 +218,10 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                     EndTime = n.EndTime,
                     StartTime = n.StartTime,
                     SlotDurationMinutes = n.SlotDurationMinutes,
-                }).ToListAsync();
+                });
 
-            return Scheduales;
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+
 
         }
 

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.ShiftDto;
 using Sehatak.Application.Interfaces.IShiftSchedule;
@@ -160,7 +161,7 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             return "تم الحذف بنجاح.";
         }
 
-        public async Task<List<StaffDirectoryResponseDto>> GetAllStaffAsync(int centerId)
+        public async Task<PagedResult<StaffDirectoryResponseDto>> GetAllStaffAsync(int centerId,PagedRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -171,11 +172,13 @@ namespace Sehatak.Infrastructure.Services.ShiftService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            var staffs = await db.Users
+            var query =  db.Users
                 .Where(u => u.role == userRole.GeneralDoctor
                        || u.role == userRole.Nurse
                        || u.role == userRole.LabTechnician
                        || u.role == userRole.Receptionist)
+                .OrderBy(f=>f.firstName)
+                .ThenBy(f=>f.lastName)
                 .Select(u => new StaffDirectoryResponseDto
                 {
                     Id = u.Id,
@@ -184,9 +187,10 @@ namespace Sehatak.Infrastructure.Services.ShiftService
                     PhoneNumber = u.phoneNumber,
                     role = u.role.ToString(),
                     isActive = u.isActive
-                }).ToListAsync();
+                });
 
-            return staffs;
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+
         }
 
         public async Task<GetShiftsScheduleResponseDto> GetShiftsSchedulesAsync(int centerId)
@@ -215,7 +219,7 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             };
         }
 
-        public async Task<List<GetStaffsShitfResponseDto>> GetStaffsWithShiftAsync(int centerId, ShiftGroup shift, int? year = null, int? month = null)
+        public async Task<PagedResult<GetStaffsShitfResponseDto>> GetStaffsWithShiftAsync(int centerId, ShiftGroup shift, PagedRequest request, int? year = null, int? month = null)
         {
             var center = await sharedDbContext.MedicalCenters
                .FirstOrDefaultAsync(c => c.Id == centerId
@@ -232,44 +236,71 @@ namespace Sehatak.Infrastructure.Services.ShiftService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
+            var distinctStaffQuery = db.StaffShifts
+                  .Where(s => s.ShiftName == shift
+                         && s.ShiftDate >= startOfMonth
+                         && s.ShiftDate <= endOfMonth)
+                  .Select(s => new
+                  { s.UserId, s.Staff.firstName, s.Staff.lastName })
+                  .Distinct();
+
+            var totalCount = await distinctStaffQuery.CountAsync();
+
+            var pagedStaffIds = await distinctStaffQuery
+                 .OrderBy(x => x.firstName)
+                 .ThenBy(x => x.lastName)
+                 .Skip((request.PageNumber - 1) * request.PageSize)
+                 .Take(request.PageSize)
+                 .Select(x => x.UserId)
+                 .ToListAsync();
+
             var shifts = await db.StaffShifts
                 .Include(s => s.Staff)
                 .Where(s => s.ShiftName == shift
                        && s.ShiftDate >= startOfMonth
-                       && s.ShiftDate <= endOfMonth)
+                       && s.ShiftDate <= endOfMonth
+                       && pagedStaffIds.Contains(s.UserId))
                 .ToListAsync();
 
             var shiftIds = shifts.Select(i => i.Id).ToList();
 
             var attendances = await db.StaffAttendances
-                .Where(a=> shiftIds.Contains(a.StaffShiftId))
+                .Where(a => shiftIds.Contains(a.StaffShiftId))
                 .ToListAsync();
 
-            var result = shifts
+            var items = shifts
                 .GroupBy(u => u.UserId)
                 .Select(g =>
+            {
+            var staff = g.First().Staff;
+            return new GetStaffsShitfResponseDto
+            {
+                userId = staff.Id,
+                name = $"{staff.firstName} {staff.lastName}",
+                email = staff.email,
+                phoneNumber = staff.phoneNumber,
+                role = staff.role.ToString(),
+                userIsActive = staff.isActive,
+                Days = g.Select(s => new DailyAttendanceDto
                 {
-                    var staff = g.First().Staff;
-                    return new GetStaffsShitfResponseDto
-                    {
-                        userId = staff.Id,
-                        name = $"{staff.firstName} {staff.lastName}",
-                        email = staff.email,
-                        phoneNumber = staff.phoneNumber,
-                        role = staff.role.ToString(),
-                        userIsActive = staff.isActive,
-                        Days = g.Select(s => new DailyAttendanceDto
-                        {
-                            Date = s.ShiftDate,
-                            Status = attendances.FirstOrDefault(a => a.StaffShiftId == s.Id)?.attendanceStatus,
-                            isActive = s.IsActive,
-                        })
-                        .OrderBy(d => d.Date)
-                        .ToList()
-                    };
-                }).ToList();
+                    Date = s.ShiftDate,
+                    Status = attendances.FirstOrDefault(a => a.StaffShiftId == s.Id)?.attendanceStatus,
+                    isActive = s.IsActive,
+                })
+                .OrderBy(d => d.Date)
+                .ToList()
+            };
+        })
+        .OrderBy(r => r.name)
+        .ToList();
 
-            return result;
+            return new PagedResult<GetStaffsShitfResponseDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
 
         public async Task<ShiftScheduleResponse> UpdateShiftScheduleAsync(int centerId, UpdateShiftSchedualRequestDto request)

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.ConsultationDto;
 using Sehatak.Application.DTOs.PaymentDto;
 using Sehatak.Application.Interfaces.ConsultaionInterface;
@@ -20,9 +21,9 @@ namespace Sehatak.API.Controllers.Consultationcontroller
 
 
         [HttpGet("patient-get-doctors/{centerId}")]
-        public async Task<IActionResult> GetDoctors(int centerId)
+        public async Task<IActionResult> GetDoctors(int centerId, [FromQuery] PagedRequest request)
         {
-            var result = await consultation.GetDoctorEnableConsultation(centerId);
+            var result = await consultation.GetDoctorEnableConsultation(centerId, request);
             return Ok(result);
         }
 
@@ -37,20 +38,20 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "PatientOnly")]
-        [HttpGet("patient-get-consultation/{centerId}/{doctorId}")]
-        public async Task<IActionResult> GetConsultation(int centerId, int doctorId)
+        [HttpGet("patient-get-consultation/{centerId}/{doctorId}/{consultationId}")]
+        public async Task<IActionResult> GetConsultation(int centerId, int doctorId, int consultationId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await consultation.ViewConsultation(centerId, doctorId, userId);
+            var result = await consultation.ViewConsultation(centerId, doctorId, userId, consultationId);
             return Ok(result);
         }
 
         [Authorize(Policy = "PatientOnly")]
         [HttpPost("patient-get-patient-consultation/{centerId}")]
-        public async Task<IActionResult> GetConsultations(int centerId, [FromBody] ConsultationStatus status)
+        public async Task<IActionResult> GetConsultations(int centerId, [FromBody] ConsultationStatus status, [FromQuery] PagedRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await consultation.ViewConsultations(centerId, userId, status);
+            var result = await consultation.ViewConsultations(centerId, userId, status,request);
             return Ok(result);
         }
 
@@ -93,10 +94,10 @@ namespace Sehatak.API.Controllers.Consultationcontroller
 
         [Authorize(Policy = "DoctorOnly")]
         [HttpGet("doctor-pending-payments/{centerId}")]
-        public async Task<IActionResult> GetPendingPayments(int centerId)
+        public async Task<IActionResult> GetPendingPayments(int centerId, [FromQuery] PagedRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await consultation.GetPaymentPinding(centerId, userId);
+            var result = await consultation.GetPaymentPinding(centerId, userId, request);
             return Ok(result);
         }
 
@@ -128,11 +129,11 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpGet("doctor-get-doctor-consultation/{centerId}")]
-        public async Task<IActionResult> GetConsultationsSchedualeAsync(int centerId)
+        [HttpGet("doctor-get-consultation/{centerId}")]
+        public async Task<IActionResult> GetConsultationsSchedualeAsync(int centerId, [FromQuery] PagedRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await consultation.GetConsultationsScheduale(centerId, userId);
+            var result = await consultation.GetConsultationsScheduale(centerId, userId, request);
             return Ok(result);
         }
 

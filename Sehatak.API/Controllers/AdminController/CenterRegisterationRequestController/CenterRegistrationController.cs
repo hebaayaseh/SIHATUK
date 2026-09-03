@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.CreateCenterRequestDto;
 using Sehatak.Application.DTOs.RecordPaymentRequestDto;
 using Sehatak.Application.Interfaces.CenterRegistrationRequest;
@@ -34,9 +35,9 @@ namespace Sehatak.API.Controllers.CenterRegistration
 
         [Authorize(Policy = "SuperAdminOnly")]
         [HttpGet("superAdmin-pending-payments")]
-        public async Task<IActionResult> GetPendingRegistrationPayments()
+        public async Task<IActionResult> GetPendingRegistrationPayments([FromQuery] PagedRequest request)
         {
-            var result = await _registrationService.GetPendingRegistrationPaymentsAsync();
+            var result = await _registrationService.GetPendingRegistrationPaymentsAsync(request);
             return Ok(result);
         }
 
@@ -53,9 +54,9 @@ namespace Sehatak.API.Controllers.CenterRegistration
 
         [Authorize(Policy = "SuperAdminOnly")]
         [HttpGet("superAdmin-requests")]
-        public async Task<IActionResult> GetCentersRegisteration()
+        public async Task<IActionResult> GetCentersRegisteration([FromQuery] PagedRequest request)
         {
-            var result = await _registrationService.GetCentersRegisterationAsync();
+            var result = await _registrationService.GetCentersRegisterationAsync(request);
             return Ok(result);
         }
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.MedicalRecordDto;
 using Sehatak.Application.Interfaces.IMedicalRecord;
 using Sehatak.Domain.Entities.TenantEntities;
@@ -37,10 +38,10 @@ namespace Sehatak.API.Controllers.MedicalRecordController
 
         [Authorize(Policy = "DoctorOnly")]
         [HttpGet("doctor-patient-history/{centerId}/{patientId}")]
-        public async Task<IActionResult> GetPatientMedicalHistory(int centerId, int patientId)
+        public async Task<IActionResult> GetPatientMedicalHistory(int centerId, int patientId, [FromQuery] PagedRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await medical.GetPatientMedicalHistoryAsync(centerId, userId, patientId);
+            var result = await medical.GetPatientMedicalHistoryAsync(centerId, userId, patientId,request);
             return Ok(result);
         }
 
