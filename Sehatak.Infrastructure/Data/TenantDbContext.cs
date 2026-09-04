@@ -147,10 +147,11 @@ namespace Sehatak.Infrastructure.Data
                 // علاقة المريض الفرعي مع الرئيسي
                 entity.HasOne(e => e.ParentPatient)
                       .WithMany(p => p.SubPatients)
-                      .HasForeignKey(e => e.SubPatientId)
+                      .HasForeignKey(e => e.ParentPatientId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                entity.Property(e => e.SubPatientName).HasMaxLength(200);
+                entity.Property(e => e.FirstName).HasMaxLength(200);
+                entity.Property(e => e.LastName).HasMaxLength(200);
 
                 entity.Property(e => e.BloodType)
                       .HasConversion<string>();
