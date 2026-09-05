@@ -25,6 +25,7 @@ using Sehatak.Application.Interfaces.IProfileInterface;
 using Sehatak.Application.Interfaces.IProfileInterface.ProfileAdmin;
 using Sehatak.Application.Interfaces.IShiftSchedule;
 using Sehatak.Application.Interfaces.IStaffAttendance;
+using Sehatak.Application.Interfaces.ISubPatient;
 using Sehatak.Application.Interfaces.ISubscriptionPaymentService;
 using Sehatak.Application.Interfaces.MedicalCenter;
 using Sehatak.Application.Interfaces.Plans;
@@ -61,6 +62,7 @@ using Sehatak.Infrastructure.Services.SuperAdminService.Features.FeatureService;
 using Sehatak.Infrastructure.Services.SuperAdminService.Plans;
 using Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentService;
 using Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth;
+using Sehatak.Infrastructure.Services.SupPatientService;
 using Sehatak.Infrastructure.Services.tokenService;
 using Serilog;
 using System;
@@ -332,6 +334,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IMedicalRecord, MedicalRecordService>();
             builder.Services.AddScoped<IApointmentDashBoard, AppointmentDashBoard>();
             builder.Services.AddScoped<IDoctorRating, DoctorRatingService>();
+            builder.Services.AddScoped<ISubPatient, SubPatientService>();
 
             var app = builder.Build();
 
