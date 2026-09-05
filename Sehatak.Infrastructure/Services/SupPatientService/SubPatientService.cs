@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.SubPatientDto;
 using Sehatak.Application.Interfaces.ISubPatient;
@@ -82,6 +83,43 @@ namespace Sehatak.Infrastructure.Services.SupPatientService
                 Gender = sp.Gender
             }).ToList();
 
+        }
+
+
+        public async Task<PagedResult<SummarySubPatientResponseDto>> GetSubPatientsAsync(int centerId, int userId, PagedRequest request)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(p => p.userId == userId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            var query = db.Patients
+                .Where(s => s.ParentPatientId == patient.patientId)
+                .OrderBy(n => n.FirstName)
+                .ThenBy(n => n.LastName)
+                .Select(s=>new SummarySubPatientResponseDto
+                {
+                    Id = s.patientId,
+                    SubPatientFirstName = s.FirstName,
+                    SubPatientLastName = s.LastName,
+                    DateOfBith = s.DateOfBith,
+                    WhatAppNumber = s.WhatsappNumber,
+                    BloodType = s.BloodType,
+                    Gender = s.Gender
+                });
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
 
         public async Task<SummarySubPatientResponseDto> UpdateSubPatientAsync(int centerId, int userId, int subPatientId, UpdateSubPatientRequestDto request)

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.SubPatientDto;
 using Sehatak.Application.Interfaces.ISubPatient;
 
@@ -27,6 +28,14 @@ namespace Sehatak.API.Controllers.PatientController.SubPatientController
         public async Task<IActionResult> UpdateSubPatientAsync(int centerId, int userId, int subPatientId, [FromBody] UpdateSubPatientRequestDto request)
         {
             var result = await subPatient.UpdateSubPatientAsync(centerId, userId, subPatientId, request);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "PatientOnly")]
+        [HttpGet("patient-get-sub-patient")]
+        public async Task<IActionResult> GetSubPatientsAsync(int centerId, int userId, [FromQuery] PagedRequest request)
+        {
+            var result = await subPatient.GetSubPatientsAsync(centerId, userId, request);
             return Ok(result);
         }
     }
