@@ -84,6 +84,63 @@ namespace Sehatak.Infrastructure.Services.SupPatientService
 
         }
 
-        
+        public async Task<SummarySubPatientResponseDto> UpdateSubPatientAsync(int centerId, int userId, int subPatientId, UpdateSubPatientRequestDto request)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(p => p.userId == userId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            var subPatient = await db.Patients
+                .FirstOrDefaultAsync(s => s.ParentPatientId == patient.patientId
+                                     && s.patientId == subPatientId);
+
+            if (subPatient == null)
+                throw new BusinessException("SubPatient.NotFound");
+
+            if (request.SubPatientFirstName != null)
+                subPatient.FirstName = request.SubPatientFirstName;
+
+            if (request.SubPatientLastName != null)
+                subPatient.LastName = request.SubPatientLastName;
+
+            if (request.DateOfBith != null)
+                subPatient.DateOfBith = request.DateOfBith.Value;
+
+            if (request.Gender != null)
+                subPatient.Gender = (Gender)request.Gender;
+
+            if (request.WhatAppNumber != null)
+                subPatient.WhatsappNumber = request.WhatAppNumber;
+
+            if (request.BloodType != null)
+                subPatient.BloodType = (BloodType)request.BloodType;
+
+            await db.SaveChangesAsync();
+
+            return new SummarySubPatientResponseDto
+            {
+                Id = subPatient.patientId,
+                SubPatientFirstName = subPatient.FirstName,
+                SubPatientLastName = subPatient.LastName,
+                DateOfBith = subPatient.DateOfBith,
+                Gender = subPatient.Gender,
+                BloodType = subPatient.BloodType,
+                WhatAppNumber = subPatient.WhatsappNumber
+            };
+
+        }
     }
 }

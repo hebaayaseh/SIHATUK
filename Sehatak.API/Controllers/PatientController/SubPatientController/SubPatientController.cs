@@ -21,5 +21,13 @@ namespace Sehatak.API.Controllers.PatientController.SubPatientController
             var result = await subPatient.AddSubPatientAsync(centerId, userId, request);
             return Ok(result);
         }
+
+        [Authorize(Policy = "PatientOnly")]
+        [HttpPut("patient-update-sub-patient")]
+        public async Task<IActionResult> UpdateSubPatientAsync(int centerId, int userId, int subPatientId, [FromBody] UpdateSubPatientRequestDto request)
+        {
+            var result = await subPatient.UpdateSubPatientAsync(centerId, userId, subPatientId, request);
+            return Ok(result);
+        }
     }
 }
