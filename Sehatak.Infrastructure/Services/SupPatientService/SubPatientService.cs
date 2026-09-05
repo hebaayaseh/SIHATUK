@@ -55,7 +55,8 @@ namespace Sehatak.Infrastructure.Services.SupPatientService
                 WhatsappNumber = sp.WhatAppNumber,
                 BloodType = sp.BloodType,
                 Gender = sp.Gender,
-                ParentPatientId = patient.patientId
+                ParentPatientId = patient.patientId,
+                NotifiableUserId = patient.userId!.Value,
             }).ToList();
 
             await db.Patients.AddRangeAsync(newSubPatients);

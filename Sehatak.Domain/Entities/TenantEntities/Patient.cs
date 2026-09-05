@@ -11,6 +11,7 @@ namespace Sehatak.Domain.Entities.TenantEntities
         public string? FirstName { get; set; }         
         public string? LastName { get; set; }
         public DateOnly DateOfBith { get; set; }
+        public int NotifiableUserId { get; set; }
         public string WhatsappNumber { get; set; }
         public BloodType BloodType { get; set; }
         public Gender Gender { get; set; }

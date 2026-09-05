@@ -1,26 +1,14 @@
-﻿using BCrypt.Net;
-using Castle.Core.Smtp;
-using DocumentFormat.OpenXml.Spreadsheet;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Win32;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.PatienRegisterDto;
 using Sehatak.Application.DTOs.PatientLoginDto;
 using Sehatak.Application.Interfaces.AuthPatient;
 using Sehatak.Application.Interfaces.IAuth;
 using Sehatak.Application.Interfaces.IEmail;
-using Sehatak.Domain.Entities;
 using Sehatak.Domain.Entities.General;
-using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using Sehatak.Infrastructure.Security;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Volo.Abp;
 
 
@@ -166,6 +154,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
                 BloodType = request.bloodType,
                 Gender = request.gender,
                 WhatsappNumber = request.phoneNumber,
+                NotifiableUserId = user.Id
             };
             await db.Patients.AddAsync(patient);
         }

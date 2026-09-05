@@ -59,10 +59,10 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         }
         [Authorize(Policy = "PatientOnly")]
         [HttpPost("patient-join-waitlist/{centerId}/{doctorId}")]
-        public async Task<IActionResult> JoinWaitLis(int centerId, int doctorId, [FromBody] DateOnly date)
+        public async Task<IActionResult> JoinWaitLis(int centerId, int doctorId, [FromBody] DateOnly date,int?subPatientId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await slotService.JoinWaitListAsync(centerId, doctorId, userId, date);
+            var result = await slotService.JoinWaitListAsync(centerId, doctorId, userId, date,subPatientId);
             return Ok(result);
         }
 
@@ -75,10 +75,10 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         }
         [Authorize(Policy = "PatientOnly")]
         [HttpGet("patient-view-my-waitlist/{centerId}/{doctorId}")]
-        public async Task<IActionResult> ViewWaitLis(int centerId, int doctorId, DateOnly date)
+        public async Task<IActionResult> ViewWaitLis(int centerId, int doctorId, DateOnly date,int?subPatientId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await slotService.GetPatientWaitListsAsync(centerId, doctorId,userId ,date);
+            var result = await slotService.GetPatientWaitListsAsync(centerId, doctorId,userId ,date,subPatientId);
             return Ok(result);
         }
 

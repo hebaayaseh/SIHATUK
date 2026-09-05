@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.SubPatientDto;
 using Sehatak.Application.Interfaces.ISubPatient;
+using System.Security.Claims;
 
 namespace Sehatak.API.Controllers.PatientController.SubPatientController
 {
@@ -16,25 +17,28 @@ namespace Sehatak.API.Controllers.PatientController.SubPatientController
             this.subPatient = subPatient;
         }
         [Authorize(Policy = "PatientOnly")]
-        [HttpPost("patient-add-sub-patient")]
-        public async Task<IActionResult> AddSubPatientAsync(int centerId, int userId,[FromBody] AddSubPatientRequestDto request)
+        [HttpPost("patient-add-sub-patient/{centerId}")]
+        public async Task<IActionResult> AddSubPatientAsync(int centerId, [FromBody] AddSubPatientRequestDto request)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await subPatient.AddSubPatientAsync(centerId, userId, request);
             return Ok(result);
         }
 
         [Authorize(Policy = "PatientOnly")]
-        [HttpPut("patient-update-sub-patient")]
-        public async Task<IActionResult> UpdateSubPatientAsync(int centerId, int userId, int subPatientId, [FromBody] UpdateSubPatientRequestDto request)
+        [HttpPut("patient-update-sub-patient/{centerId}/{subPatientId}")]
+        public async Task<IActionResult> UpdateSubPatientAsync(int centerId, int subPatientId, [FromBody] UpdateSubPatientRequestDto request)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await subPatient.UpdateSubPatientAsync(centerId, userId, subPatientId, request);
             return Ok(result);
         }
 
         [Authorize(Policy = "PatientOnly")]
-        [HttpGet("patient-get-sub-patient")]
-        public async Task<IActionResult> GetSubPatientsAsync(int centerId, int userId, [FromQuery] PagedRequest request)
+        [HttpGet("patient-get-sub-patient/{centerId}")]
+        public async Task<IActionResult> GetSubPatientsAsync(int centerId, [FromQuery] PagedRequest request)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await subPatient.GetSubPatientsAsync(centerId, userId, request);
             return Ok(result);
         }

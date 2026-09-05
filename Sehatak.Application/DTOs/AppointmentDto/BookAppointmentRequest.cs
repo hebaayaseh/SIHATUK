@@ -10,5 +10,6 @@ namespace Sehatak.Application.DTOs.AppointmentDto
     {
         public TimeOnly timeSlot { get; set; }
         public DateOnly dateOnly { get; set; }
+        public int? SubPatientId { get; set; }
     }
 }

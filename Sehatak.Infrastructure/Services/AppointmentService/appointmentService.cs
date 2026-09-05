@@ -1,6 +1,4 @@
-﻿using DocumentFormat.OpenXml.Office2016.Excel;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AppointmentDto;
 using Sehatak.Application.DTOs.Exceptions;
@@ -68,7 +66,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .FirstOrDefaultAsync();
 
             if (schedule == null)
-                throw new BusinessException("Doctor.NotFound");
+                throw new BusinessException("Schedule.NotFound");
 
             var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(schedule.StartTime, schedule.EndTime, (int)schedule.SlotDurationMinutes);
 
@@ -150,7 +148,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                .FirstOrDefaultAsync();
 
             if (schedule == null)
-                throw new BusinessException("Doctor.NotFound");
+                throw new BusinessException("Schedule.NotFound");
 
             var patient = await db.Patients
                 .Include(u => u.user)
@@ -159,8 +157,22 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
+
+            if (request.SubPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == request.SubPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             var hasExistingAppointment = await db.Appointments
-               .AnyAsync(a => a.patientId == patient.patientId
+               .AnyAsync(a => a.patientId == actingPatient.patientId
                         && a.doctorId == doctorId
                         && a.appointmentDate == request.dateOnly
                         && a.appointmentStatus == AppointmentStatus.Confirmed);
@@ -200,7 +212,6 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             availableSlots = availableSlots.OrderBy(s => s).ToList();
 
-            
 
             if (!availableSlots.Contains(request.timeSlot))
             {
@@ -219,7 +230,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
                     db.Waitlists.Add(new Waitlist
                     {
-                        PatientId = patient.patientId,
+                        PatientId = actingPatient.patientId,
                         DoctorId = doctorId,
                         PreferredDate = request.dateOnly,
                         Status = WaitlistStatus.Waiting,
@@ -239,7 +250,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             await db.Appointments.AddAsync(
                 new Appointment
                 {
-                    patientId = patient.patientId,
+                    patientId = actingPatient.patientId,
                     timeSlot = request.timeSlot,
                     appointmentDate = request.dateOnly,
                     appointmentStatus = AppointmentStatus.Confirmed,
@@ -312,6 +323,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             {
                 bookedSlot.appointmentStatus = AppointmentStatus.Cancelled;
                 bookedSlot.cancellationReason = request.Reason ?? "تم حجب هذا الموعد من قبل الطبيب";
+                bookedSlot.updateAt = DateTime.UtcNow;
 
                 await db.PostponedServices.AddAsync(
                     new PostponedService
@@ -326,7 +338,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
                 db.Notifications.Add(new Notification
                 {
-                    UserId = (int)bookedSlot.Patient.userId,
+                    UserId = bookedSlot.Patient.NotifiableUserId,
                     Message = "نأسف لإبلاغكم بإلغاء موعدكم من قبل الطبيب. يرجى حجز موعد جديد.",
                     CreatedAt = DateTime.UtcNow,
                     Type = NotificationType.Cancellation,
@@ -375,11 +387,24 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
+
+            if (request.SubPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == request.SubPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             var appointment = await db.Appointments
                 .Include(p => p.Patient)
-                .ThenInclude(u => u.user)
                 .Where(a => a.doctorId == doctorId
-                       && a.patientId == patient.patientId
+                       && a.patientId == actingPatient.patientId
                        && a.appointmentStatus == AppointmentStatus.Confirmed
                        && a.appointmentDate == request.date
                        && a.timeSlot == request.timeSlot
@@ -394,7 +419,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             await db.Notifications.AddAsync(new Notification
             {
-                UserId = (int)appointment.Patient.userId,
+                UserId = patient.userId!.Value,
                 Type = NotificationType.Cancellation,
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
@@ -403,7 +428,6 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var nextWaiting = await db.Waitlists
                     .Include(p => p.Patient)
-                    .ThenInclude(u => u.user)
                     .Where(w => w.DoctorId == doctorId
                            && w.PreferredDate == request.date
                            && w.Status == WaitlistStatus.Waiting)
@@ -427,7 +451,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
                 await db.Notifications.AddAsync(new Notification
                 {
-                    UserId = (int)nextWaiting.Patient.userId,
+                    UserId = nextWaiting.Patient.NotifiableUserId,
                     Type = NotificationType.Appointment,
                     IsRead = false,
                     CreatedAt = DateTime.UtcNow,
@@ -461,7 +485,19 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
 
+            if (request.SubPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == request.SubPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
 
             var doctor = await db.Doctors
                  .Include(u => u.user)
@@ -473,10 +509,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var appintment = await db.Appointments
                 .Include(p=>p.Patient)
-                .ThenInclude(u=>u.user)
                 .Where(a => a.Id == request.appointmentId
                        && a.doctorId == doctor.Id
-                       && a.patientId == patient.patientId
+                       && a.patientId == actingPatient.patientId
                        && a.appointmentStatus == AppointmentStatus.Confirmed)
                 .FirstOrDefaultAsync();
 
@@ -567,7 +602,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             await db.Notifications.AddAsync(new Notification
             {
-                UserId = (int)appintment.Patient.userId,
+                UserId = patient.userId!.Value,
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
                 Message = "تم اعادة جدولة موعدك بنجاح.",
@@ -585,7 +620,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         }
 
-        public async Task<string> JoinWaitListAsync(int centerId, int doctorId, int userId, DateOnly date)
+        public async Task<string> JoinWaitListAsync(int centerId, int doctorId, int userId, DateOnly date,int? subPatientId)
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             if (date < today)
@@ -616,9 +651,23 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             var alreadyInWaitlist = await db.Waitlists
                 .AnyAsync(w => w.DoctorId == doctorId
-                       && w.PatientId == patient.patientId
+                       && w.PatientId == actingPatient.patientId
                        && w.Status == WaitlistStatus.Waiting
                        && w.PreferredDate == date);
                 
@@ -629,7 +678,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             await db.Waitlists
                 .AddAsync(new Waitlist
                 {
-                    PatientId = patient.patientId,
+                    PatientId = actingPatient.patientId,
                     DoctorId = doctorId,
                     PreferredDate = date,
                     CreatedAt = DateTime.UtcNow,
@@ -672,9 +721,11 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 {
                     WaitLisId = w.Id,
                     PatientId = w.PatientId,
-                    PatientName = $"{w.Patient.user.firstName} {w.Patient.user.firstName}",
-                    PhoneNumber = w.Patient.user.phoneNumber,
-                    Email = w.Patient.user.email,
+                    PatientName = w.Patient.userId != null
+                    ? w.Patient.user.firstName + " " + w.Patient.user.lastName
+                    : w.Patient.FirstName + " " + w.Patient.LastName,
+                    PhoneNumber = w.Patient.userId != null ? w.Patient.user.phoneNumber : w.Patient.ParentPatient.user.phoneNumber,
+                    Email = w.Patient.userId != null ? w.Patient.user.email : w.Patient.ParentPatient.user.email,
                     status = w.Status,
                     date = w.PreferredDate
 
@@ -684,7 +735,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         }
 
-        public async Task<GetPatientWaitList> GetPatientWaitListsAsync(int centerId, int doctorId, int userId, DateOnly date)
+        public async Task<GetPatientWaitList> GetPatientWaitListsAsync(int centerId, int doctorId, int userId, DateOnly date,int?subPatientId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -711,19 +762,34 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             var waitList =await db.Waitlists
                 .Include(p => p.Patient)
-                .Where(w => w.PatientId == patient.patientId
+                .Where(w => w.PatientId == actingPatient.patientId
                                      && w.DoctorId == doctorId
                                      && w.PreferredDate == date)
                 .Select(n => new GetPatientWaitList
                 {
                     WaitLisId = n.Id,
                     PatientId = n.PatientId,
-                    PatientName = $"{n.Patient.user.firstName} {n.Patient.user.lastName}",
-                    PhoneNumber = n.Patient.user.phoneNumber,
-                    date = n.PreferredDate,
-                    Email = n.Patient.user.email,
+                    PatientName = n.Patient.userId != null
+                    ? n.Patient.user.firstName + " " + n.Patient.user.lastName
+                    : n.Patient.FirstName + " " + n.Patient.LastName,
+                    PhoneNumber = n.Patient.userId != null ? n.Patient.user.phoneNumber : n.Patient.ParentPatient.user.phoneNumber,
+                    Email = n.Patient.userId != null ? n.Patient.user.email : n.Patient.ParentPatient.user.email,
                     status = n.Status
                 }).FirstOrDefaultAsync();
 
