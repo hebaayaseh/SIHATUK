@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.ServicePriceDto;
 using Sehatak.Application.Interfaces.ServicePriceInterface;
@@ -6,14 +7,15 @@ using Sehatak.Domain.Entities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using System.Linq.Dynamic.Core;
 
 namespace Sehatak.Infrastructure.Services.ServicePriceService
 {
-    public class servicePrice : IServicePrice
+    public class ServicePriceService : IServicePrice
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public servicePrice(SharedDbContext sharedDbContext , TenantDbContextFactory contextFactory)
+        public ServicePriceService(SharedDbContext sharedDbContext , TenantDbContextFactory contextFactory)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
@@ -30,7 +32,9 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
             using var db = contextFactory.CreateForCenter(centerId);
 
             var admin = await db.Users
-                 .FirstOrDefaultAsync(u => u.Id == userId && u.role == userRole.Admin && u.isActive);
+                 .FirstOrDefaultAsync(u => u.Id == userId 
+                                      && u.role == userRole.Admin 
+                                      && u.isActive);
 
             if (admin == null)
                 throw new BusinessException("Auth.Forbidden");
@@ -55,6 +59,15 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
 
             if (conflictingNames.Any())
                 throw new BusinessException("Validation.DuplicateServiceNames");
+            var type = await db.ServicePrices
+                .FirstOrDefaultAsync(s => s.Type == request.Type
+                                     && (s.Type == ServiceType.ConsultationCost
+                                     ||  s.Type == ServiceType.Appointment
+                                     ||  s.Type == ServiceType.FollowUp)
+                                     && s.IsActive);
+
+            if (type != null)
+                throw new BusinessException("ServiceType.AlreadyExist");
 
             var item = request.Items
                 .Select(s => new ServicePrice
@@ -80,6 +93,35 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
 
             };
 
+        }
+
+        public async Task<Application.Common.PagedResult<GetServicePriceResponseDto>> GetServicePriceByCenterId(int centerId, ServiceType type, PagedRequest request)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var query = db.ServicePrices
+                .Where(s => s.Type == type && s.IsActive)
+                .Select(s => new GetServicePriceResponseDto
+                {
+                    Type = type,
+                    Items = new List<ServicePriceResponseItem>
+                    {
+                        new ServicePriceResponseItem
+                        {
+                            Id = s.Id,
+                            ServiceName = s.ServiceName,
+                            Price = s.Price
+                        }
+                    },
+                });
+
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
 
         public async Task<string> RemoveServicePrice(int userId, int centerId, int servicePriceId)

@@ -9,6 +9,7 @@ namespace Sehatak.Application.DTOs.DoctorDto
         public string patientName { get; set; }
         public DateOnly date {  get; set; }
         public TimeOnly timeSlot {  get; set; }
+        public bool IsfollowUp { get; set; }
 
     }
 }

@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.ServicePriceDto;
 using Sehatak.Application.Interfaces.ServicePriceInterface;
+using Sehatak.Domain.Enums;
 using System.Runtime.InteropServices;
 using System.Security.Claims;
 
@@ -46,6 +48,12 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.ServicePricecontroller
             var result = await servicePrice.RemoveServicePrice(userId, centerId, servicePriceId);
             return Ok(result);
         }
-
+        [Authorize(Policy = "MedicalStaff")]
+        [HttpGet("medicalStaff-get-service-price/{centerId}")]
+        public async Task<IActionResult> GetServicePriceByCenterId(int centerId, [FromQuery] ServiceType type, [FromQuery] PagedRequest request)
+        {
+            var result = await servicePrice.GetServicePriceByCenterId(centerId, type, request);
+            return Ok(result);
+        }
     }
 }

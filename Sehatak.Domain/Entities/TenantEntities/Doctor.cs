@@ -12,8 +12,6 @@ namespace Sehatak.Domain.Entities.TenantEntities
         
         // initial value = false 
         public bool OnlineEnabled { get; set; } = false;
-        // For connect with service price table to get the consultation cost for the doctor
-        public int? ConsultationCostId { get; set; }
 
 
         // Navigation Properties :

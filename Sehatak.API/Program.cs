@@ -324,7 +324,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<ISignup, StaffService>();
             builder.Services.AddScoped<IprofileStaff, EditStaffService>();
             builder.Services.AddScoped<IDoctorDailyHours, DoctorDailyHoursService>();
-            builder.Services.AddScoped<IServicePrice, servicePrice>();
+            builder.Services.AddScoped<IServicePrice, ServicePriceService>();
             builder.Services.AddScoped<IFinancialReportAdmin, FinancialReportAdminService>();
             builder.Services.AddScoped<IChatHub, ChatHistoryService>();
             builder.Services.AddScoped<ITokenService, TokenService>();

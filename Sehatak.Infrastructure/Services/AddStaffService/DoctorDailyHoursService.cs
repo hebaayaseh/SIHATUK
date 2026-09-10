@@ -403,6 +403,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                     patientName = $"{a.Patient.user.firstName} {a.Patient.user.lastName}",
                     date = a.appointmentDate,
                     timeSlot = (TimeOnly)a.timeSlot,
+                    IsfollowUp = a.IsFollowUp
                 })
                 .ToListAsync();
 

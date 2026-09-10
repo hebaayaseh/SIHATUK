@@ -281,6 +281,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 followUp.Status = FollowUpStatus.Booked;
                 followUp.ScheduledAppointment = newAppointment;
                 followUp.UpdatedAt = DateTime.UtcNow;
+                newAppointment.IsFollowUp = true;
             }
 
             await db.Notifications.AddAsync(new Notification
@@ -1105,6 +1106,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 followUp.Status = FollowUpStatus.Booked;
                 followUp.ScheduledAppointment = newAppointment;
                 followUp.UpdatedAt = DateTime.UtcNow;
+                newAppointment.IsFollowUp = true;
             }
 
             await db.Notifications.AddAsync(new Notification

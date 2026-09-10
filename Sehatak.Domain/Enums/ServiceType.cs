@@ -8,6 +8,7 @@ namespace Sehatak.Domain.Enums
         LabTest = 2,          
         MedicalSupply = 3, 
         Appointment = 4,
-        Other = 5           
+        FollowUp = 5,
+        Other = 6           
     }
 }

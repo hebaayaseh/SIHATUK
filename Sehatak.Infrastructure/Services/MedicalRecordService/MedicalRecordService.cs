@@ -73,8 +73,30 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                 
                 await db.MedicalRecords.AddAsync(record);
                 Create = record.CreatedAt;
-                if (request.ConsultationCost > 0)
-                    doctorAppointment.ConsultationCost = (decimal)request.ConsultationCost;
+                decimal basePrice;
+
+                if (request.ConsultationCost >= 0)
+                {
+                    basePrice = (decimal)request.ConsultationCost;
+                }
+                else if (doctorAppointment.IsFollowUp)
+                {
+                    var serviceCost = await db.ServicePrices
+                        .FirstOrDefaultAsync(s => s.Type == ServiceType.FollowUp && s.IsActive);
+                    if (serviceCost == null)
+                        throw new BusinessException("ServicePrice.NotFound");
+                    basePrice = serviceCost.Price;
+                }
+                else
+                {
+                    var serviceCost = await db.ServicePrices
+                        .FirstOrDefaultAsync(s => s.Type == ServiceType.Appointment && s.IsActive);
+                    if (serviceCost == null)
+                        throw new BusinessException("ServicePrice.NotFound");
+                    basePrice = serviceCost.Price;
+                }
+
+                doctorAppointment.ConsultationCost = basePrice;
 
                 if (request.Items != null)
                 {
@@ -90,23 +112,11 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                         };
                         await db.AppointmentItems.AddAsync(Item);
                         totalCost += (double)Item.TotalPrice;
-
                     }
-
-                    billAmount = (double)((decimal)totalCost + doctorAppointment.ConsultationCost);
-
                 }
-                else
-                {
-                    var serviceCost = await db.ServicePrices
-                        .FirstOrDefaultAsync(s => s.Type == ServiceType.Appointment
-                                             && s.IsActive);
 
-                    if (serviceCost == null)
-                        throw new BusinessException("ServicePrice.NotFound");
-                    billAmount = totalCost + (double)serviceCost.Price;
-                    
-                }
+                billAmount = totalCost + (double)basePrice;
+
                 var payment = new Payment
                 {
                     Amount = (decimal)billAmount,
@@ -253,7 +263,7 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                     }
                 }
 
-                if (request.CustomConsultationPrice > 0)
+                if (request.CustomConsultationPrice >= 0)
                 {
                     if (appointment.ConsultationCost != null)
                     {

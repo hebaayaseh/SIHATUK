@@ -27,6 +27,7 @@ namespace Sehatak.Domain.Entities.TenantEntities
         public int? queueNumber { get; set; }
 
         public decimal? BillAmount { get; set; }
+        public bool IsFollowUp { get; set; } = false;
 
         public AppointmentStatus appointmentStatus { get; set; } = AppointmentStatus.Pending;
 
