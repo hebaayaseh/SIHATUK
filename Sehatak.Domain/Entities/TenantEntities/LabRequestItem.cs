@@ -9,6 +9,7 @@ namespace Sehatak.Domain.Entities.TenantEntities
         public int LabRequestId { get; set; }
 
         public int ServicePriceId { get; set; }
+        public decimal UnitPrice { get; set; }
 
         // Navigation Properties :
         public LabRequest LabRequest { get; set; } = null!;

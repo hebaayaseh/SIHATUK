@@ -8,7 +8,6 @@ namespace Sehatak.Domain.Entities.TenantEntities
     {
         [Key]
         public int Id { get; set; }
-        public bool IsEmergency { get; set; } = false;
         public int? ReceptionistId { get; set; } 
         public int RescheduleCount { get; set; } = 0;
         // Queue management properties :
@@ -40,6 +39,7 @@ namespace Sehatak.Domain.Entities.TenantEntities
         public decimal ConsultationCost { get; set; } = 0;
         public decimal ItemsTotal { get; set; } = 0;
         public DateTime? CheckInTime {  get; set; }
+        public DateTime? CheckOutTime { get; set; }
         public bool DelayProcessed { get; set; } = false;
 
 

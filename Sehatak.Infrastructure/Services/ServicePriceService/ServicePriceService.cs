@@ -106,22 +106,29 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
             using var db = contextFactory.CreateForCenter(centerId);
 
             var query = db.ServicePrices
-                .Where(s => s.Type == type && s.IsActive)
-                .Select(s => new GetServicePriceResponseDto
-                {
-                    Type = type,
-                    Items = new List<ServicePriceResponseItem>
-                    {
-                        new ServicePriceResponseItem
-                        {
-                            Id = s.Id,
-                            ServiceName = s.ServiceName,
-                            Price = s.Price
-                        }
-                    },
-                });
+               .Where(s => s.Type == type && s.IsActive)
+               .Select(s => new ServicePriceResponseItem
+               {
+                   Id = s.Id,
+                   ServiceName = s.ServiceName,
+                   Price = s.Price
+               });
 
-            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+            var pagedItems = await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+
+            var responseDto = new GetServicePriceResponseDto
+            {
+                Type = type,
+                Items = pagedItems.Items
+            };
+
+            return new Application.Common.PagedResult<GetServicePriceResponseDto>
+            {
+                Items = new List<GetServicePriceResponseDto> { responseDto },
+                TotalCount = pagedItems.TotalCount,
+                PageNumber = pagedItems.PageNumber,
+                PageSize = pagedItems.PageSize
+            };
         }
 
         public async Task<string> RemoveServicePrice(int userId, int centerId, int servicePriceId)
@@ -195,5 +202,7 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
             };
 
         }
+
+        
     }
 }

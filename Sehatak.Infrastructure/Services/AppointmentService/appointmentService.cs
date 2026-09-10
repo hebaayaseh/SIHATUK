@@ -268,7 +268,6 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 appointmentDate = request.dateOnly,
                 appointmentStatus = AppointmentStatus.Confirmed,
                 doctorId = doctorId,
-                IsEmergency = false,
                 updateAt = DateTime.UtcNow,
                 createdAt = DateTime.UtcNow
 
@@ -1093,7 +1092,6 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 appointmentDate = request.dateOnly,
                 appointmentStatus = AppointmentStatus.Confirmed,
                 doctorId = doctorId,
-                IsEmergency = false,
                 updateAt = DateTime.UtcNow,
                 createdAt = DateTime.UtcNow,
                 ReceptionistId = userId

@@ -43,6 +43,7 @@ namespace Sehatak.Infrastructure.Data
         public DbSet<EmailVerificationCode> EmailVerificationCodes => Set<EmailVerificationCode>();
         public DbSet<DoctorBlockedDay> DoctorBlockedDays => Set<DoctorBlockedDay>();
         public DbSet<ShiftSchedule> shiftSchedules => Set<ShiftSchedule>();
+        public DbSet<EmergencyCase> EmergencyCases => Set<EmergencyCase>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -82,6 +83,29 @@ namespace Sehatak.Infrastructure.Data
 
                 entity.Property(e => e.role)
                       .HasConversion<string>();
+            });
+            // EMERGENCY CASE
+            modelBuilder.Entity<EmergencyCase>(entity =>
+            {
+                entity.ToTable("emergency_cases");
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.PatientName)
+                      .IsRequired()
+                      .HasMaxLength(150);
+
+                entity.Property(e => e.AmountPaid)
+                      .HasPrecision(10, 2);
+
+                entity.HasOne(e => e.DoctorUser)
+                      .WithMany()
+                      .HasForeignKey(e => e.DoctorUserId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Receptionist)
+                      .WithMany()
+                      .HasForeignKey(e => e.ReceptionistId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             //  DEPARTMENT 
