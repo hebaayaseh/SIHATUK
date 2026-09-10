@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Sehatak.API.Hubs;
@@ -18,6 +17,7 @@ using Sehatak.Application.Interfaces.IAuth;
 using Sehatak.Application.Interfaces.IDashBoard;
 using Sehatak.Application.Interfaces.IDoctorRating;
 using Sehatak.Application.Interfaces.IEmail;
+using Sehatak.Application.Interfaces.IEmerngency;
 using Sehatak.Application.Interfaces.IFinancialReports;
 using Sehatak.Application.Interfaces.IFollowUp;
 using Sehatak.Application.Interfaces.IMedicalRecord;
@@ -36,7 +36,6 @@ using Sehatak.Application.Interfaces.ServicePriceInterface;
 using Sehatak.Application.Interfaces.SignUp;
 using Sehatak.Application.Interfaces.StaffLogin;
 using Sehatak.Application.Interfaces.SuperAdminInterface;
-using Sehatak.Domain.Enums;
 using Sehatak.Infrastructure.CalculateSlot;
 using Sehatak.Infrastructure.Data;
 using Sehatak.Infrastructure.Security;
@@ -48,6 +47,7 @@ using Sehatak.Infrastructure.Services.DashBoardService;
 using Sehatak.Infrastructure.Services.DepartmentService;
 using Sehatak.Infrastructure.Services.DoctorRatingService;
 using Sehatak.Infrastructure.Services.EditProfileService;
+using Sehatak.Infrastructure.Services.EmergencyService;
 using Sehatak.Infrastructure.Services.FinancialReportServices;
 using Sehatak.Infrastructure.Services.FollowUpService;
 using Sehatak.Infrastructure.Services.GetStaff;
@@ -339,6 +339,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IDoctorRating, DoctorRatingService>();
             builder.Services.AddScoped<ISubPatient, SubPatientService>();
             builder.Services.AddScoped<IFollowUp, FollowUpService>();
+            builder.Services.AddScoped<IEmerngency, EmergencyService>();
 
             var app = builder.Build();
 

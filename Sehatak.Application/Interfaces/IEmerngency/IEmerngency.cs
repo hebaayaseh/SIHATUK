@@ -1,17 +1,13 @@
 ﻿using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.EmergencyDto;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Sehatak.Application.Interfaces.IEmengency
+namespace Sehatak.Application.Interfaces.IEmerngency
 {
-    public interface IEmengency
+    public interface IEmerngency
     {
         Task<EmergencyResponseDto> RegisterPatientEmergencyAsync(int centerId, int userId, EmergencyRequestDto request);
-        Task<EmergencyResponseDto> EditPatientEmergencyAsync(int centerId, int userId, int emergencyId);
+        Task<EmergencyResponseDto> EditPatientEmergencyAsync(int centerId, int userId, UpdateEmergencyRequestDto request);
         Task<PagedResult<EmergencyResponseDto>> GetPatientEmergencyAsync(int centerId, PagedRequest request);
+        Task<PagedResult<GetDoctorGeneralResponseDto>> GetDoctorGeneralAsync(int centerId,PagedRequest request);
     }
 }
