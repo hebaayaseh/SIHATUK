@@ -102,7 +102,7 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
                 .FirstOrDefaultAsync(s => s.Id == servicePriceId && s.IsActive);
 
             if (servicePrice == null)
-                throw new BusinessException("Generall.NotFound");
+                throw new BusinessException("General.NotFound");
 
             servicePrice.IsActive = false;
             servicePrice.UpdatedAt = DateTime.UtcNow;
@@ -134,7 +134,7 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
 
             if (request.Price != null)
             {
-                if (request.Price <= 0)
+                if (request.Price < 0)
                     throw new BusinessException("ServicePrice.InvalidPrice");
                 updateService.Price = request.Price.Value;
             }
