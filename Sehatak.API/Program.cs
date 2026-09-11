@@ -290,8 +290,8 @@ namespace Sehatak.API
                 options.AddPolicy("DoctorOnly", policy => policy.RequireRole("Doctor"));
                 options.AddPolicy("ReceptionistOnly", policy => policy.RequireRole("Receptionist"));
                 options.AddPolicy("PatientOnly", policy => policy.RequireRole("Patient"));
+                options.AddPolicy("Emergency", policy => policy.RequireRole("Admin", "Receptionist"));
 
-                
             });
 
             
