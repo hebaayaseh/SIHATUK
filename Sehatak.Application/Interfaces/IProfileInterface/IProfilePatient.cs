@@ -1,5 +1,6 @@
 ﻿using Sehatak.Application.DTOs.EditProfile.EditEmailOrPasswored;
 using Sehatak.Application.DTOs.EditProfile.EditProfileActors;
+using Sehatak.Application.DTOs.EditProfileDto.EditEmailOrPasswored;
 
 namespace Sehatak.Application.Interfaces.IProfileInterface
 {
@@ -12,5 +13,7 @@ namespace Sehatak.Application.Interfaces.IProfileInterface
 
         Task<bool> RequestEditPassword(int centerId , int userId, EditPasswordRequest request);
         Task<PasswordResponse> ConfirmEditPassword(int centerId , int userId, ConfirmEditPasswordRequest request);
+        Task<string> ForgetPasswordAsync(int centerId, ForgetPasswordRequest request);
+        Task<PasswordResponse> ConfirmForgetPassword(int centerId, ConfirmForgetPasswordRequest request);
     }
 }

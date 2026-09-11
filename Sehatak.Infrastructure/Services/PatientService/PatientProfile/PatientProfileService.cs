@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.EditProfile.EditEmailOrPasswored;
 using Sehatak.Application.DTOs.EditProfile.EditProfileActors;
+using Sehatak.Application.DTOs.EditProfileDto.EditEmailOrPasswored;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.IProfileInterface;
@@ -36,7 +37,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
                                      && p.isActive);
 
             if (user == null)
-                throw new BusinessException("Patient.NotFound");
+                throw new BusinessException("User.NotFound");
 
 
             if (request.firstNmae != null)
@@ -129,7 +130,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
                                      && p.isActive);
 
             if (user == null)
-                throw new BusinessException("Patient.NotFound");
+                throw new BusinessException("User.NotFound");
 
             string? Image = null;
             if (!string.IsNullOrEmpty(user.ProfileImageUrl))
@@ -161,7 +162,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
                                      && p.isActive);
 
             if(user == null)
-                throw new BusinessException("Patient.NotFound");
+                throw new BusinessException("User.NotFound");
 
             var exist = await db.Users
                 .AnyAsync(u => u.email == request.Email);
@@ -199,7 +200,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
                                      && p.isActive);
 
             if (user == null)
-                throw new BusinessException("Patient.NotFound");
+                throw new BusinessException("User.NotFound");
 
             var validCode = await db.EmailVerificationCodes
                .Where(c => c.UserId == userId
@@ -237,7 +238,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
                                      && p.isActive);
 
             if(user == null)
-                throw new BusinessException("Patient.NotFound");
+                throw new BusinessException("User.NotFound");
 
             if (request.PasswordHash != request.ConfirmPassword)
                 throw new BusinessException("Validation.PasswordMismatch");
@@ -281,7 +282,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
                                      && p.isActive);
 
             if (user == null)
-                throw new BusinessException("Patient.NotFound");
+                throw new BusinessException("User.NotFound");
             var validCode = await db.EmailVerificationCodes
                 .Where(c => c.UserId == userId
                        && c.Purpose == "change-password"
@@ -298,6 +299,84 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
 
             await db.SaveChangesAsync();
             return new PasswordResponse { message = "Password Update Succses" };
+        }
+
+        public async Task<string> ForgetPasswordAsync(int centerId, ForgetPasswordRequest request)
+        {
+            var center = await sharedDbContext.MedicalCenters
+               .FirstOrDefaultAsync(c => c.Id == centerId
+                                    && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var user = await db.Users
+                .FirstOrDefaultAsync(p => p.email == request.Email 
+                                     && p.isActive);
+
+            if (user == null)
+                throw new BusinessException("User.NotFound");
+
+            if (request.newPassword != request.confirmPassword)
+                throw new BusinessException("Validation.PasswordMismatch");
+
+            var isSamePassword = BCrypt.Net.BCrypt.Verify(request.newPassword, user.passwordHash);
+
+            if (isSamePassword)
+                throw new BusinessException("Validation.SamePassword");
+
+            var code = new Random().Next(100000, 999999).ToString();
+            db.EmailVerificationCodes.Add(new EmailVerificationCode
+            {
+                UserId = user.Id,
+                Code = code,
+                Purpose = "change-password",
+                PendingValue = BCrypt.Net.BCrypt.HashPassword(request.newPassword),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(10)
+            });
+            await db.SaveChangesAsync();
+            await emailService.SendOtpAsync(user.email, code, "change-password");
+            return "تم ارسال الكود الي ايميلك الخاص .";
+
+        }
+        public async Task<PasswordResponse> ConfirmForgetPassword(int centerId, ConfirmForgetPasswordRequest request)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var user = await db.Users
+                .FirstOrDefaultAsync(u => u.email == request.Email
+                                     && u.isActive);
+
+            if (user == null)
+                throw new BusinessException("User.NotFound");
+
+            var validCode = await db.EmailVerificationCodes
+                .Where(c => c.UserId == user.Id
+                       && c.Purpose == "change-password"
+                       && !c.IsUsed
+                       && c.Code == request.Code
+                       && c.ExpiresAt > DateTime.UtcNow)
+                .OrderByDescending(c => c.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (validCode == null || string.IsNullOrEmpty(validCode.PendingValue))
+                throw new BusinessException("Verify.Code");
+
+            user.passwordHash = validCode.PendingValue;
+            validCode.IsUsed = true;
+            
+
+            await db.SaveChangesAsync();
+            return new PasswordResponse { message = "Password Update Success" };
         }
     }
 }

@@ -217,6 +217,71 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
             RefreshToken = tokens.RefreshToken 
         };
     }
+    public async Task<string> PatientDeactiveProfileAsync(int centerId, int userId)
+    {
+        var center = await sharedDbContext.MedicalCenters
+            .FirstOrDefaultAsync(c => c.Id == centerId
+                                 && c.CenterStatus == CenterStatus.Active);
+
+        if (center == null)
+            throw new BusinessException("Center.NotFound");
+
+        using var db = tenantFactory.CreateForCenter(centerId);
+
+        var user = await db.Users
+            .Include(p => p.patient)
+            .FirstOrDefaultAsync(p => p.Id == userId
+                                 && p.isActive);
+
+        if (user == null)
+            throw new BusinessException("User.NotFound");
+
+        user.isActive = false;
+        await db.SaveChangesAsync();
+        return "تم تعطيل الحساب بنجاح.";
+    }
+
+    public async Task<PatientResponseDto> PatientActiveProfileAsync(int centerId, PatientRequestDto request)
+    {
+        var center = await sharedDbContext.MedicalCenters
+            .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
+        if (center == null)
+            throw new BusinessException("Center.NotFound");
+
+        using var db = tenantFactory.CreateForCenter(centerId);
+
+        var patient = await db.Users
+            .FirstOrDefaultAsync(p => !p.isActive && p.email == request.email);
+
+        if (patient == null)
+            throw new BusinessException("Auth.Unauthorized");
+
+        if (patient.role != userRole.Patient)
+            throw new BusinessException("Auth.Forbidden");
+
+        var passwordValid = BCrypt.Net.BCrypt.Verify(request.password, patient.passwordHash);
+
+        if (!passwordValid)
+            throw new BusinessException("Validation.PasswordMismatch");
+
+        patient.isActive = true;
+        await db.SaveChangesAsync();
+
+        var tokens = await tokenService.IssueTokensAsync(
+            userId: patient.Id,
+            name: $"{patient.firstName} {patient.lastName}",
+            email: patient.email,
+            role: patient.role.ToString(),
+            centerId: centerId,
+            ownerType: TokenOwnerType.TenantUser
+        );
+        return new PatientResponseDto
+        {
+            AccessToken = tokens.AccessToken,
+            RefreshToken = tokens.RefreshToken
+        };
+
+    }
 }
 
 

@@ -53,6 +53,7 @@ using Sehatak.Infrastructure.Services.FinancialReportServices;
 using Sehatak.Infrastructure.Services.FollowUpService;
 using Sehatak.Infrastructure.Services.GetStaff;
 using Sehatak.Infrastructure.Services.MedicalRecordService;
+using Sehatak.Infrastructure.Services.PatientService.PatientProfile;
 using Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
 using Sehatak.Infrastructure.Services.PtientCenterService;
 using Sehatak.Infrastructure.Services.SearchDoctorService;
@@ -325,6 +326,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IGetStaff, GetDoctorService>();
             builder.Services.AddScoped<ISignup, StaffService>();
             builder.Services.AddScoped<IprofileStaff, EditStaffService>();
+            builder.Services.AddScoped<IProfilePatient, PatientProfileService>();
             builder.Services.AddScoped<IDoctorDailyHours, DoctorDailyHoursService>();
             builder.Services.AddScoped<IServicePrice, ServicePriceService>();
             builder.Services.AddScoped<IFinancialReportAdmin, FinancialReportAdminService>();
