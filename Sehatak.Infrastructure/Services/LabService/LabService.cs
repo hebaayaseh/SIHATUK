@@ -7,8 +7,6 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System.Net;
-using System.Runtime.InteropServices;
 
 namespace Sehatak.Infrastructure.Services.LabService
 {
@@ -183,6 +181,63 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
+
+        public async Task<PagedResult<PatientGetLabRequestReponseDto>> PatientGetLabRequestAsync(int centerId, int userId, PagedRequest request,int?subPatientId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+               .FirstOrDefaultAsync(c => c.Id == centerId
+                                    && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var patient = await db.Patients
+              .Include(u => u.user)
+              .FirstOrDefaultAsync(p => p.userId == userId
+                                   && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
+            var query = db.LabRequests
+                .Where(l => l.PatientId == actingPatient.patientId)
+                .OrderByDescending(r => r.RequstedAt)
+                .Select(n => new PatientGetLabRequestReponseDto
+                {
+                    LabRequestId = n.Id,
+                    CreatedAt = n.RequstedAt,
+                    LabStatus = n.Status.ToString(),
+                    Note = n.Notes,
+                    LabItems = n.Items.Select(i => new LabItemResponseDto
+                    {
+                        ServicePriceId = i.ServicePriceId,
+                        ServiceName = i.ServicePrice.ServiceName,
+                        LabRequestId = i.LabRequestId,
+                        UnitPrice = i.UnitPrice
+                    }).ToList(),
+                    TotalPrice = n.Items.Sum(i => i.UnitPrice)
+                });
+
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+        }
+
 
         public async Task<LabRequestResponseDto> UpdateLabRequestAsync(int centerId, int userId, UpdateLabRequestDto request)
         {

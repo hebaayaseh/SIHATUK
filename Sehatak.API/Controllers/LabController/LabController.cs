@@ -36,13 +36,21 @@ namespace Sehatak.API.Controllers.LabController
 
         [Authorize(Policy = "DoctorOnly")]
         [HttpGet("doctor-get-patient-lab-requests/{centerId}")]
-        public async Task<IActionResult> UpdateLabRequest(int centerId,int patientId, [FromQuery] PagedRequest request)
+        public async Task<IActionResult> DoctorGetLabRequestsAsync(int centerId,int patientId, [FromQuery] PagedRequest request)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
             var result = await lab.GetLabRequestForPatientAsync(centerId, userId,patientId, request);
             return Ok(result);
         }
 
+        [Authorize(Policy = "PatientOnly")]
+        [HttpGet("patient-get-patient-lab-requests/{centerId}")]
+        public async Task<IActionResult> PatientGetLabRequestsAsync(int centerId,[FromQuery] PagedRequest request, [FromQuery] int?subPatientId)
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var result = await lab.PatientGetLabRequestAsync(centerId, userId, request,subPatientId);
+            return Ok(result);
+        }
 
     }
 }
