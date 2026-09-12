@@ -6,6 +6,7 @@ namespace Sehatak.Application.DTOs.MedicalRecordDto
     {
         public int Id { get; set; }
         public int PatientId { get; set; }
+        public string PatientName { get; set; }
         public int DoctorId { get; set; }
         public string DoctorName { get; set; } = string.Empty;
         public int? AppointmentId { get; set; }
@@ -15,7 +16,7 @@ namespace Sehatak.Application.DTOs.MedicalRecordDto
         public string Notes { get; set; } = string.Empty;
         public decimal? ConsultationCost { get; set; }
         public decimal? BillAmount { get; set; }
-        public List<MedicalRecordItemDto>? Items { get; set; }
+        public List<MedicalRecordItemResponseDto>? Items { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdateAt { get; set; }
     }

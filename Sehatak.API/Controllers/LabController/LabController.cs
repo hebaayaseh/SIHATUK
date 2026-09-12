@@ -1,0 +1,37 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.DTOs.LabDto;
+using Sehatak.Application.Interfaces.ILab;
+
+namespace Sehatak.API.Controllers.LabController
+{
+    [ApiController]
+    [Route("[Controller]")]
+    public class LabController : ControllerBase
+    {
+        private readonly ILab lab;
+        public LabController(ILab lab)
+        {
+            this.lab = lab;
+        }
+
+        [Authorize(Policy = "DoctorOnly")]
+        [HttpPost("doctor-create-lab-request/{centerId}")]
+        public async Task<IActionResult> CreateLabRequest(int centerId, [FromBody] CreateLabRequestDto request)
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var result = await lab.CreateLabRequestAsync(centerId, userId, request);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "DoctorOnly")]
+        [HttpPut("doctor-update-lab-request/{centerId}")]
+        public async Task<IActionResult> UpdateLabRequest(int centerId, [FromBody] UpdateLabRequestDto request)
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var result = await lab.UpdateLabRequestAsync(centerId, userId, request);
+            return Ok(result);
+        }
+
+    }
+}

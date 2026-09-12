@@ -20,6 +20,7 @@ using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.IEmerngency;
 using Sehatak.Application.Interfaces.IFinancialReports;
 using Sehatak.Application.Interfaces.IFollowUp;
+using Sehatak.Application.Interfaces.ILab;
 using Sehatak.Application.Interfaces.IMedicalRecord;
 using Sehatak.Application.Interfaces.IPatientCenter;
 using Sehatak.Application.Interfaces.IProfileInterface;
@@ -52,6 +53,7 @@ using Sehatak.Infrastructure.Services.EmergencyService;
 using Sehatak.Infrastructure.Services.FinancialReportServices;
 using Sehatak.Infrastructure.Services.FollowUpService;
 using Sehatak.Infrastructure.Services.GetStaff;
+using Sehatak.Infrastructure.Services.LabService;
 using Sehatak.Infrastructure.Services.MedicalRecordService;
 using Sehatak.Infrastructure.Services.PatientService.PatientProfile;
 using Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
@@ -345,6 +347,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IFollowUp, FollowUpService>();
             builder.Services.AddScoped<IEmerngency, EmergencyService>();
             builder.Services.AddScoped<IViewProfile, ViewProfileService>();
+            builder.Services.AddScoped<ILab, LabService>();
 
             var app = builder.Build();
 
