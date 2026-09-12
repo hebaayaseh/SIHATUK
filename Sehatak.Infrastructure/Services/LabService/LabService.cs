@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.LabDto;
 using Sehatak.Application.Interfaces.ILab;
@@ -6,6 +7,8 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using System.Net;
+using System.Runtime.InteropServices;
 
 namespace Sehatak.Infrastructure.Services.LabService
 {
@@ -110,6 +113,7 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             return new LabRequestResponseDto
             {
+                LabRequestId = labRequest.Id,
                 PatientId = request.PatientId,
                 PatientName = patientExists.userId != null
                 ? patientExists.user.firstName + " " + patientExists.user.lastName
@@ -118,9 +122,66 @@ namespace Sehatak.Infrastructure.Services.LabService
                 CreatedAt = labRequest.RequstedAt,
                 LabItems = responseItems,
                 TotalPrice = grandTotal,
+                LabStatus = labRequest.Status.ToString(),
                 Note = labRequest.Notes,
                 UpdatedAt = DateTime.UtcNow
             };
+        }
+
+        public async Task<PagedResult<LabRequestResponseDto>> GetLabRequestForPatientAsync(int centerId, int userId, int patientId, PagedRequest request)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.userId == userId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var patientExists = await db.Patients
+               .Include(u => u.user)
+               .FirstOrDefaultAsync(p => p.patientId == patientId);
+
+            if (patientExists == null)
+                throw new BusinessException("Patient.NotFound");
+
+            if (patientExists.userId != null && patientExists.user.isActive == false)
+                throw new BusinessException("Patient.NotFound");
+
+            var query = db.LabRequests
+                .Where(l => l.PatientId == patientId)
+                .OrderByDescending(r => r.RequstedAt)
+                .Select(n => new LabRequestResponseDto
+                {
+                    LabRequestId = n.Id,
+                    AppointmentId = (int)n.AppointmentId,
+                    PatientId = n.PatientId,
+                    PatientName = patientExists.userId != null
+                    ? patientExists.user.firstName + " " + patientExists.user.lastName
+                    : patientExists.FirstName + " " + patientExists.LastName,
+                    CreatedAt = n.RequstedAt,
+                    LabStatus = n.Status.ToString(),
+                    Note = n.Notes,
+                    LabItems = n.Items.Select(i => new LabItemResponseDto
+                    {
+                        ServicePriceId = i.ServicePriceId,
+                        ServiceName = i.ServicePrice.ServiceName,
+                        LabRequestId = i.LabRequestId,
+                        UnitPrice = i.UnitPrice
+                    }).ToList(),
+                    TotalPrice = n.Items.Sum(i => i.UnitPrice)
+                });
+
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
 
         public async Task<LabRequestResponseDto> UpdateLabRequestAsync(int centerId, int userId, UpdateLabRequestDto request)
@@ -230,6 +291,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                 {
                     ServicePriceId = i.ServicePriceId,
                     ServiceName = i.ServicePrice.ServiceName,
+                    LabRequestId = i.LabRequestId,
                     UnitPrice = i.UnitPrice
                 })
                 .ToListAsync();
@@ -238,12 +300,14 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             return new LabRequestResponseDto
             {
+                LabRequestId = labRequest.Id,
                 PatientId = request.PatientId,
                 PatientName = patientExists.userId != null
                 ? patientExists.user.firstName + " " + patientExists.user.lastName
                 : patientExists.FirstName + " " + patientExists.LastName,
                 AppointmentId = request.AppointmentId,
                 CreatedAt = labRequest.RequstedAt,
+                LabStatus = labRequest.Status.ToString(),
                 LabItems = currentItems,
                 TotalPrice = grandTotal,
                 Note = labRequest.Notes,   

@@ -213,3 +213,41 @@ Sehatak.Application.DTOs.Exceptions.BusinessException: LabRequest.DuplicateItem
    at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
    at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
    at Sehatak.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\hebah\source\repos\Sehatak_TenantClinic\Sehatak.API\Middleware\ExceptionMiddleware.cs:line 24
+2026-09-12 19:11:52 [ERR] Unhandled exception occurred. Path: /Lab/doctor-create-lab-request/6, Method: POST {"SourceContext":"Sehatak.API.Middleware.ExceptionMiddleware","RequestId":"0HNOGSVUT18GG:0000000B","RequestPath":"/Lab/doctor-create-lab-request/6","ConnectionId":"0HNOGSVUT18GG"}
+Sehatak.Application.DTOs.Exceptions.BusinessException: Appointment.NotFound
+   at Sehatak.Infrastructure.Services.LabService.LabService.CreateLabRequestAsync(Int32 centerId, Int32 userId, CreateLabRequestDto request) in C:\Users\hebah\source\repos\Sehatak_TenantClinic\Sehatak.Infrastructure\Services\LabService\LabService.cs:line 63
+   at Sehatak.API.Controllers.LabController.LabController.CreateLabRequest(Int32 centerId, CreateLabRequestDto request) in C:\Users\hebah\source\repos\Sehatak_TenantClinic\Sehatak.API\Controllers\LabController\LabController.cs:line 24
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Localization.RequestLocalizationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at Sehatak.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\hebah\source\repos\Sehatak_TenantClinic\Sehatak.API\Middleware\ExceptionMiddleware.cs:line 24
+2026-09-12 19:22:58 [ERR] Unhandled exception occurred. Path: /Lab/doctor-update-lab-request/6, Method: PUT {"SourceContext":"Sehatak.API.Middleware.ExceptionMiddleware","RequestId":"0HNOGT6TR9805:0000000D","RequestPath":"/Lab/doctor-update-lab-request/6","ConnectionId":"0HNOGT6TR9805"}
+Sehatak.Application.DTOs.Exceptions.BusinessException: LabRequest.DuplicateItem
+   at Sehatak.Infrastructure.Services.LabService.LabService.UpdateLabRequestAsync(Int32 centerId, Int32 userId, UpdateLabRequestDto request) in C:\Users\hebah\source\repos\Sehatak_TenantClinic\Sehatak.Infrastructure\Services\LabService\LabService.cs:line 267
+   at Sehatak.API.Controllers.LabController.LabController.UpdateLabRequest(Int32 centerId, UpdateLabRequestDto request) in C:\Users\hebah\source\repos\Sehatak_TenantClinic\Sehatak.API\Controllers\LabController\LabController.cs:line 33
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Localization.RequestLocalizationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at Sehatak.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\hebah\source\repos\Sehatak_TenantClinic\Sehatak.API\Middleware\ExceptionMiddleware.cs:line 24

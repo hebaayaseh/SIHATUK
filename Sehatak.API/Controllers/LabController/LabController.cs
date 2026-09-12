@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.LabDto;
 using Sehatak.Application.Interfaces.ILab;
 
@@ -32,6 +33,16 @@ namespace Sehatak.API.Controllers.LabController
             var result = await lab.UpdateLabRequestAsync(centerId, userId, request);
             return Ok(result);
         }
+
+        [Authorize(Policy = "DoctorOnly")]
+        [HttpGet("doctor-get-patient-lab-requests/{centerId}")]
+        public async Task<IActionResult> UpdateLabRequest(int centerId,int patientId, [FromQuery] PagedRequest request)
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var result = await lab.GetLabRequestForPatientAsync(centerId, userId,patientId, request);
+            return Ok(result);
+        }
+
 
     }
 }
