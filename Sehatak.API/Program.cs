@@ -346,7 +346,6 @@ namespace Sehatak.API
             builder.Services.AddScoped<ISignup, StaffService>();
             builder.Services.AddScoped<IprofileStaff, EditStaffService>();
             builder.Services.AddScoped<IProfilePatient, PatientProfileService>();
-            builder.Services.AddMemoryCache();
             builder.Services.AddScoped<IDoctorDailyHours, DoctorDailyHoursService>();
             builder.Services.AddMemoryCache();
             builder.Services.AddScoped<IServicePrice, ServicePriceService>();

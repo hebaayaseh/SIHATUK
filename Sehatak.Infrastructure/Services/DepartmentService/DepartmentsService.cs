@@ -8,6 +8,8 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Infrastructure.Data;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Caching.Memory;
+using System.Collections.Concurrent;
 
 namespace Sehatak.Infrastructure.Services.DepartmentService
 {
@@ -16,13 +18,28 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
         private readonly TenantDbContextFactory contextFactory;
         private readonly SharedDbContext sharedDbContext;
         private IEmailService emailService;
-        public DepartmentsService(TenantDbContextFactory contextFactory, SharedDbContext sharedDbContext, IEmailService emailService)
+        private readonly IMemoryCache cache;
+        public DepartmentsService(TenantDbContextFactory contextFactory, SharedDbContext sharedDbContext, IEmailService emailService, IMemoryCache cache)
         {
             this.contextFactory = contextFactory;
             this.sharedDbContext = sharedDbContext;
             this.emailService = emailService;
+            this.cache = cache;
         }
 
+        private static string CacheKey(int centerId) =>
+            $"departmentss:{centerId}";
+
+        private void InvalidateDepartmentCache(int centerId) =>
+            cacheKeysByCenter.TryRemove(centerId, out _);
+
+        private static readonly ConcurrentDictionary<int, ConcurrentBag<string>> cacheKeysByCenter = new();
+
+        private void TrackKey(int centerId, string key)
+        {
+            var bag = cacheKeysByCenter.GetOrAdd(centerId, _ => new ConcurrentBag<string>());
+            bag.Add(key);
+        }
         public async Task<DepartmentResponseDto> AddDepartmentAsync(int centerId,DepartmentRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
@@ -101,6 +118,8 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
                 department.ImageUrl = $"/uploads/receipts/{fileName}";
             }
             await db.SaveChangesAsync();
+            InvalidateDepartmentCache(centerId);
+
             return new DepartmentResponseDto { 
                  departmentId = department.Id,
                  departmentName = department.Name,
@@ -125,6 +144,7 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
 
             db.Departments.Remove(department);
             await db.SaveChangesAsync();
+            InvalidateDepartmentCache(centerId);
 
             return "Department.Removed";
         }
@@ -137,6 +157,10 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
+            var key = CacheKey(centerId);
+            if (cache.TryGetValue(key, out GetDepartmentResponseDto? cached))
+                return cached!;
+
             using var db = contextFactory.CreateForCenter(centerId);
 
             var departments = await db.Departments
@@ -147,10 +171,14 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
                     departmentName = a.Name,
                 }).ToListAsync();
 
-            return new GetDepartmentResponseDto
+
+            var result = new GetDepartmentResponseDto
             {
                 Departments = departments
             };
+
+            cache.Set(key, result ,TimeSpan.FromHours(1));
+            return result;
         }
     
     public async Task<DoctorResponseDto> RegisterDoctorAsync(int centerId, DoctorRequestDto request)
@@ -194,12 +222,12 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
             if (request.ProfileImage != null)
             {
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.ProfileImage.FileName);
-                var path = Path.Combine("wwwroot/uploads/receipts", fileName);
+                var path = Path.Combine("wwwroot/uploads/department", fileName);
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await request.ProfileImage.CopyToAsync(stream);
                 }
-                user.ProfileImageUrl = $"/uploads/receipts/{fileName}";
+                user.ProfileImageUrl = $"/uploads/department/{fileName}";
             }
             await db.Users.AddAsync(user);
             await db.SaveChangesAsync();
