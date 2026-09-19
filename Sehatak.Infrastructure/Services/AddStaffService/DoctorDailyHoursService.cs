@@ -30,18 +30,25 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             this.cache = cache;
         }
         private static string CacheKey(int centerId, int doctorId, int pageNumber, int pageSize) =>
-            $"serviceprices:{centerId}:{doctorId}:{pageNumber}:{pageSize}";
+            $"doctorschedule:{centerId}:{doctorId}:{pageNumber}:{pageSize}";
 
-        private void InvalidateServicePriceCache(int centerId) =>
-            cacheKeysByCenter.TryRemove(centerId, out _);
+        private static readonly ConcurrentDictionary<(int centerId, int doctorId), ConcurrentBag<string>> cacheKeysByDoctor = new();
 
-        private static readonly ConcurrentDictionary<int, ConcurrentBag<string>> cacheKeysByCenter = new();
-
-        private void TrackKey(int centerId, string key)
+        private void TrackKey(int centerId, int doctorId, string key)
         {
-            var bag = cacheKeysByCenter.GetOrAdd(centerId, _ => new System.Collections.Concurrent.ConcurrentBag<string>());
+            var bag = cacheKeysByDoctor.GetOrAdd((centerId, doctorId), _ => new ConcurrentBag<string>());
             bag.Add(key);
         }
+
+        private void InvalidateDoctorScheduleCache(int centerId, int doctorId)
+        {
+            if (!cacheKeysByDoctor.TryRemove((centerId, doctorId), out var keys))
+                return;
+
+            foreach (var key in keys)
+                cache.Remove(key);
+        }
+
         public async Task<AddDoctorDailyHoursResponse> AddDoctorDailyHoursAsync(int centerId, int userId, int doctorId, AddDoctorDailyHoursRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
@@ -86,6 +93,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
 
             await db.DoctorSchedules.AddAsync(doctorScheduale);
             await db.SaveChangesAsync();
+            InvalidateDoctorScheduleCache(centerId,doctorId);
 
             return new AddDoctorDailyHoursResponse
             {
@@ -231,6 +239,8 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 throw new BusinessException("Center.NotFound");
 
             var key = CacheKey(centerId, doctorId, request.PageNumber, request.PageSize);
+            if (cache.TryGetValue(key, out Application.Common.PagedResult<GetDoctorDailyHoursResponse>? cached))
+                return cached!;
 
             using var db = contextFactory.CreateForCenter(centerId);
 
@@ -261,9 +271,12 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                     SlotDurationMinutes = n.SlotDurationMinutes,
                 });
 
-            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+            var result = await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
 
+            cache.Set(key, result, TimeSpan.FromMinutes(10));
+            TrackKey(centerId,doctorId, key);
 
+            return result;
         }
 
         public async Task<UpdateDoctorDailyHoursResponse> UpdateDoctorDailyHoursAsync(
@@ -380,6 +393,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             await db.DoctorSchedules.AddAsync(newSchedule);
 
             await db.SaveChangesAsync();
+            InvalidateDoctorScheduleCache(centerId, doctorId);
 
             return new UpdateDoctorDailyHoursResponse
             {
