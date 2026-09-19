@@ -6,6 +6,7 @@ using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.IProfileInterface;
 using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Infrastructure.Data;
+using System.Security.Cryptography;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
 {
@@ -86,7 +87,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
             if (exists)
                 throw new BusinessException("Auth.EmailExists");
 
-            var code = new Random().Next(100000, 999999).ToString();
+            var code = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
 
             sharedDbContext.emailVerificationCodes.Add(new emailVerificationCode
             {

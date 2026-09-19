@@ -20,7 +20,7 @@ namespace Sehatak.Infrastructure.Data
             var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
             optionsBuilder.UseMySql(
                 connectionString,
-                ServerVersion.AutoDetect(connectionString),
+                TenantServerVersionCache.Get(connectionString),
                 mySqlOptions => mySqlOptions.MigrationsAssembly("Sehatak.Infrastructure")
             );
             return new TenantDbContext(optionsBuilder.Options);

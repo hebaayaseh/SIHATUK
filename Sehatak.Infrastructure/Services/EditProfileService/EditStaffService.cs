@@ -9,6 +9,7 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using System.Security.Cryptography;
 
 namespace Sehatak.Infrastructure.Services.EditProfileService
 {
@@ -230,7 +231,7 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
             if (exists)
                 throw new BusinessException("Auth.EmailExists");
 
-            var code = new Random().Next(100000, 999999).ToString();
+            var code = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
 
             db.EmailVerificationCodes.Add(new EmailVerificationCode
             {
@@ -308,7 +309,7 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
             if (isSamePassword)
                 throw new BusinessException("Validation.SamePassword");
 
-            var code = new Random().Next(100000, 999999).ToString();
+            var code = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
 
             db.EmailVerificationCodes.Add(new EmailVerificationCode
             {

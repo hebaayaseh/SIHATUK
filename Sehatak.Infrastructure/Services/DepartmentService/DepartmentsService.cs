@@ -7,6 +7,7 @@ using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Infrastructure.Data;
+using System.Security.Cryptography;
 
 namespace Sehatak.Infrastructure.Services.DepartmentService
 {
@@ -230,10 +231,7 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
         private string GenerateTempPassword()
         {
             const string chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-            var random = new Random();
-            return new string(Enumerable.Repeat(chars, 10)
-                .Select(s => s[random.Next(s.Length)])
-                .ToArray());
+            return new string(RandomNumberGenerator.GetItems<char>(chars, 10));
         }
     }
 }

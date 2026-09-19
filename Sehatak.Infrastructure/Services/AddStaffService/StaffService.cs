@@ -8,6 +8,7 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using System.Security.Cryptography;
 
 namespace Sehatak.Infrastructure.Services.AddStaff
 {
@@ -97,11 +98,9 @@ namespace Sehatak.Infrastructure.Services.AddStaff
         private string GenerateTempPassword()
         {
             const string chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-            var random = new Random();
-            return new string(Enumerable.Repeat(chars, 10)
-                .Select(s => s[random.Next(s.Length)])
-                .ToArray());
+            return new string(RandomNumberGenerator.GetItems<char>(chars, 10));
         }
+
         public async Task<bool> ActiveStaffAsync(int centerId, RemoveStaffRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters

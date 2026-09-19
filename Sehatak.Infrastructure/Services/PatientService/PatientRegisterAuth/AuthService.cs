@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.PatienRegisterDto;
 using Sehatak.Application.DTOs.PatientLoginDto;
@@ -10,6 +12,7 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using System.Security.Cryptography;
 
 
 namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
@@ -19,12 +22,16 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
     private readonly TenantDbContextFactory tenantFactory;
     private readonly IEmailService emailSender;
     private readonly ITokenService tokenService;
-    public AuthService(SharedDbContext sharedDbContext , TenantDbContextFactory tenantDbContextFactory, IEmailService emailSenderService,ITokenService tokenService)
+    private readonly IWebHostEnvironment env;
+
+    public AuthService(SharedDbContext sharedDbContext, TenantDbContextFactory tenantDbContextFactory,
+        IEmailService emailSenderService, ITokenService tokenService, IWebHostEnvironment webHostEnvironment)
     {
         this.sharedDbContext = sharedDbContext;
         tenantFactory = tenantDbContextFactory;
         emailSender = emailSenderService;
         this.tokenService = tokenService;
+        env = webHostEnvironment;
     }
 
     public async Task<PatientResponseDto> LoginPatientAsync(int centerId, PatientRequestDto request)
@@ -80,28 +87,29 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
         if (existing != null && existing.isActive)
             throw new BusinessException("Auth.EmailExists");
 
+        if (existing != null && !existing.isActive)
+        {
+            var wasEverVerified = await db.EmailVerificationCodes
+                .AnyAsync(c => c.UserId == existing.Id && c.IsUsed);
+
+            if (wasEverVerified)
+                throw new BusinessException("Auth.AccountDeactivated");
+        }
+
         User user;
 
         if (existing != null && !existing.isActive)
         {
-
             existing.firstName = request.firstName;
             existing.lastName = request.lastName;
             existing.passwordHash = BCrypt.Net.BCrypt.HashPassword(request.password);
             existing.phoneNumber = request.phoneNumber;
             existing.address = request.address;
             existing.city = request.city;
-            
 
             if (request.ProfileImage != null)
             {
-                var fileName = Guid.NewGuid() + Path.GetExtension(request.ProfileImage.FileName);
-                var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
-                using (var stream = new FileStream(path, FileMode.Create))
-                {
-                    await request.ProfileImage.CopyToAsync(stream);
-                }
-                existing.ProfileImageUrl = $"/uploads/profileImage/{fileName}";
+                existing.ProfileImageUrl = await SaveProfileImageAsync(request.ProfileImage);
             }
 
             user = existing;
@@ -125,18 +133,13 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
 
             if (request.ProfileImage != null)
             {
-                var fileName = Guid.NewGuid() + Path.GetExtension(request.ProfileImage.FileName);
-                var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
-                using (var stream = new FileStream(path, FileMode.Create))
-                {
-                    await request.ProfileImage.CopyToAsync(stream);
-                }
-                user.ProfileImageUrl = $"/uploads/profileImage/{fileName}";
+                user.ProfileImageUrl = await SaveProfileImageAsync(request.ProfileImage);
             }
 
             await db.Users.AddAsync(user);
             await db.SaveChangesAsync();
         }
+
         var existingPatient = await db.Patients.FirstOrDefaultAsync(p => p.userId == user.Id);
 
         if (existingPatient != null)
@@ -162,7 +165,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
 
         await db.SaveChangesAsync();
 
-        var code = new Random().Next(100000, 999999).ToString();
+        var code = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
         db.EmailVerificationCodes.Add(new EmailVerificationCode
         {
             UserId = user.Id,
@@ -179,6 +182,19 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
             UserId = user.Id,
             Email = user.email!
         };
+    }
+
+    private static async Task<string> SaveProfileImageAsync(IFormFile file)
+    {
+        var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+        var folder = Path.Combine(AppContext.BaseDirectory, "wwwroot", "uploads", "profileImage");
+        Directory.CreateDirectory(folder);
+
+        var path = Path.Combine(folder, fileName);
+        using var stream = new FileStream(path, FileMode.Create);
+        await file.CopyToAsync(stream);
+
+        return $"/uploads/profileImage/{fileName}";
     }
 
     public async Task<VerifyOtpResponseDto?> VerifyOtpAsync(int CenterId,VerifyOtpRequestDto request)

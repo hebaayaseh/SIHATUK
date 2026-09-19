@@ -8,6 +8,7 @@ using Sehatak.Application.Interfaces.IProfileInterface;
 using Sehatak.Domain.Entities.General;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using System.Security.Cryptography;
 namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
 {
     public class PatientProfileService : IProfilePatient
@@ -327,7 +328,8 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
             if (isSamePassword)
                 throw new BusinessException("Validation.SamePassword");
 
-            var code = new Random().Next(100000, 999999).ToString();
+            var code = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
+
             db.EmailVerificationCodes.Add(new EmailVerificationCode
             {
                 UserId = user.Id,

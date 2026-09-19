@@ -11,6 +11,7 @@ using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
 using System.Linq.Dynamic.Core;
+using System.Security.Cryptography;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
 {
@@ -182,11 +183,9 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
         private string GenerateTempPassword()
         {
             const string chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-            var random = new Random();
-            return new string(Enumerable.Repeat(chars, 10)
-                .Select(s => s[random.Next(s.Length)])
-                .ToArray());
+            return new string(RandomNumberGenerator.GetItems<char>(chars, 10));
         }
+
         public async Task<SpasificCenterResponseDto> GetSpasificCenterById(int centerId)
         {
             var center = await sharedDbContext.MedicalCenters

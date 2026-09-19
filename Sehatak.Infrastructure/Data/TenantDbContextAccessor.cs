@@ -24,10 +24,7 @@ namespace Sehatak.Infrastructure.Data
             var connectionString = BuildConnectionString(centerId);
 
             var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
-            optionsBuilder.UseMySql(
-                connectionString,
-                ServerVersion.AutoDetect(connectionString)
-            );
+            optionsBuilder.UseMySql(connectionString, TenantServerVersionCache.Get(connectionString));
 
             return new TenantDbContext(optionsBuilder.Options);
         }
