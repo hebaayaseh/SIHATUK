@@ -370,4 +370,310 @@
   <data name="Slot.AlreadyBlocked" xml:space="preserve">
     <value>الموعد ملغى بالفعل!</value>
   </data>
+  <data name="Validation.TooLong" xml:space="preserve">
+    <value>القيمة أطول من المسموح.</value>
+  </data>
+  <data name="Validation.TooShort" xml:space="preserve">
+    <value>القيمة أقصر من المسموح.</value>
+  </data>
+  <data name="Validation.InvalidValue" xml:space="preserve">
+    <value>القيمة غير صالحة.</value>
+  </data>
+  <data name="Validation.InvalidId" xml:space="preserve">
+    <value>المعرّف غير صالح.</value>
+  </data>
+  <data name="Validation.InvalidEnum" xml:space="preserve">
+    <value>الخيار المحدد غير صالح.</value>
+  </data>
+  <data name="Validation.AtLeastOneFieldRequired" xml:space="preserve">
+    <value>يجب إدخال حقل واحد على الأقل.</value>
+  </data>
+  <data name="Validation.PasswordTooWeak" xml:space="preserve">
+    <value>يجب أن تحتوي كلمة المرور على حرف كبير وحرف صغير ورقم.</value>
+  </data>
+  <data name="Validation.SamePassword" xml:space="preserve">
+    <value>يجب أن تختلف كلمة المرور الجديدة عن الحالية.</value>
+  </data>
+  <data name="Validation.InvalidOtpFormat" xml:space="preserve">
+    <value>يجب أن يتكون رمز التحقق من 6 أرقام.</value>
+  </data>
+  <data name="Validation.DateInPast" xml:space="preserve">
+    <value>لا يمكن أن يكون التاريخ في الماضي.</value>
+  </data>
+  <data name="Validation.DateInFuture" xml:space="preserve">
+    <value>لا يمكن أن يكون التاريخ في المستقبل.</value>
+  </data>
+  <data name="Validation.DateTooFar" xml:space="preserve">
+    <value>التاريخ بعيد جدًا.</value>
+  </data>
+  <data name="Validation.EndTimeBeforeStartTime" xml:space="preserve">
+    <value>يجب أن يكون وقت الانتهاء بعد وقت البدء.</value>
+  </data>
+  <data name="Validation.ShiftTooShort" xml:space="preserve">
+    <value>فترة العمل أقصر من مدة الموعد الواحد.</value>
+  </data>
+  <data name="Validation.InvalidDateOfBirth" xml:space="preserve">
+    <value>تاريخ الميلاد غير صالح.</value>
+  </data>
+  <data name="Validation.NegativeAmount" xml:space="preserve">
+    <value>لا يمكن أن يكون المبلغ سالبًا.</value>
+  </data>
+  <data name="Validation.AmountTooLarge" xml:space="preserve">
+    <value>المبلغ كبير جدًا.</value>
+  </data>
+  <data name="Validation.InvalidPercent" xml:space="preserve">
+    <value>يجب أن تكون النسبة بين 0 و 100.</value>
+  </data>
+  <data name="Validation.InvalidQuantity" xml:space="preserve">
+    <value>الكمية غير صالحة.</value>
+  </data>
+  <data name="Validation.InvalidRating" xml:space="preserve">
+    <value>يجب أن يكون التقييم بين 1 و 5.</value>
+  </data>
+  <data name="Validation.InvalidSlotDuration" xml:space="preserve">
+    <value>يجب أن تكون مدة الموعد بين 5 و 480 دقيقة.</value>
+  </data>
+  <data name="Validation.FileRequired" xml:space="preserve">
+    <value>يجب إرفاق ملف.</value>
+  </data>
+  <data name="Validation.FileTypeNotAllowed" xml:space="preserve">
+    <value>نوع الملف غير مسموح.</value>
+  </data>
+  <data name="Validation.FileNameInvalid" xml:space="preserve">
+    <value>اسم الملف غير صالح.</value>
+  </data>
+  <data name="Validation.ListEmpty" xml:space="preserve">
+    <value>القائمة لا يمكن أن تكون فارغة.</value>
+  </data>
+  <data name="Validation.ListTooLarge" xml:space="preserve">
+    <value>القائمة تحتوي على عناصر أكثر من المسموح.</value>
+  </data>
+  <data name="Validation.DuplicateItems" xml:space="preserve">
+    <value>القائمة تحتوي على عناصر مكررة.</value>
+  </data>
+  <data name="Validation.InvalidUrl" xml:space="preserve">
+    <value>الرابط غير صالح.</value>
+  </data>
+  <data name="Validation.Failed" xml:space="preserve">
+    <value>يوجد خطأ في أحد الحقول.</value>
+  </data>
+  <data name="Appointment.AlreadyCheckedIn" xml:space="preserve">
+    <value>تم تسجيل دخول المريض مسبقًا.</value>
+  </data>
+  <data name="Appointment.AlreadyCheckedOut" xml:space="preserve">
+    <value>تم تسجيل خروج المريض مسبقًا.</value>
+  </data>
+  <data name="Appointment.AlreadyExists" xml:space="preserve">
+    <value>يوجد موعد محجوز مسبقًا في هذا اليوم.</value>
+  </data>
+  <data name="Appointment.AlreadyFinished" xml:space="preserve">
+    <value>تم إنهاء الموعد مسبقًا.</value>
+  </data>
+  <data name="Appointment.AlreadyStarted" xml:space="preserve">
+    <value>بدأ الموعد مسبقًا.</value>
+  </data>
+  <data name="Appointment.NoFound" xml:space="preserve">
+    <value>الموعد غير موجود.</value>
+  </data>
+  <data name="Appointment.NotCheckedInYet" xml:space="preserve">
+    <value>لم يتم تسجيل دخول المريض بعد.</value>
+  </data>
+  <data name="Appointment.NotStartedYet" xml:space="preserve">
+    <value>لم يبدأ الموعد بعد.</value>
+  </data>
+  <data name="Attendance.AlreadyExsist" xml:space="preserve">
+    <value>تم تسجيل الحضور لهذا اليوم مسبقًا.</value>
+  </data>
+  <data name="Attendance.NotFound" xml:space="preserve">
+    <value>سجل الحضور غير موجود.</value>
+  </data>
+  <data name="Auth.InvalidRefreshToken" xml:space="preserve">
+    <value>رمز التحديث غير صالح أو منتهي الصلاحية.</value>
+  </data>
+  <data name="Cente.NotFound" xml:space="preserve">
+    <value>المركز غير موجود.</value>
+  </data>
+  <data name="Center.NoFound" xml:space="preserve">
+    <value>المركز غير موجود.</value>
+  </data>
+  <data name="CenterNotFound" xml:space="preserve">
+    <value>المركز غير موجود.</value>
+  </data>
+  <data name="Center.UniqueUrlExists" xml:space="preserve">
+    <value>رابط المركز مستخدم بالفعل.</value>
+  </data>
+  <data name="CenterRegistration.AdminCreationFailed" xml:space="preserve">
+    <value>فشل إنشاء حساب مدير المركز.</value>
+  </data>
+  <data name="CenterRegistration.NotFound" xml:space="preserve">
+    <value>طلب التسجيل غير موجود.</value>
+  </data>
+  <data name="CenterRegistration.PaymentNotConfirmed" xml:space="preserve">
+    <value>لم يتم تأكيد دفعة التسجيل.</value>
+  </data>
+  <data name="Consultation.AlreadyRequested" xml:space="preserve">
+    <value>تم طلب الاستشارة مسبقًا.</value>
+  </data>
+  <data name="Consultation.CannotCancelAfterConfirmed" xml:space="preserve">
+    <value>لا يمكن إلغاء الاستشارة بعد تأكيدها.</value>
+  </data>
+  <data name="Consultation.CannotCancelAfterPaymentSubmitted" xml:space="preserve">
+    <value>لا يمكن إلغاء الاستشارة بعد إرسال الدفعة.</value>
+  </data>
+  <data name="Consultation.NotPending" xml:space="preserve">
+    <value>الاستشارة ليست قيد الانتظار.</value>
+  </data>
+  <data name="Date.Invalid" xml:space="preserve">
+    <value>التاريخ غير صالح.</value>
+  </data>
+  <data name="Invalid.Date" xml:space="preserve">
+    <value>التاريخ غير صالح.</value>
+  </data>
+  <data name="Doctor.DayAlreadyBlocked" xml:space="preserve">
+    <value>تم حجب هذا اليوم للطبيب مسبقًا.</value>
+  </data>
+  <data name="Doctor.DayBlocked" xml:space="preserve">
+    <value>الطبيب غير متاح في هذا اليوم.</value>
+  </data>
+  <data name="Doctor.NoFound" xml:space="preserve">
+    <value>الطبيب غير موجود.</value>
+  </data>
+  <data name="DoctorRating.AlreadyRated" xml:space="preserve">
+    <value>تم تقييم هذا الموعد مسبقًا.</value>
+  </data>
+  <data name="DoctorRating.AppointmentNotCompleted" xml:space="preserve">
+    <value>يجب إتمام الموعد قبل التقييم.</value>
+  </data>
+  <data name="DoctorShift.NotFound" xml:space="preserve">
+    <value>وردية الطبيب غير موجودة.</value>
+  </data>
+  <data name="Email.AlreadyExists" xml:space="preserve">
+    <value>البريد الإلكتروني مسجل بالفعل.</value>
+  </data>
+  <data name="Emergency.NotFound" xml:space="preserve">
+    <value>الحالة الطارئة غير موجودة.</value>
+  </data>
+  <data name="FollowUp.AlreadyExists" xml:space="preserve">
+    <value>توجد متابعة لهذا الموعد مسبقًا.</value>
+  </data>
+  <data name="FollowUp.CannotBeUpdated" xml:space="preserve">
+    <value>لا يمكن تعديل هذه المتابعة.</value>
+  </data>
+  <data name="FollowUp.DateNotAllowed" xml:space="preserve">
+    <value>التاريخ المحدد خارج فترة المتابعة المسموحة.</value>
+  </data>
+  <data name="FollowUp.NoFound" xml:space="preserve">
+    <value>المتابعة غير موجودة.</value>
+  </data>
+  <data name="FollowUp.NotFoundOrNotPending" xml:space="preserve">
+    <value>المتابعة غير موجودة أو ليست قيد الانتظار.</value>
+  </data>
+  <data name="LabRequest.AlreadyCollected" xml:space="preserve">
+    <value>تم سحب العينات مسبقًا.</value>
+  </data>
+  <data name="LabRequest.AlreadyPaid" xml:space="preserve">
+    <value>تم دفع طلب المختبر مسبقًا.</value>
+  </data>
+  <data name="LabRequest.DuplicateItem" xml:space="preserve">
+    <value>هذا الفحص موجود بالفعل في الطلب.</value>
+  </data>
+  <data name="LabRequest.NotCollected" xml:space="preserve">
+    <value>لم يتم سحب العينات بعد.</value>
+  </data>
+  <data name="LabRequest.NotFound" xml:space="preserve">
+    <value>طلب المختبر غير موجود.</value>
+  </data>
+  <data name="LabRequestItemNotFound" xml:space="preserve">
+    <value>عنصر طلب المختبر غير موجود.</value>
+  </data>
+  <data name="LabResult.NotFound" xml:space="preserve">
+    <value>نتيجة المختبر غير موجودة.</value>
+  </data>
+  <data name="Medical.NotFound" xml:space="preserve">
+    <value>السجل الطبي غير موجود.</value>
+  </data>
+  <data name="MedicalRecord.CannotLinkToBoth" xml:space="preserve">
+    <value>لا يمكن ربط السجل بموعد واستشارة في آن واحد.</value>
+  </data>
+  <data name="MedicalRecord.MustLinkToAppointmentOrConsultation" xml:space="preserve">
+    <value>يجب ربط السجل بموعد أو استشارة.</value>
+  </data>
+  <data name="Notification.NotFound" xml:space="preserve">
+    <value>الإشعار غير موجود.</value>
+  </data>
+  <data name="PatientNotFound" xml:space="preserve">
+    <value>المريض غير موجود.</value>
+  </data>
+  <data name="Payment.AlreadyProcessed" xml:space="preserve">
+    <value>تمت معالجة هذه الدفعة مسبقًا.</value>
+  </data>
+  <data name="Payment.Exists" xml:space="preserve">
+    <value>توجد دفعة مسجلة مسبقًا.</value>
+  </data>
+  <data name="Payment.NotCompleted" xml:space="preserve">
+    <value>لم يتم إتمام الدفع.</value>
+  </data>
+  <data name="Rating.NotFound" xml:space="preserve">
+    <value>التقييم غير موجود.</value>
+  </data>
+  <data name="Receptionist.NoFound" xml:space="preserve">
+    <value>موظف الاستقبال غير موجود.</value>
+  </data>
+  <data name="Receptionist.NotFound" xml:space="preserve">
+    <value>موظف الاستقبال غير موجود.</value>
+  </data>
+  <data name="Schedule.NotFound" xml:space="preserve">
+    <value>لا يوجد جدول للطبيب في هذا اليوم.</value>
+  </data>
+  <data name="ServicePrice.InvalidPrice" xml:space="preserve">
+    <value>سعر الخدمة غير صالح.</value>
+  </data>
+  <data name="ServicePrice.NotFound" xml:space="preserve">
+    <value>سعر الخدمة غير موجود.</value>
+  </data>
+  <data name="ServiceType.AlreadyExist" xml:space="preserve">
+    <value>نوع الخدمة موجود بالفعل.</value>
+  </data>
+  <data name="Shift.NotFound" xml:space="preserve">
+    <value>الوردية غير موجودة.</value>
+  </data>
+  <data name="ShiftSchedule.AlreadyExists" xml:space="preserve">
+    <value>جدول الوردية موجود بالفعل.</value>
+  </data>
+  <data name="ShiftSchedule.NotConfigured" xml:space="preserve">
+    <value>لم يتم إعداد جداول الورديات بعد.</value>
+  </data>
+  <data name="Staff.NotFound" xml:space="preserve">
+    <value>الموظف غير موجود.</value>
+  </data>
+  <data name="StaffShift.AlreadyAssigned" xml:space="preserve">
+    <value>تم إسناد وردية لهذا الموظف في ذلك اليوم مسبقًا.</value>
+  </data>
+  <data name="SubPatient.NotFound" xml:space="preserve">
+    <value>المريض الفرعي غير موجود.</value>
+  </data>
+  <data name="SubPatient.NotFoundOrNotOwned" xml:space="preserve">
+    <value>المريض الفرعي غير موجود أو غير تابع لك.</value>
+  </data>
+  <data name="Subscription.AlreadyProcessed" xml:space="preserve">
+    <value>تمت معالجة هذا الاشتراك مسبقًا.</value>
+  </data>
+  <data name="Subscription.NotFound" xml:space="preserve">
+    <value>الاشتراك غير موجود.</value>
+  </data>
+  <data name="Technician.NotFound" xml:space="preserve">
+    <value>فني المختبر غير موجود.</value>
+  </data>
+  <data name="Validation.CenterIdRequired" xml:space="preserve">
+    <value>يجب تحديد المركز.</value>
+  </data>
+  <data name="Validation.InvalidTarget" xml:space="preserve">
+    <value>الفئة المستهدفة غير صالحة.</value>
+  </data>
+  <data name="Verify.Code" xml:space="preserve">
+    <value>رمز التحقق غير صالح أو منتهي الصلاحية.</value>
+  </data>
+  <data name="WaitList.NotFound" xml:space="preserve">
+    <value>طلب قائمة الانتظار غير موجود.</value>
+  </data>
 </root>

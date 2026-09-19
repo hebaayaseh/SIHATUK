@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AppointmentDto;
 using Sehatak.Application.Interfaces.ApointmentInterface;
-using Sehatak.Infrastructure.Services.AppointmentService;
 using System.Security.Claims;
 
 namespace Sehatak.API.Controllers.PatientController.AppointmentController
@@ -18,8 +17,8 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
             this.slotService = slotService;
         }
 
-        [HttpPost("patient-available-doctor-slot/{centerId}/{doctorId}")]
-        public async Task<IActionResult> AvailableDoctorSlot(int centerId, int doctorId, [FromBody] DateOnly date)
+        [HttpGet("patient-get-available-doctor-slot/{centerId}/{doctorId}")]
+        public async Task<IActionResult> AvailableDoctorSlot(int centerId, int doctorId, [FromQuery] DateOnly date)
         {
             var result = await slotService.GetAvailableDoctorSlot(centerId, doctorId, date);
             return Ok(result);
@@ -67,7 +66,7 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         }
 
         [Authorize(Policy = "ReceptionistOnly")]
-        [HttpGet("Receptionist-view-waitlist/{centerId}/{doctorId}")]
+        [HttpGet("receptionist-view-waitlist/{centerId}/{doctorId}")]
         public async Task<IActionResult> ViewPatientsWaitList(int centerId, int doctorId, DateOnly date, [FromQuery] PagedRequest request)
         {
             var result = await slotService.GetPatientsWaitListsAsync(centerId, doctorId, date, request);

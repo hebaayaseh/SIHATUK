@@ -370,4 +370,310 @@
   <data name="Slot.AlreadyBlocked" xml:space="preserve">
     <value>The Appointment already canceled</value>
   </data>
+  <data name="Validation.TooLong" xml:space="preserve">
+    <value>The value is too long.</value>
+  </data>
+  <data name="Validation.TooShort" xml:space="preserve">
+    <value>The value is too short.</value>
+  </data>
+  <data name="Validation.InvalidValue" xml:space="preserve">
+    <value>The value is not valid.</value>
+  </data>
+  <data name="Validation.InvalidId" xml:space="preserve">
+    <value>The identifier is not valid.</value>
+  </data>
+  <data name="Validation.InvalidEnum" xml:space="preserve">
+    <value>The selected option is not valid.</value>
+  </data>
+  <data name="Validation.AtLeastOneFieldRequired" xml:space="preserve">
+    <value>At least one field must be provided.</value>
+  </data>
+  <data name="Validation.PasswordTooWeak" xml:space="preserve">
+    <value>The password must contain an uppercase letter, a lowercase letter and a digit.</value>
+  </data>
+  <data name="Validation.SamePassword" xml:space="preserve">
+    <value>The new password must be different from the current one.</value>
+  </data>
+  <data name="Validation.InvalidOtpFormat" xml:space="preserve">
+    <value>The verification code must be 6 digits.</value>
+  </data>
+  <data name="Validation.DateInPast" xml:space="preserve">
+    <value>The date cannot be in the past.</value>
+  </data>
+  <data name="Validation.DateInFuture" xml:space="preserve">
+    <value>The date cannot be in the future.</value>
+  </data>
+  <data name="Validation.DateTooFar" xml:space="preserve">
+    <value>The date is too far ahead.</value>
+  </data>
+  <data name="Validation.EndTimeBeforeStartTime" xml:space="preserve">
+    <value>The end time must be after the start time.</value>
+  </data>
+  <data name="Validation.ShiftTooShort" xml:space="preserve">
+    <value>The working window is shorter than one slot.</value>
+  </data>
+  <data name="Validation.InvalidDateOfBirth" xml:space="preserve">
+    <value>The date of birth is not valid.</value>
+  </data>
+  <data name="Validation.NegativeAmount" xml:space="preserve">
+    <value>The amount cannot be negative.</value>
+  </data>
+  <data name="Validation.AmountTooLarge" xml:space="preserve">
+    <value>The amount is too large.</value>
+  </data>
+  <data name="Validation.InvalidPercent" xml:space="preserve">
+    <value>The percentage must be between 0 and 100.</value>
+  </data>
+  <data name="Validation.InvalidQuantity" xml:space="preserve">
+    <value>The quantity is not valid.</value>
+  </data>
+  <data name="Validation.InvalidRating" xml:space="preserve">
+    <value>The rating must be between 1 and 5.</value>
+  </data>
+  <data name="Validation.InvalidSlotDuration" xml:space="preserve">
+    <value>The slot duration must be between 5 and 480 minutes.</value>
+  </data>
+  <data name="Validation.FileRequired" xml:space="preserve">
+    <value>A file is required.</value>
+  </data>
+  <data name="Validation.FileTypeNotAllowed" xml:space="preserve">
+    <value>This file type is not allowed.</value>
+  </data>
+  <data name="Validation.FileNameInvalid" xml:space="preserve">
+    <value>The file name is not valid.</value>
+  </data>
+  <data name="Validation.ListEmpty" xml:space="preserve">
+    <value>The list cannot be empty.</value>
+  </data>
+  <data name="Validation.ListTooLarge" xml:space="preserve">
+    <value>The list contains too many items.</value>
+  </data>
+  <data name="Validation.DuplicateItems" xml:space="preserve">
+    <value>The list contains duplicate items.</value>
+  </data>
+  <data name="Validation.InvalidUrl" xml:space="preserve">
+    <value>The link is not a valid URL.</value>
+  </data>
+  <data name="Validation.Failed" xml:space="preserve">
+    <value>One or more fields are not valid.</value>
+  </data>
+  <data name="Appointment.AlreadyCheckedIn" xml:space="preserve">
+    <value>The patient has already checked in.</value>
+  </data>
+  <data name="Appointment.AlreadyCheckedOut" xml:space="preserve">
+    <value>The patient has already checked out.</value>
+  </data>
+  <data name="Appointment.AlreadyExists" xml:space="preserve">
+    <value>An appointment already exists for this day.</value>
+  </data>
+  <data name="Appointment.AlreadyFinished" xml:space="preserve">
+    <value>The appointment has already finished.</value>
+  </data>
+  <data name="Appointment.AlreadyStarted" xml:space="preserve">
+    <value>The appointment has already started.</value>
+  </data>
+  <data name="Appointment.NoFound" xml:space="preserve">
+    <value>Appointment not found.</value>
+  </data>
+  <data name="Appointment.NotCheckedInYet" xml:space="preserve">
+    <value>The patient has not checked in yet.</value>
+  </data>
+  <data name="Appointment.NotStartedYet" xml:space="preserve">
+    <value>The appointment has not started yet.</value>
+  </data>
+  <data name="Attendance.AlreadyExsist" xml:space="preserve">
+    <value>Attendance has already been recorded for this day.</value>
+  </data>
+  <data name="Attendance.NotFound" xml:space="preserve">
+    <value>Attendance record not found.</value>
+  </data>
+  <data name="Auth.InvalidRefreshToken" xml:space="preserve">
+    <value>The refresh token is invalid or expired.</value>
+  </data>
+  <data name="Cente.NotFound" xml:space="preserve">
+    <value>Center not found.</value>
+  </data>
+  <data name="Center.NoFound" xml:space="preserve">
+    <value>Center not found.</value>
+  </data>
+  <data name="CenterNotFound" xml:space="preserve">
+    <value>Center not found.</value>
+  </data>
+  <data name="Center.UniqueUrlExists" xml:space="preserve">
+    <value>This center URL is already taken.</value>
+  </data>
+  <data name="CenterRegistration.AdminCreationFailed" xml:space="preserve">
+    <value>Creating the center administrator failed.</value>
+  </data>
+  <data name="CenterRegistration.NotFound" xml:space="preserve">
+    <value>Registration request not found.</value>
+  </data>
+  <data name="CenterRegistration.PaymentNotConfirmed" xml:space="preserve">
+    <value>The registration payment has not been confirmed.</value>
+  </data>
+  <data name="Consultation.AlreadyRequested" xml:space="preserve">
+    <value>A consultation has already been requested.</value>
+  </data>
+  <data name="Consultation.CannotCancelAfterConfirmed" xml:space="preserve">
+    <value>The consultation cannot be cancelled after confirmation.</value>
+  </data>
+  <data name="Consultation.CannotCancelAfterPaymentSubmitted" xml:space="preserve">
+    <value>The consultation cannot be cancelled after payment was submitted.</value>
+  </data>
+  <data name="Consultation.NotPending" xml:space="preserve">
+    <value>The consultation is not pending.</value>
+  </data>
+  <data name="Date.Invalid" xml:space="preserve">
+    <value>The date is not valid.</value>
+  </data>
+  <data name="Invalid.Date" xml:space="preserve">
+    <value>The date is not valid.</value>
+  </data>
+  <data name="Doctor.DayAlreadyBlocked" xml:space="preserve">
+    <value>This day is already blocked for the doctor.</value>
+  </data>
+  <data name="Doctor.DayBlocked" xml:space="preserve">
+    <value>The doctor is not available on this day.</value>
+  </data>
+  <data name="Doctor.NoFound" xml:space="preserve">
+    <value>Doctor not found.</value>
+  </data>
+  <data name="DoctorRating.AlreadyRated" xml:space="preserve">
+    <value>This appointment has already been rated.</value>
+  </data>
+  <data name="DoctorRating.AppointmentNotCompleted" xml:space="preserve">
+    <value>The appointment must be completed before rating.</value>
+  </data>
+  <data name="DoctorShift.NotFound" xml:space="preserve">
+    <value>Doctor shift not found.</value>
+  </data>
+  <data name="Email.AlreadyExists" xml:space="preserve">
+    <value>This email is already registered.</value>
+  </data>
+  <data name="Emergency.NotFound" xml:space="preserve">
+    <value>Emergency case not found.</value>
+  </data>
+  <data name="FollowUp.AlreadyExists" xml:space="preserve">
+    <value>A follow-up already exists for this appointment.</value>
+  </data>
+  <data name="FollowUp.CannotBeUpdated" xml:space="preserve">
+    <value>This follow-up can no longer be updated.</value>
+  </data>
+  <data name="FollowUp.DateNotAllowed" xml:space="preserve">
+    <value>The selected date is outside the allowed follow-up window.</value>
+  </data>
+  <data name="FollowUp.NoFound" xml:space="preserve">
+    <value>Follow-up not found.</value>
+  </data>
+  <data name="FollowUp.NotFoundOrNotPending" xml:space="preserve">
+    <value>The follow-up was not found or is not pending.</value>
+  </data>
+  <data name="LabRequest.AlreadyCollected" xml:space="preserve">
+    <value>The samples have already been collected.</value>
+  </data>
+  <data name="LabRequest.AlreadyPaid" xml:space="preserve">
+    <value>This lab request has already been paid.</value>
+  </data>
+  <data name="LabRequest.DuplicateItem" xml:space="preserve">
+    <value>This test is already in the lab request.</value>
+  </data>
+  <data name="LabRequest.NotCollected" xml:space="preserve">
+    <value>The samples have not been collected yet.</value>
+  </data>
+  <data name="LabRequest.NotFound" xml:space="preserve">
+    <value>Lab request not found.</value>
+  </data>
+  <data name="LabRequestItemNotFound" xml:space="preserve">
+    <value>Lab request item not found.</value>
+  </data>
+  <data name="LabResult.NotFound" xml:space="preserve">
+    <value>Lab result not found.</value>
+  </data>
+  <data name="Medical.NotFound" xml:space="preserve">
+    <value>Medical record not found.</value>
+  </data>
+  <data name="MedicalRecord.CannotLinkToBoth" xml:space="preserve">
+    <value>A record cannot be linked to both an appointment and a consultation.</value>
+  </data>
+  <data name="MedicalRecord.MustLinkToAppointmentOrConsultation" xml:space="preserve">
+    <value>A record must be linked to an appointment or a consultation.</value>
+  </data>
+  <data name="Notification.NotFound" xml:space="preserve">
+    <value>Notification not found.</value>
+  </data>
+  <data name="PatientNotFound" xml:space="preserve">
+    <value>Patient not found.</value>
+  </data>
+  <data name="Payment.AlreadyProcessed" xml:space="preserve">
+    <value>This payment has already been processed.</value>
+  </data>
+  <data name="Payment.Exists" xml:space="preserve">
+    <value>A payment already exists for this item.</value>
+  </data>
+  <data name="Payment.NotCompleted" xml:space="preserve">
+    <value>The payment has not been completed.</value>
+  </data>
+  <data name="Rating.NotFound" xml:space="preserve">
+    <value>Rating not found.</value>
+  </data>
+  <data name="Receptionist.NoFound" xml:space="preserve">
+    <value>Receptionist not found.</value>
+  </data>
+  <data name="Receptionist.NotFound" xml:space="preserve">
+    <value>Receptionist not found.</value>
+  </data>
+  <data name="Schedule.NotFound" xml:space="preserve">
+    <value>The doctor has no schedule for this day.</value>
+  </data>
+  <data name="ServicePrice.InvalidPrice" xml:space="preserve">
+    <value>The service price is not valid.</value>
+  </data>
+  <data name="ServicePrice.NotFound" xml:space="preserve">
+    <value>Service price not found.</value>
+  </data>
+  <data name="ServiceType.AlreadyExist" xml:space="preserve">
+    <value>This service type already exists.</value>
+  </data>
+  <data name="Shift.NotFound" xml:space="preserve">
+    <value>Shift not found.</value>
+  </data>
+  <data name="ShiftSchedule.AlreadyExists" xml:space="preserve">
+    <value>This shift schedule already exists.</value>
+  </data>
+  <data name="ShiftSchedule.NotConfigured" xml:space="preserve">
+    <value>Shift schedules have not been configured yet.</value>
+  </data>
+  <data name="Staff.NotFound" xml:space="preserve">
+    <value>Staff member not found.</value>
+  </data>
+  <data name="StaffShift.AlreadyAssigned" xml:space="preserve">
+    <value>This staff member is already assigned to a shift on that day.</value>
+  </data>
+  <data name="SubPatient.NotFound" xml:space="preserve">
+    <value>Sub-patient not found.</value>
+  </data>
+  <data name="SubPatient.NotFoundOrNotOwned" xml:space="preserve">
+    <value>The sub-patient was not found or does not belong to you.</value>
+  </data>
+  <data name="Subscription.AlreadyProcessed" xml:space="preserve">
+    <value>This subscription has already been processed.</value>
+  </data>
+  <data name="Subscription.NotFound" xml:space="preserve">
+    <value>Subscription not found.</value>
+  </data>
+  <data name="Technician.NotFound" xml:space="preserve">
+    <value>Lab technician not found.</value>
+  </data>
+  <data name="Validation.CenterIdRequired" xml:space="preserve">
+    <value>A center must be selected.</value>
+  </data>
+  <data name="Validation.InvalidTarget" xml:space="preserve">
+    <value>The selected target is not valid.</value>
+  </data>
+  <data name="Verify.Code" xml:space="preserve">
+    <value>The verification code is invalid or expired.</value>
+  </data>
+  <data name="WaitList.NotFound" xml:space="preserve">
+    <value>Waitlist entry not found.</value>
+  </data>
 </root>

@@ -101,8 +101,6 @@ namespace Sehatak.Infrastructure.Services.ConfirmPaymentService
             if (labRequest == null)
                 throw new BusinessException("LabRequest.NotFound");
 
-            if (labRequest.Status != LabRequestStatus.Collected)
-                throw new BusinessException("LabRequest.NotCollected");
 
             if (labRequest.Payment != null)
                 throw new BusinessException("LabRequest.AlreadyPaid");

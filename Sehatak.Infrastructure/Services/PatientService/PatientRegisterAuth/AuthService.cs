@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.PatienRegisterDto;
 using Sehatak.Application.DTOs.PatientLoginDto;
 using Sehatak.Application.Interfaces.AuthPatient;
@@ -9,7 +10,6 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using Volo.Abp;
 
 
 namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
@@ -73,7 +73,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
         if (center == null)
             throw new BusinessException("Center.NotFound");
 
-        var db = tenantFactory.CreateForCenter(centerId);
+        using var db = tenantFactory.CreateForCenter(centerId);
 
         var existing = await db.Users.FirstOrDefaultAsync(u => u.email == request.email);
 
@@ -96,12 +96,12 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
             if (request.ProfileImage != null)
             {
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.ProfileImage.FileName);
-                var path = Path.Combine("wwwroot/uploads/receipts", fileName);
+                var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await request.ProfileImage.CopyToAsync(stream);
                 }
-                existing.ProfileImageUrl = $"/uploads/receipts/{fileName}";
+                existing.ProfileImageUrl = $"/uploads/profileImage/{fileName}";
             }
 
             user = existing;

@@ -81,6 +81,9 @@ using Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth;
 using Sehatak.Infrastructure.Services.SupPatientService;
 using Sehatak.Infrastructure.Services.tokenService;
 using Sehatak.Infrastructure.Services.ViewProfileService;
+using FluentValidation.AspNetCore;
+using Sehatak.API.Validation;
+using Sehatak.Application.Validators;
 using Serilog;
 using System;
 using System.Text;
@@ -112,8 +115,13 @@ namespace Sehatak.API
             })
             .AddJsonOptions(options =>
             {
-              options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+                options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
             });
+
+            // 1b. FLUENTVALIDATION
+            builder.Services.AddSehatakValidators();
+            builder.Services.AddFluentValidationAutoValidation();
+            builder.Services.AddLocalizedValidationResponse();
 
             // 2. SWAGGER
             builder.Services.AddEndpointsApiExplorer();
@@ -167,7 +175,7 @@ namespace Sehatak.API
             // 5. TENANT DATABASE
             builder.Services.AddHttpContextAccessor(); // بيبني TenantDbContext لمركز معين، يدوياً
             builder.Services.AddScoped<TenantDbContextAccessor>();     // بيجيب TenantDbContext للمركز الحالي من JWT
-            
+
 
             // 6. SIGNALR
             builder.Services.AddSignalR();
@@ -298,8 +306,8 @@ namespace Sehatak.API
                 options.AddPolicy("SuperAdminOnly", policy => policy.RequireRole("SuperAdmin"));
                 options.AddPolicy("AdminOrAbove", policy => policy.RequireRole("SuperAdmin", "Admin"));
                 options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-                options.AddPolicy("MedicalStaff", policy => policy.RequireRole("Admin", "Doctor", "Receptionist", "LabTechnician","Nurse","GeneralDoctor"));
-                options.AddPolicy("StaffShift", policy => policy.RequireRole("Receptionist", "LabTechnician","Nurse","GeneralDoctor"));
+                options.AddPolicy("MedicalStaff", policy => policy.RequireRole("Admin", "Doctor", "Receptionist", "LabTechnician", "Nurse", "GeneralDoctor"));
+                options.AddPolicy("StaffShift", policy => policy.RequireRole("Receptionist", "LabTechnician", "Nurse", "GeneralDoctor"));
                 options.AddPolicy("DoctorOnly", policy => policy.RequireRole("Doctor"));
                 options.AddPolicy("ReceptionistOnly", policy => policy.RequireRole("Receptionist"));
                 options.AddPolicy("PatientOnly", policy => policy.RequireRole("Patient"));
@@ -308,7 +316,7 @@ namespace Sehatak.API
                 options.AddPolicy("TechnicianOnly", policy => policy.RequireRole("LabTechnician"));
             });
 
-            
+
 
             // 11. SERVICES
             builder.Services.AddSingleton<JwtTokenGenerator>();
@@ -390,7 +398,7 @@ namespace Sehatak.API
             app.MapControllers();
             app.MapHub<ChatHubs>("/hubs/chat");
             app.Lifetime.ApplicationStopping.Register(() => Log.CloseAndFlush());
-            
+
             app.Run();
         }
     }

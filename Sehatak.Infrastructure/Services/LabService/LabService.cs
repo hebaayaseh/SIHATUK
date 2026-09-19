@@ -302,6 +302,9 @@ namespace Sehatak.Infrastructure.Services.LabService
             if (labRequest == null)
                 throw new BusinessException("LabRequest.NotFound");
 
+            if (labRequest.Payment == null)
+                throw new BusinessException("Payment.NotCompleted");
+
             if (labRequest.Status != LabRequestStatus.Pending
                 && labRequest.Status != LabRequestStatus.Seen)
                 throw new BusinessException("LabRequest.AlreadyCollected");
@@ -309,7 +312,6 @@ namespace Sehatak.Infrastructure.Services.LabService
             labRequest.Status = LabRequestStatus.Collected;
             labRequest.UpdatedAt = DateTime.UtcNow;
 
-            
 
             await db.SaveChangesAsync();
 

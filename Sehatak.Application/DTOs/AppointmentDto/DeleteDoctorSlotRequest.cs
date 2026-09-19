@@ -6,6 +6,6 @@ namespace Sehatak.Application.DTOs.AppointmentDto
     {
         public TimeOnly timeSlot {  get; set; }
         public DateOnly date { get; set; }
-        public string Reason {  get; set; }
+        public string? Reason {  get; set; }
     }
 }

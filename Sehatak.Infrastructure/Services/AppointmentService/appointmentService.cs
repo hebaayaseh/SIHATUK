@@ -474,7 +474,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             appointment.appointmentStatus = AppointmentStatus.Cancelled;
             appointment.updateAt = DateTime.UtcNow;
-            appointment.cancellationReason = request.Resone;
+            appointment.cancellationReason = request.Resone!=null ? request.Resone : null;
 
             await db.Notifications.AddAsync(new Notification
             {
