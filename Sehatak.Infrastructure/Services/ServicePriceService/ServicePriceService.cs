@@ -8,6 +8,8 @@ using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
 using System.Linq.Dynamic.Core;
+using Microsoft.Extensions.Caching.Memory;
+using System.Collections.Concurrent;
 
 namespace Sehatak.Infrastructure.Services.ServicePriceService
 {
@@ -15,10 +17,25 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public ServicePriceService(SharedDbContext sharedDbContext , TenantDbContextFactory contextFactory)
+        private readonly IMemoryCache cache;
+        public ServicePriceService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory, IMemoryCache cache)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
+            this.cache = cache;
+        }
+        private static string CacheKey(int centerId, ServiceType type, int pageNumber, int pageSize) =>
+        $"serviceprices:{centerId}:{type}:{pageNumber}:{pageSize}";
+
+        private void InvalidateServicePriceCache(int centerId) =>
+        cacheKeysByCenter.TryRemove(centerId, out _);
+
+        private static readonly ConcurrentDictionary<int, ConcurrentBag<string>> cacheKeysByCenter = new();
+
+        private void TrackKey(int centerId, string key)
+        {
+            var bag = cacheKeysByCenter.GetOrAdd(centerId, _ => new ConcurrentBag<string>());
+            bag.Add(key);
         }
 
         public async Task<ServicePriceResponse> AddServicePriceAsync(int userId , int centerId, ServicePriceRequest request)
@@ -81,6 +98,7 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
 
             await db.ServicePrices.AddRangeAsync(item);
             await db.SaveChangesAsync();
+            InvalidateServicePriceCache(centerId);
 
             return new ServicePriceResponse
             {
@@ -103,6 +121,11 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
+            var key = CacheKey(centerId, type, request.PageNumber, request.PageSize);
+
+            if (cache.TryGetValue(key, out Application.Common.PagedResult<GetServicePriceResponseDto>? cached))
+                return cached!;
+
             using var db = contextFactory.CreateForCenter(centerId);
 
             var query = db.ServicePrices
@@ -122,14 +145,20 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
                 Items = pagedItems.Items
             };
 
-            return new Application.Common.PagedResult<GetServicePriceResponseDto>
+            var result = new Application.Common.PagedResult<GetServicePriceResponseDto>
             {
                 Items = new List<GetServicePriceResponseDto> { responseDto },
                 TotalCount = pagedItems.TotalCount,
                 PageNumber = pagedItems.PageNumber,
                 PageSize = pagedItems.PageSize
             };
+
+            cache.Set(key, result, TimeSpan.FromMinutes(10));
+            TrackKey(centerId, key);
+
+            return result;
         }
+
 
         public async Task<string> RemoveServicePrice(int userId, int centerId, int servicePriceId)
         {
@@ -156,6 +185,8 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
             servicePrice.IsActive = false;
             servicePrice.UpdatedAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
+            InvalidateServicePriceCache(centerId);
+
             return "The service price has been successfully removed.";
         }
 
@@ -193,6 +224,8 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
 
             updateService.UpdatedAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
+            InvalidateServicePriceCache(centerId);
+
             return new UpaterServicePriceResponse 
             {
                 Id = updateService.Id,

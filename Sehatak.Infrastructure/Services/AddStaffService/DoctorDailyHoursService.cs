@@ -13,6 +13,8 @@ using Sehatak.Domain.Enums.PostponeEnums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
 using System.Linq.Dynamic.Core;
+using Microsoft.Extensions.Caching.Memory;
+using System.Collections.Concurrent;
 
 namespace Sehatak.Infrastructure.Services.AddStaff
 {
@@ -20,12 +22,26 @@ namespace Sehatak.Infrastructure.Services.AddStaff
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public DoctorDailyHoursService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory)
+        private readonly IMemoryCache cache;
+        public DoctorDailyHoursService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory,IMemoryCache cache)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
+            this.cache = cache;
         }
+        private static string CacheKey(int centerId, int doctorId, int pageNumber, int pageSize) =>
+            $"serviceprices:{centerId}:{doctorId}:{pageNumber}:{pageSize}";
 
+        private void InvalidateServicePriceCache(int centerId) =>
+            cacheKeysByCenter.TryRemove(centerId, out _);
+
+        private static readonly ConcurrentDictionary<int, ConcurrentBag<string>> cacheKeysByCenter = new();
+
+        private void TrackKey(int centerId, string key)
+        {
+            var bag = cacheKeysByCenter.GetOrAdd(centerId, _ => new System.Collections.Concurrent.ConcurrentBag<string>());
+            bag.Add(key);
+        }
         public async Task<AddDoctorDailyHoursResponse> AddDoctorDailyHoursAsync(int centerId, int userId, int doctorId, AddDoctorDailyHoursRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
@@ -213,6 +229,8 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                                      && c.CenterStatus == CenterStatus.Active);
             if (center == null)
                 throw new BusinessException("Center.NotFound");
+
+            var key = CacheKey(centerId, doctorId, request.PageNumber, request.PageSize);
 
             using var db = contextFactory.CreateForCenter(centerId);
 
