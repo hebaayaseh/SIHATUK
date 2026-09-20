@@ -407,10 +407,10 @@ namespace Sehatak.Infrastructure.Services.AddStaff
 
         public async Task<DoctorAppointmentResponse> GetDoctorAppointmentsForDayAsync(int centerId, int userId, DateOnly? date)
         {
-            if (date != null && date < DateOnly.FromDateTime(DateTime.UtcNow))
+            if (date != null && date < ClinicClock.Today)
                 throw new BusinessException("Date.Invalid");
 
-            date ??= DateOnly.FromDateTime(DateTime.UtcNow);
+            date ??= ClinicClock.Today;
 
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Sehatak.Application.Common;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
@@ -42,7 +43,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
             var sharedDb = scope.ServiceProvider.GetRequiredService<SharedDbContext>();
             var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = ClinicClock.Today;
 
             var expiredSubscriptions = await sharedDb.CenterSubscriptions
                 .Include(s => s.Center)
@@ -81,7 +82,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
             var sharedDb = scope.ServiceProvider.GetRequiredService<SharedDbContext>();
             var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = ClinicClock.Today;
             var reminderDate = today.AddDays(7);
 
 

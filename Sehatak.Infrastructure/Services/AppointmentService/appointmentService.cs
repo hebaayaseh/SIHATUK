@@ -27,8 +27,8 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         public async Task<AvailableDoctorSlot> GetAvailableDoctorSlot(int centerId, int doctorId, DateOnly date)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            if (date < today)
+            var today = ClinicClock.Today; if (date < today)
+
                 throw new BusinessException("Date.Invalid");
 
             var center = await sharedDbContext.MedicalCenters
@@ -1050,7 +1050,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .OrderBy(s => s)
                 .ToList();
 
-            if (request.dateOnly == DateOnly.FromDateTime(DateTime.UtcNow))
+            if (request.dateOnly == ClinicClock.Today)
             {
                 var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
                 availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();

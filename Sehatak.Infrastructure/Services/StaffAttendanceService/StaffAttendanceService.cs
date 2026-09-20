@@ -6,6 +6,7 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using Sehatak.Application.Common;
 
 namespace Sehatak.Infrastructure.Services.StaffAttendanceService
 {
@@ -29,7 +30,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            if (request.AttendanceDate != DateOnly.FromDateTime(DateTime.UtcNow))
+            if (request.AttendanceDate != ClinicClock.Today)
                 throw new BusinessException("Invalid.Date");
 
             var user = await db.Users
@@ -81,7 +82,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
                 throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
-            if (request.AttendanceDate != DateOnly.FromDateTime(DateTime.UtcNow))
+            if (request.AttendanceDate != ClinicClock.Today)
                 throw new BusinessException("Invalid.Date");
 
             var user = await db.Users
@@ -141,7 +142,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            if (request.AttendanceDate != DateOnly.FromDateTime(DateTime.UtcNow))
+            if (request.AttendanceDate != ClinicClock.Today)
                 throw new BusinessException("Invalid.Date");
 
             var user = await db.Users
@@ -197,7 +198,8 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
                 throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
-            if (request.AttendanceDate != DateOnly.FromDateTime(DateTime.UtcNow))
+
+            if (request.AttendanceDate != ClinicClock.Today)
                 throw new BusinessException("Invalid.Date");
 
             var user = await db.Users

@@ -29,7 +29,7 @@ namespace Sehatak.Infrastructure.Services.DashBoardService
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
-            var targetDate = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+            var targetDate = date ?? ClinicClock.Today;
 
             using var db = contextFactory.CreateForCenter(centerId);
 

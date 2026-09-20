@@ -21,7 +21,8 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
         }
         public async Task<FollowUpResponseDto> DoctorAddFollowUpAsync(int centerId, int userId, DoctorAddFollowUpRequestDto request)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = ClinicClock.Today;
+
             if (request.AllowFollowUpDate < today && request.AllowFollowUpDate!=null)
                 throw new BusinessException("Date.Invalid");
 
@@ -191,7 +192,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                 })
                 .FirstAsync();
 
-            var now = DateTime.UtcNow;
+            var now = ClinicClock.Now;
             followUp.AllowFollowUpDate = request.AllowFollowUpDate;
             followUp.UpdatedAt = now;
 
@@ -277,7 +278,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
 
         public async Task<FollowUpResponseDto> ReceptionistAddFollowUpAsync(int centerId, int userId, ReceptionistAddFollowUpRequestDto request)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = ClinicClock.Today;
             if (request.AllowFollowUpDate < today && request.AllowFollowUpDate != null)
                 throw new BusinessException("Date.Invalid");
 
@@ -322,7 +323,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
             if (duplicateFollowUp)
                 throw new BusinessException("FollowUp.AlreadyExists");
 
-            var now = DateTime.UtcNow;
+            var now = ClinicClock.Now;
             var followUp = new FollowUp
             {
                 OriginalAppointmentId = request.OriginalAppointmentId,

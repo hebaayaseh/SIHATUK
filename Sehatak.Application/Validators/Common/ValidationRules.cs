@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Sehatak.Application.Common;
 using System.Text.RegularExpressions;
 
 namespace Sehatak.Application.Validators.Common
@@ -136,7 +137,7 @@ namespace Sehatak.Application.Validators.Common
 
         // ---- dates ----------------------------------------------------------
 
-        public static DateOnly Today => DateOnly.FromDateTime(DateTime.UtcNow);
+        public static DateOnly Today => ClinicClock.Today;
 
         public static IRuleBuilderOptions<T, DateOnly> NotInThePast<T>(this IRuleBuilder<T, DateOnly> rule) =>
             rule.Must(d => d != default).WithMessage(ValidationKeys.Required)

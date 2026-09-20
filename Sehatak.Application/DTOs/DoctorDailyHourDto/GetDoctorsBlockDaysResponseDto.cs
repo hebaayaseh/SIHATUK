@@ -9,6 +9,6 @@ namespace Sehatak.Application.DTOs.DoctorDailyHourDto
         public int DoctorId { get; set; }
         public string DoctorName { get; set; }
         public TimeOnly? TimeSlot { get; set; }
-        public DateOnly? date { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+        public DateOnly? date { get; set; } 
     }
 }

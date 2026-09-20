@@ -7,6 +7,7 @@ using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.PaymentEnums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using Sehatak.Application.Common;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
 {
@@ -44,9 +45,8 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
                 .Where(c => c.CenterStatus == CenterStatus.Active && c.RequiresPrepayment)
                 .ToListAsync();
 
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var now = DateTime.UtcNow;
-
+            var today = ClinicClock.Today;
+            var now = ClinicClock.Now;
             foreach (var center in activeCenters)
             {
                 try
@@ -152,7 +152,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
                 .Where(c => c.CenterStatus == CenterStatus.Active)
                 .ToListAsync();
 
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = ClinicClock.Today;
 
             foreach (var center in activeCenters)
             {

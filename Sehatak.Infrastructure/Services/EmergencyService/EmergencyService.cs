@@ -75,8 +75,8 @@ namespace Sehatak.Infrastructure.Services.EmergencyService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            var date = DateOnly.FromDateTime(DateTime.UtcNow);
-            var now = DateTime.UtcNow;
+            var date = ClinicClock.Today;
+            var now = ClinicClock.Now;
 
             var query =  db.StaffAttendances
                .Where(t => t.Staff.role == userRole.GeneralDoctor
@@ -150,8 +150,8 @@ namespace Sehatak.Infrastructure.Services.EmergencyService
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
-            var date = DateOnly.FromDateTime(DateTime.UtcNow);
-            var now = DateTime.UtcNow;
+            var date = ClinicClock.Today;
+            var now = ClinicClock.Now;
 
             var shift = await db.StaffAttendances
                .FirstOrDefaultAsync(t => t.UserId == request.DoctorUserId

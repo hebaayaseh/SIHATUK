@@ -138,7 +138,7 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             var staffs = await db.StaffShifts
                 .Where(s => s.ShiftName == shift.ShiftName
                       && s.IsActive
-                      && s.ShiftDate >= DateOnly.FromDateTime(DateTime.UtcNow))
+                      && s.ShiftDate >= ClinicClock.Today)
                 .ToListAsync();
 
             db.shiftSchedules.Remove(shift);
@@ -323,7 +323,7 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             var staffs = await db.StaffShifts
                 .Where(s => s.ShiftName == shift.ShiftName
                        && s.IsActive
-                       && s.ShiftDate>= DateOnly.FromDateTime(DateTime.UtcNow))
+                       && s.ShiftDate >= ClinicClock.Today)
                 .ToListAsync();
 
 

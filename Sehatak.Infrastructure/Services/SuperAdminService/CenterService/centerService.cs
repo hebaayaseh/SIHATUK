@@ -87,7 +87,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
             {
                 CenterId = center.Id,
                 PlanId = plan.Id,
-                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                StartDate = ClinicClock.Today,
                 EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(plan.DurationDays)),
                 Status = SubscriptionStatus.Active,
                 AmountPaid = plan.Price

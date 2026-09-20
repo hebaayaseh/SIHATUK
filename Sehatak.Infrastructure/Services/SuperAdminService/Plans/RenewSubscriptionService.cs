@@ -6,6 +6,7 @@ using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using Sehatak.Application.Common;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
 {
@@ -122,7 +123,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
                 CenterId = centerId,
                 PlanId = request.newPlanId,
                 Status = SubscriptionStatus.Pending,  
-                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                StartDate = ClinicClock.Today,
                 EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(newPlan.DurationDays)),
                 AmountPaid = newPlan.Price
             };
