@@ -7,7 +7,6 @@ using Sehatak.Domain.Entities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System.Linq.Dynamic.Core;
 using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Concurrent;
 

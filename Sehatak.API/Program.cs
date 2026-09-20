@@ -259,7 +259,7 @@ namespace Sehatak.API
                     ValidateAudience = true,
                     ValidAudience = jwtAudience,
                     ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero,
+                    ClockSkew = TimeSpan.FromSeconds(30),
                     NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier
                 };
 

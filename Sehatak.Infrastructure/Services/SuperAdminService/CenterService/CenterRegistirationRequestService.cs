@@ -10,7 +10,6 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System.Linq.Dynamic.Core;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
 {
@@ -81,7 +80,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
                 AdminLastName = request.AdminLastName,
                 PlanId = request.PlanId,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.PasswordHash),
-                RequestedAt = request.RequestedAt,
+                RequestedAt = DateTime.UtcNow,
 
             };
             await sharedDbContext.centerRegistrationRequests.AddAsync(creatCenter);

@@ -25,9 +25,6 @@ namespace Sehatak.Application.Validators.Payment
                 .OverridePropertyName(nameof(PaymentRequestDto.ReferenceNumber))
                 .When(x => x.Method != PaymentMethod.cash);
 
-            // PaidAt is server-owned; a client-supplied future date corrupts reports.
-            RuleFor(x => x.PaidAt)
-                .LessThanOrEqualTo(_ => DateTime.UtcNow.AddMinutes(5)).WithMessage(ValidationKeys.DateInFuture);
         }
     }
 

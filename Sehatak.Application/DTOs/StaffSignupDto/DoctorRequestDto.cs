@@ -18,7 +18,6 @@ namespace Sehatak.Application.DTOs.StaffSignup
         public string? phoneNumber { get; set; }
         public string address { get; set; }
         public string city { get; set; }
-        public DateTime createdAt { get; set; } = DateTime.UtcNow;
         public IFormFile? ProfileImage { get; set; }
         public string Specialization { get; set; }
         public string Bio { get; set; }

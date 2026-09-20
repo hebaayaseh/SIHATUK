@@ -10,7 +10,6 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System.Linq.Dynamic.Core;
 using System.Security.Cryptography;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService

@@ -8,7 +8,6 @@ using Sehatak.Application.Interfaces.ISubscriptionPaymentService;
 using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System.Linq.Dynamic.Core;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentService
 {

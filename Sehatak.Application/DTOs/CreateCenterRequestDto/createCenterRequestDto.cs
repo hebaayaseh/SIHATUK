@@ -21,7 +21,6 @@ namespace Sehatak.Application.DTOs.CreateCenterRequestDto
         public decimal PrepaymentAmount { get; set; } = 0;
         public int RefundPolicyHours { get; set; } = 24;
         public decimal PartialRefundPercent { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public int? AddedBySuperAdminId { get; set; }
         public string? AdminWhatsappNumber { get; set; }
         public string? AdminEmail { get; set; }

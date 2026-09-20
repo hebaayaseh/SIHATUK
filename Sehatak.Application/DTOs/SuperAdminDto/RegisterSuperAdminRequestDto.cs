@@ -18,7 +18,6 @@ namespace Sehatak.Application.DTOs.SuperAdminDto
         public string phoneNumber { get; set; } = string.Empty;
         [Required]
         public string SuperAdminKey { get; set; } = string.Empty;
-        public DateTime CreateAt { get; set; } = DateTime.Now;
         [Required]
         [MinLength(8)]
         public string password { get; set; }

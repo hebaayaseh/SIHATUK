@@ -1,0 +1,16 @@
+﻿.vs/
+bin/
+obj/
+*.user
+*.suo
+packages/
+*.nupkg
+.DS_Store
+Thumbs.db
+appsettings.Development.json
+
+# ملفات اللوج بتتولد وقت التشغيل
+Sehatak.API/Logs/
+
+# ملفات المستخدمين المرفوعة (صور بروفايل، إيصالات، إلخ)
+Sehatak.API/wwwroot/uploads/

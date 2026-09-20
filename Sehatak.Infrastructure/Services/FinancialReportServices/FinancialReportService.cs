@@ -5,7 +5,6 @@ using Sehatak.Application.DTOs.FinancialReport;
 using Sehatak.Application.Interfaces.IFinancialReports;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System.Linq.Dynamic.Core;
 
 namespace Sehatak.Infrastructure.Services.FinancialReportServices
 {

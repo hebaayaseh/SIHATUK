@@ -283,7 +283,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 ReceiptImageUrl = receiptImageUrl,
                 Amount = servicePrice.Price,
                 PaidAt = DateTime.UtcNow,
-                Method = PaymentMethod.online,
+                Method = request.Method,
                 Type = PaymentType.Consultation,
                 ReferenceNumber = request.ReferenceNumber,
                 Status = PaymentStatus.Pending,

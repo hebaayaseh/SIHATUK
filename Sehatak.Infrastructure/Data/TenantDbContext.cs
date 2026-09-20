@@ -171,6 +171,9 @@ namespace Sehatak.Infrastructure.Data
 
                 entity.Property(e => e.FirstName).HasMaxLength(200);
                 entity.Property(e => e.LastName).HasMaxLength(200);
+                entity.ToTable(tb => tb.HasCheckConstraint(
+                   "CK_patients_SubPatientName",
+                   "`userId` IS NOT NULL OR (`FirstName` IS NOT NULL AND `LastName` IS NOT NULL)"));
 
                 entity.Property(e => e.BloodType)
                       .HasConversion<string>();

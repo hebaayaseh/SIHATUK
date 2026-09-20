@@ -10,7 +10,6 @@ namespace Sehatak.Application.DTOs.PaymentDto
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
         public string? ReferenceNumber { get; set; }
         public IFormFile? ReceiptImageUrl { get; set; }
-        public DateTime PaidAt { get; set; } = DateTime.UtcNow;
         public string? Notes { get; set; }
 
     }

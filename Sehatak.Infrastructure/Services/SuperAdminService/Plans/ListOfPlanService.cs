@@ -7,7 +7,6 @@ using Sehatak.Application.DTOs.PlansDto;
 using Sehatak.Application.Interfaces.Plans;
 using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Infrastructure.Data;
-using System.Linq.Dynamic.Core;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
 {
@@ -30,7 +29,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
                     Name = p.Name,
                     DurationDays = p.DurationDays,
                     Price = p.Price,
-                    PlanFeatureId = p.PlanFeatures.Select(pf => pf.Feature.NameOfFeature).ToList()
+                    PlanFeatureNames = p.PlanFeatures.Select(pf => pf.Feature.NameOfFeature).ToList()
                 });
 
             return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
