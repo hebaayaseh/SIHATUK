@@ -676,4 +676,7 @@
   <data name="WaitList.NotFound" xml:space="preserve">
     <value>Waitlist entry not found.</value>
   </data>
+  <data name="Schedule.SlotDurationMissing" xml:space="preserve">
+    <value>This doctor's schedule is missing a slot duration. Please contact the clinic administrator</value>
+  </data>
 </root>

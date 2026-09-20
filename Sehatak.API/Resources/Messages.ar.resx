@@ -676,4 +676,7 @@
   <data name="WaitList.NotFound" xml:space="preserve">
     <value>طلب قائمة الانتظار غير موجود.</value>
   </data>
+  <data name="Schedule.SlotDurationMissing" xml:space="preserve">
+    <value>جدول دوام هذا الطبيب ناقص مدة الموعد. يرجى التواصل مع إدارة العيادة.</value>
+  </data>
 </root>

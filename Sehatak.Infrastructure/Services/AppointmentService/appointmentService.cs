@@ -68,7 +68,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (schedule == null)
                 throw new BusinessException("Schedule.NotFound");
 
-            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(schedule.StartTime, schedule.EndTime, (int)schedule.SlotDurationMinutes);
+            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(
+                schedule.StartTime, schedule.EndTime,
+                schedule.SlotDurationMinutes ?? throw new BusinessException("Schedule.SlotDurationMissing"));
 
             var bookedSlots = await db.Appointments
                 .Where(a => a.doctorId == doctorId
@@ -190,7 +192,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (hasExistingAppointment)
                 throw new BusinessException("Appointment.AlreadyExists");
 
-            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(schedule.StartTime, schedule.EndTime, (int)schedule.SlotDurationMinutes);
+            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(
+                schedule.StartTime, schedule.EndTime,
+                schedule.SlotDurationMinutes ?? throw new BusinessException("Schedule.SlotDurationMissing"));
 
             var bookedSlots = await db.Appointments
                 .Where(a => a.doctorId == doctorId
@@ -596,7 +600,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (schedule == null)
                 throw new BusinessException("Doctor.NotFound");
 
-            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(schedule.StartTime, schedule.EndTime, (int)schedule.SlotDurationMinutes);
+            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(
+                schedule.StartTime, schedule.EndTime,
+                schedule.SlotDurationMinutes ?? throw new BusinessException("Schedule.SlotDurationMissing"));
 
             var bookedSlots = await db.Appointments
                  .Where(a => a.doctorId == doctorId
@@ -1014,7 +1020,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (hasExistingAppointment)
                 throw new BusinessException("Appointment.AlreadyExists");
 
-            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(schedule.StartTime, schedule.EndTime, (int)schedule.SlotDurationMinutes);
+            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(
+                schedule.StartTime, schedule.EndTime,
+                schedule.SlotDurationMinutes ?? throw new BusinessException("Schedule.SlotDurationMissing"));
 
             var bookedSlots = await db.Appointments
                 .Where(a => a.doctorId == doctorId
@@ -1322,7 +1330,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (schedule == null)
                 throw new BusinessException("Schedule.NotFound");
 
-            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(schedule.StartTime, schedule.EndTime, (int)schedule.SlotDurationMinutes);
+            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(
+                schedule.StartTime, schedule.EndTime,
+                schedule.SlotDurationMinutes ?? throw new BusinessException("Schedule.SlotDurationMissing"));
 
             var bookedSlots = await db.Appointments
                  .Where(a => a.doctorId == doctorId

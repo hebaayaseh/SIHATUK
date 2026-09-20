@@ -429,14 +429,16 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 .Where(a => a.doctorId == doctor.Id
                        && a.appointmentDate == date
                        && a.appointmentStatus == AppointmentStatus.Confirmed)
-                .OrderBy(a => a.timeSlot)
+                .OrderBy(a => a.timeSlot.HasValue)
                 .Select(a => new AppointmentSummaryDto
                 {
                     appointmentId = a.Id,
                     patientId = a.patientId,
-                    patientName = $"{a.Patient.user.firstName} {a.Patient.user.lastName}",
+                    patientName = a.Patient.userId!=null
+                    ?$"{a.Patient.user.firstName} {a.Patient.user.lastName}"
+                    :$"{a.Patient.FirstName} {a.Patient.LastName}",
                     date = a.appointmentDate,
-                    timeSlot = (TimeOnly)a.timeSlot,
+                    timeSlot = a.timeSlot!.Value,
                     IsfollowUp = a.IsFollowUp
                 })
                 .ToListAsync();
