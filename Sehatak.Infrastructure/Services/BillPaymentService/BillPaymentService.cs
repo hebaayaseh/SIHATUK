@@ -28,7 +28,7 @@ namespace Sehatak.Infrastructure.Services.BillPaymentService
                                      && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
-                throw new BusinessException("CenterNotFound");
+                throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
@@ -94,7 +94,7 @@ namespace Sehatak.Infrastructure.Services.BillPaymentService
                          && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
-                throw new BusinessException("CenterNotFound");
+                throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
@@ -150,7 +150,7 @@ namespace Sehatak.Infrastructure.Services.BillPaymentService
                                      && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
-                throw new BusinessException("CenterNotFound");
+                throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 

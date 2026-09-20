@@ -24,7 +24,7 @@ namespace Sehatak.Infrastructure.Services.SearchDoctorService
             var center = await sharedDbContext.MedicalCenters
                  .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
             if (center == null)
-                throw new BusinessException("Cente.NotFound");
+                throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
             var query = db.Doctors

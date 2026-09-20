@@ -546,7 +546,7 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                                      && p.user.isActive);
 
             if (patient == null)
-                throw new BusinessException("PatientNotFound");
+                throw new BusinessException("Patient.NotFound");
             Patient actingPatient = patient;
 
             if (subPatientId.HasValue)

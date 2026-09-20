@@ -31,7 +31,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
             using var db = contextFactory.CreateForCenter(centerId);
 
             if (request.AttendanceDate != ClinicClock.Today)
-                throw new BusinessException("Invalid.Date");
+                throw new BusinessException("Date.Invalid");
 
             var user = await db.Users
                 .FirstOrDefaultAsync(u => u.Id == request.userId
@@ -83,7 +83,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
 
             using var db = contextFactory.CreateForCenter(centerId);
             if (request.AttendanceDate != ClinicClock.Today)
-                throw new BusinessException("Invalid.Date");
+                throw new BusinessException("Date.Invalid");
 
             var user = await db.Users
                 .FirstOrDefaultAsync(u => u.Id == userId
@@ -143,7 +143,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
             using var db = contextFactory.CreateForCenter(centerId);
 
             if (request.AttendanceDate != ClinicClock.Today)
-                throw new BusinessException("Invalid.Date");
+                throw new BusinessException("Date.Invalid");
 
             var user = await db.Users
                 .FirstOrDefaultAsync(u => u.Id == userId
@@ -200,7 +200,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
             using var db = contextFactory.CreateForCenter(centerId);
 
             if (request.AttendanceDate != ClinicClock.Today)
-                throw new BusinessException("Invalid.Date");
+                throw new BusinessException("Date.Invalid");
 
             var user = await db.Users
                 .FirstOrDefaultAsync(u => u.Id == userId

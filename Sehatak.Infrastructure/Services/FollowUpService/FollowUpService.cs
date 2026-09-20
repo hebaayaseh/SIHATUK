@@ -31,7 +31,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
-                throw new BusinessException("Center.NoFound");
+                throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
@@ -41,7 +41,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && d.user.isActive);
 
             if (doctor == null)
-                throw new BusinessException("Doctor.NoFound");
+                throw new BusinessException("Doctor.NotFound");
 
             var appointmentExists = await db.Appointments
                 .AnyAsync(a => a.Id == request.OriginalAppointmentId
@@ -50,7 +50,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                            && a.patientId == request.PatientId);
 
             if (!appointmentExists)
-                throw new BusinessException("Appointment.NoFound");
+                throw new BusinessException("Appointment.NotFound");
 
             var duplicateFollowUp = await db.FollowUps
                 .AnyAsync(f => f.OriginalAppointmentId == request.OriginalAppointmentId
@@ -121,7 +121,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
-                throw new BusinessException("Center.NoFound");
+                throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
@@ -131,7 +131,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && d.user.isActive);
 
             if (doctor == null)
-                throw new BusinessException("Doctor.NoFound");
+                throw new BusinessException("Doctor.NotFound");
 
             var query = db.FollowUps
                 .Where(f => f.DoctorId == doctor.Id)
@@ -158,7 +158,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
-                throw new BusinessException("Center.NoFound");
+                throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
@@ -168,7 +168,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && d.user.isActive);
 
             if (doctor == null)
-                throw new BusinessException("Doctor.NoFound");
+                throw new BusinessException("Doctor.NotFound");
 
             var followUp = await db.FollowUps
                 .FirstOrDefaultAsync(f => f.Id == request.FollowUpId
@@ -176,7 +176,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && f.PatientId == request.PatientId);
 
             if (followUp == null)
-                throw new BusinessException("FollowUp.NoFound");
+                throw new BusinessException("FollowUp.NotFound");
 
             if (followUp.Status != FollowUpStatus.Pending)
                 throw new BusinessException("FollowUp.CannotBeUpdated");
@@ -234,7 +234,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
-                throw new BusinessException("Center.NoFound");
+                throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
@@ -287,7 +287,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
-                throw new BusinessException("Center.NoFound");
+                throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
@@ -296,7 +296,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && d.isActive);
 
             if (receptionist == null)
-                throw new BusinessException("Receptionist.NoFound");
+                throw new BusinessException("Receptionist.NotFound");
 
             var appointment = await db.Appointments
               .Include(a => a.Patient)
@@ -307,14 +307,14 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                          && a.doctorId == request.DoctorId);
 
             if (appointment == null)
-                throw new BusinessException("Appointment.NoFound");
+                throw new BusinessException("Appointment.NotFound");
 
             var doctor = await db.Doctors
                 .Include(d => d.user)
                 .FirstOrDefaultAsync(d => d.Id == request.DoctorId && d.user.isActive);
 
             if (doctor == null)
-                throw new BusinessException("Doctor.NoFound");
+                throw new BusinessException("Doctor.NotFound");
 
             var duplicateFollowUp = await db.FollowUps
                 .AnyAsync(f => f.OriginalAppointmentId == request.OriginalAppointmentId
@@ -377,7 +377,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
-                throw new BusinessException("Center.NoFound");
+                throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
@@ -386,7 +386,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && d.isActive);
 
             if (receptionist == null)
-                throw new BusinessException("Receptionist.NoFound");
+                throw new BusinessException("Receptionist.NotFound");
 
             var query = db.FollowUps
               .Where(f => f.Status == FollowUpStatus.Pending)
@@ -421,7 +421,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
-                throw new BusinessException("Center.NoFound");
+                throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
@@ -429,7 +429,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                .FirstOrDefaultAsync(d => d.Id == userId && d.isActive);
 
             if (receptionist == null)
-                throw new BusinessException("Receptionist.NoFound");
+                throw new BusinessException("Receptionist.NotFound");
 
 
             var followUp = await db.FollowUps
@@ -437,7 +437,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                                      && f.PatientId == request.PatientId);
 
             if (followUp == null)
-                throw new BusinessException("FollowUp.NoFound");
+                throw new BusinessException("FollowUp.NotFound");
 
             if (followUp.Status != FollowUpStatus.Pending)
                 throw new BusinessException("FollowUp.CannotBeUpdated");
