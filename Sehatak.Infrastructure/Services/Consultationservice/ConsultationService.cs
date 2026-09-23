@@ -138,7 +138,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
         }
 
-        public async Task<bool> ConfirmPaymentAsync(int centerId ,int paymentId, int doctorId , DateTime ScheduledAt , string videoLink)
+        public async Task<bool> ConfirmPaymentAsync(int centerId, int paymentId, int doctorId, string? videoLink)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -158,8 +158,8 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 throw new BusinessException("Doctor.NotFound");
 
             var payment = await db.Payments
-                .Include(p=>p.Patient)
-                .Include(c=>c.Consultation)
+                .Include(p => p.Patient)
+                .Include(c => c.Consultation)
                 .FirstOrDefaultAsync(p => p.Id == paymentId);
 
             if (payment == null)
@@ -168,7 +168,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (payment.Type != PaymentType.Consultation || payment.Consultation == null)
                 throw new BusinessException("Consultation.NotFound");
 
-            if (payment.Consultation.DoctorId != doctor.Id) 
+            if (payment.Consultation.DoctorId != doctor.Id)
                 throw new BusinessException("Auth.Forbidden");
 
             if (payment.RecordedByStaffId != null)
@@ -177,27 +177,34 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (payment.Status != PaymentStatus.Pending)
                 throw new BusinessException("Payment.AlreadyProcessed");
 
+            if (payment.Consultation.ScheduledAt == null)
+                throw new BusinessException("Consultation.NotScheduledYet");   
+
             var patient = payment.Patient;
 
             payment.RecordedByStaffId = doctor.user.Id;
             payment.Consultation.Status = ConsultationStatus.Accepted;
             payment.Status = PaymentStatus.Paid;
-            payment.Consultation.ScheduledAt = ScheduledAt;
-            payment.Consultation.VideoLink = videoLink;
 
-            await db.Notifications.AddAsync( new Notification
+            if (videoLink != null)
+                payment.Consultation.VideoLink = videoLink;
+
+            var linkText = payment.Consultation.VideoLink != null
+                ? $" الاستشارة تتم هنا: {payment.Consultation.VideoLink}"
+                : "";
+
+            await db.Notifications.AddAsync(new Notification
             {
                 UserId = patient.NotifiableUserId,
                 Type = NotificationType.Appointment,
                 IsRead = false,
-                CreatedAt=DateTime.UtcNow,
-                Message = $"تم الموافقة على الاستشارة عند الطبيب {doctor.user.firstName} {doctor.user.lastName} في الموعد {ScheduledAt} " +
-                $"الاستشارة تتم هنا : {payment.Consultation.VideoLink}"
+                CreatedAt = DateTime.UtcNow,
+                Message = $"تم تأكيد استشارتك عند الطبيب {doctor.user.firstName} {doctor.user.lastName} " +
+                          $"في الموعد {payment.Consultation.ScheduledAt}.{linkText}"
             });
 
             await db.SaveChangesAsync();
             return true;
-
         }
 
         public async Task<string> ConsultationRecordPayment(int centerId, int consultationId, int userId , PaymentRequestDto request,int? subPatientId)
@@ -232,14 +239,16 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 actingPatient = subPatient;
             }
 
+
             var consultaion = await db.Consultations
-                .Include(p=>p.Patient)
-                .FirstOrDefaultAsync(c => c.Id == consultationId
-                                     && c.PatientId == actingPatient.patientId
-                                     && c.Status == ConsultationStatus.Pending);
+               .Include(p => p.Patient)
+               .FirstOrDefaultAsync(c => c.Id == consultationId
+                                    && c.PatientId == actingPatient.patientId
+                                    && c.Status == ConsultationStatus.Pending
+                                    && c.ScheduledAt != null);   
 
             if (consultaion == null)
-                throw new BusinessException("Consultation.NotFound");
+                throw new BusinessException("Consultation.NotScheduledYet");   
 
             var paymentExists = await db.Payments
                 .AnyAsync(p => p.ConsultationId == consultationId
@@ -719,6 +728,51 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
 
+        }
+        public async Task<string> DoctorScheduleConsultationAsync(int centerId, int userId, int consultationId, DateTime scheduledAt)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.userId == userId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var consultation = await db.Consultations
+                .Include(p => p.Patient)
+                .FirstOrDefaultAsync(c => c.Id == consultationId
+                                     && c.DoctorId == doctor.Id
+                                     && c.Status == ConsultationStatus.Pending);
+
+            if (consultation == null)
+                throw new BusinessException("Consultation.NotFound");
+
+            if (consultation.ScheduledAt != null)
+                throw new BusinessException("Consultation.AlreadyScheduled");
+
+            consultation.ScheduledAt = scheduledAt;
+
+            await db.Notifications.AddAsync(new Notification
+            {
+                UserId = consultation.Patient.NotifiableUserId,
+                Type = NotificationType.Appointment,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                Message = $"تم قبول طلب الاستشارة، الموعد المقترح بتاريخ {scheduledAt}. الرجاء إتمام الدفع لتأكيد الحجز."
+            });
+
+            await db.SaveChangesAsync();
+            return "تم تحديد موعد الاستشارة، بانتظار الدفع من المريض.";
         }
     }
 }

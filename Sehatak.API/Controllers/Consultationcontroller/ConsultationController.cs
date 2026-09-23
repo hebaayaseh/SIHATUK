@@ -70,7 +70,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         public async Task<IActionResult> ConfirmPayment(int centerId, int paymentId, [FromBody] ConfirmPaymentRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await consultation.ConfirmPaymentAsync(centerId, paymentId, userId, request.ScheduledAt, request.VideoLink);
+            var result = await consultation.ConfirmPaymentAsync(centerId, paymentId, userId, request.VideoLink);
             return Ok(result);
         }
 
@@ -80,6 +80,15 @@ namespace Sehatak.API.Controllers.Consultationcontroller
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await consultation.RejectConsultationPaymentAsync(centerId, paymentId, userId, request.Reason);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "DoctorOnly")]
+        [HttpPost("doctor-confirm-request/{centerId}/{consultationId}")]
+        public async Task<IActionResult> ConfirmRequest(int centerId, int consultationId, DateTime scheduledAt)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await consultation.DoctorScheduleConsultationAsync(centerId, userId, consultationId,scheduledAt);
             return Ok(result);
         }
 
