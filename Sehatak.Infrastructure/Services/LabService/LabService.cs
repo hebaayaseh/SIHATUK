@@ -104,7 +104,6 @@ namespace Sehatak.Infrastructure.Services.LabService
                 Status = LabRequestStatus.Pending,
                 RequestedByUserId = userId,
                 UpdatedAt = DateTime.UtcNow
-
             };
 
             await db.LabRequests.AddAsync(labRequest);
@@ -129,7 +128,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                     var item = new LabRequestItem
                     {
                         ServicePriceId = Item.Id,
-                        LabRequest = labRequest,          
+                        LabRequest = labRequest,
                         UnitPrice = servicePrice.Price,
                     };
                     await db.LabRequestItems.AddAsync(item);
@@ -139,7 +138,8 @@ namespace Sehatak.Infrastructure.Services.LabService
                         ServicePriceId = servicePrice.Id,
                         ServiceName = servicePrice.ServiceName,
                         UnitPrice = servicePrice.Price,
-                        ItemId = item.Id
+                        ItemId = item.Id,
+                        IsAvailable = true
                     });
                 }
             }
@@ -213,7 +213,8 @@ namespace Sehatak.Infrastructure.Services.LabService
                         ServicePriceName = i.ServicePrice.ServiceName,
                         LabRequestItemId = i.Id,
                         ResultValue = i.ResultValue,
-                        ResultFileUrl = i.ResultFileUrl
+                        ResultFileUrl = i.ResultFileUrl,
+                        IsAvailable = i.IsAvailable
                     }).ToList(),
                 }).FirstOrDefaultAsync();
             if (query == null)
@@ -270,15 +271,16 @@ namespace Sehatak.Infrastructure.Services.LabService
                         ServicePriceId = i.ServicePriceId,
                         ServiceName = i.ServicePrice.ServiceName,
                         ItemId = i.Id,
-                        UnitPrice = i.UnitPrice
+                        UnitPrice = i.UnitPrice,
+                        IsAvailable = i.IsAvailable
                     }).ToList(),
-                    TotalPrice = n.Items.Sum(i => i.UnitPrice)
+                    TotalPrice = n.Items.Where(i => i.IsAvailable).Sum(i => i.UnitPrice)
                 });
 
             return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
 
-        public async Task<string> LabCollectSample(int centerId, int userId, int labRequestId)
+        public async Task<string> LabCollectSample(int centerId, int userId, int labRequestId, List<int>? unavailableItemIds)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -297,21 +299,32 @@ namespace Sehatak.Infrastructure.Services.LabService
                 throw new BusinessException("Technician.NotFound");
 
             var labRequest = await db.LabRequests
+                .Include(l => l.Items)
                 .FirstOrDefaultAsync(l => l.Id == labRequestId);
 
             if (labRequest == null)
                 throw new BusinessException("LabRequest.NotFound");
 
-            if (labRequest.Payment == null)
-                throw new BusinessException("Payment.NotCompleted");
-
             if (labRequest.Status != LabRequestStatus.Pending
                 && labRequest.Status != LabRequestStatus.Seen)
                 throw new BusinessException("LabRequest.AlreadyCollected");
 
+            if (unavailableItemIds != null)
+            {
+                foreach (var itemId in unavailableItemIds)
+                {
+                    var item = labRequest.Items.FirstOrDefault(i => i.Id == itemId);
+                    if (item == null)
+                        throw new BusinessException("LabRequestItemNotFound");
+                    item.IsAvailable = false;
+                }
+            }
+
+            if (labRequest.Items.All(i => !i.IsAvailable))
+                throw new BusinessException("LabRequest.NoAvailableItems");
+
             labRequest.Status = LabRequestStatus.Collected;
             labRequest.UpdatedAt = DateTime.UtcNow;
-
 
             await db.SaveChangesAsync();
 
@@ -403,9 +416,10 @@ namespace Sehatak.Infrastructure.Services.LabService
                     ServicePriceId = n.ServicePriceId,
                     ServicePriceName = n.ServicePrice.ServiceName,
                     ResultValue = n.ResultValue,
-                    ResultFileUrl = n.ResultFileUrl
+                    ResultFileUrl = n.ResultFileUrl,
+                    IsAvailable = n.IsAvailable
                 }).ToList(),
-                TotalPrice = items.Sum(x => x.UnitPrice)
+                TotalPrice = items.Where(x => x.IsAvailable).Sum(x => x.UnitPrice)
             };
         }
 
@@ -453,6 +467,9 @@ namespace Sehatak.Infrastructure.Services.LabService
                 if (Item == null)
                     throw new BusinessException("LabRequestItemNotFound");
 
+                if (!Item.IsAvailable)
+                    throw new BusinessException("LabRequestItem.NotAvailable");
+
                 Item.ResultValue = item.ResultValue;
 
                 string? result = null;
@@ -484,7 +501,9 @@ namespace Sehatak.Infrastructure.Services.LabService
             await db.SaveChangesAsync();
 
             var stillPending = await db.LabRequestItems
-                .AnyAsync(l => l.LabRequestId == labRequest.Id && l.ResultValue == null);
+                .AnyAsync(l => l.LabRequestId == labRequest.Id
+                         && l.IsAvailable
+                         && l.ResultValue == null);
 
             if (!stillPending)
             {
@@ -521,7 +540,8 @@ namespace Sehatak.Infrastructure.Services.LabService
                     ServicePriceId = i.ServicePriceId,
                     ServicePriceName = i.ServicePrice.ServiceName,
                     ResultValue = i.ResultValue,
-                    ResultFileUrl = i.ResultFileUrl
+                    ResultFileUrl = i.ResultFileUrl,
+                    IsAvailable = i.IsAvailable
                 })
                 .ToListAsync();
 
@@ -533,7 +553,7 @@ namespace Sehatak.Infrastructure.Services.LabService
             };
         }
 
-        public async Task<PagedResult<PatientGetLabRequestReponseDto>> PatientGetLabRequestAsync(int centerId, int userId, PagedRequest request,int?subPatientId)
+        public async Task<PagedResult<PatientGetLabRequestReponseDto>> PatientGetLabRequestAsync(int centerId, int userId, PagedRequest request, int? subPatientId)
         {
             var center = await sharedDbContext.MedicalCenters
                .FirstOrDefaultAsync(c => c.Id == centerId
@@ -551,7 +571,6 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
-
 
             Patient actingPatient = patient;
 
@@ -578,7 +597,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                     LabStatus = n.Status.ToString(),
                     PatientId = n.PatientId,
                     PatientName = actingPatient.userId != null
-                    ?actingPatient.user.firstName + " " + actingPatient.user.lastName
+                    ? actingPatient.user.firstName + " " + actingPatient.user.lastName
                     : actingPatient.FirstName + " " + actingPatient.LastName,
                     Note = n.Notes,
                     LabItems = n.Items.Select(i => new LabItemResponseDto
@@ -586,9 +605,10 @@ namespace Sehatak.Infrastructure.Services.LabService
                         ServicePriceId = i.ServicePriceId,
                         ServiceName = i.ServicePrice.ServiceName,
                         ItemId = i.Id,
-                        UnitPrice = i.UnitPrice
+                        UnitPrice = i.UnitPrice,
+                        IsAvailable = i.IsAvailable
                     }).ToList(),
-                    TotalPrice = n.Items.Sum(i => i.UnitPrice)
+                    TotalPrice = n.Items.Where(i => i.IsAvailable).Sum(i => i.UnitPrice)
                 });
 
             return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
@@ -642,11 +662,12 @@ namespace Sehatak.Infrastructure.Services.LabService
                         ResultValue = n.ResultValue,
                         ResultFileUrl = n.ResultFileUrl,
                         ServicePriceName = n.ServicePrice.ServiceName,
-                        ServicePriceId = n.ServicePriceId
+                        ServicePriceId = n.ServicePriceId,
+                        IsAvailable = n.IsAvailable
                     }).ToList()
                 });
 
-            return await query.ToPagedResultAsync(request.PageNumber,request.PageSize);
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
         }
 
         public async Task<ReceptionistLabRequestReponseDto> ReceptionistCreateLabRequestAsync(int centerId, int userId, ReceptionistCreateLabRequestDto request)
@@ -662,7 +683,8 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             var Receptionist = await db.Users
                 .FirstOrDefaultAsync(u => u.Id == userId
-                                     && u.isActive);
+                                     && u.isActive
+                                     && u.role == userRole.Receptionist);
 
             if (Receptionist == null)
                 throw new BusinessException("Receptionist.NotFound");
@@ -719,7 +741,8 @@ namespace Sehatak.Infrastructure.Services.LabService
                         ServicePriceId = servicePrice.Id,
                         ServiceName = servicePrice.ServiceName,
                         UnitPrice = servicePrice.Price,
-                        ItemId = item.Id
+                        ItemId = item.Id,
+                        IsAvailable = true
                     });
                 }
             }
@@ -756,7 +779,8 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             var receptionist = await db.Users
                 .FirstOrDefaultAsync(u => u.Id == userId
-                                     && u.isActive);
+                                     && u.isActive
+                                     && u.role == userRole.Receptionist);
 
             if (receptionist == null)
                 throw new BusinessException("Receptionist.NotFound");
@@ -780,9 +804,10 @@ namespace Sehatak.Infrastructure.Services.LabService
                         ServicePriceId = i.ServicePriceId,
                         ServicePriceName = i.ServicePrice.ServiceName,
                         ResultValue = i.ResultValue,
-                        ResultFileUrl = i.ResultFileUrl
+                        ResultFileUrl = i.ResultFileUrl,
+                        IsAvailable = i.IsAvailable
                     }).ToList(),
-                    TotalPrice = n.Items.Sum(i => i.UnitPrice)
+                    TotalPrice = n.Items.Where(i => i.IsAvailable).Sum(i => i.UnitPrice)
                 });
 
             return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
@@ -801,7 +826,8 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             var Receptionist = await db.Users
                 .FirstOrDefaultAsync(d => d.Id == userId
-                                     && d.isActive);
+                                     && d.isActive
+                                     && d.role == userRole.Receptionist);
 
             if (Receptionist == null)
                 throw new BusinessException("Receptionist.NotFound");
@@ -884,11 +910,12 @@ namespace Sehatak.Infrastructure.Services.LabService
                     ServicePriceId = i.ServicePriceId,
                     ServiceName = i.ServicePrice.ServiceName,
                     ItemId = i.Id,
-                    UnitPrice = i.UnitPrice
+                    UnitPrice = i.UnitPrice,
+                    IsAvailable = i.IsAvailable
                 })
                 .ToListAsync();
 
-            var grandTotal = currentItems.Sum(i => i.UnitPrice);
+            var grandTotal = currentItems.Where(i => i.IsAvailable).Sum(i => i.UnitPrice);
 
             return new ReceptionistLabRequestReponseDto
             {
@@ -904,7 +931,6 @@ namespace Sehatak.Infrastructure.Services.LabService
                 Note = labRequest.Notes,
                 UpdatedAt = labRequest.UpdatedAt
             };
-        
         }
 
         public async Task<LabRequestResponseDto> UpdateLabRequestAsync(int centerId, int userId, UpdateLabRequestDto request)
@@ -977,7 +1003,7 @@ namespace Sehatak.Infrastructure.Services.LabService
             if (request.AddLabItems != null)
             {
                 var existingIds = LabItems
-                        .Where(l => request.RemoveLabItems == null 
+                        .Where(l => request.RemoveLabItems == null
                                || !request.RemoveLabItems.Contains(l.Id))
                         .Select(l => l.ServicePriceId)
                         .ToHashSet();
@@ -998,7 +1024,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                     var item = new LabRequestItem
                     {
                         ServicePriceId = Item.Id,
-                        LabRequestId = labRequest.Id,   
+                        LabRequestId = labRequest.Id,
                         UnitPrice = servicePrice.Price,
                     };
                     await db.LabRequestItems.AddAsync(item);
@@ -1015,11 +1041,12 @@ namespace Sehatak.Infrastructure.Services.LabService
                     ServicePriceId = i.ServicePriceId,
                     ServiceName = i.ServicePrice.ServiceName,
                     ItemId = i.Id,
-                    UnitPrice = i.UnitPrice
+                    UnitPrice = i.UnitPrice,
+                    IsAvailable = i.IsAvailable
                 })
                 .ToListAsync();
 
-            var grandTotal = currentItems.Sum(i => i.UnitPrice);
+            var grandTotal = currentItems.Where(i => i.IsAvailable).Sum(i => i.UnitPrice);
 
             return new LabRequestResponseDto
             {
@@ -1033,7 +1060,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                 LabStatus = labRequest.Status.ToString(),
                 LabItems = currentItems,
                 TotalPrice = grandTotal,
-                Note = labRequest.Notes,   
+                Note = labRequest.Notes,
                 UpdatedAt = labRequest.UpdatedAt
             };
         }

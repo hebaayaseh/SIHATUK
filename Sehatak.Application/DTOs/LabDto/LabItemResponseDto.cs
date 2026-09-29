@@ -8,5 +8,6 @@ namespace Sehatak.Application.DTOs.LabDto
         public string ServiceName { get; set; }
         public int ItemId { get; set; }
         public decimal UnitPrice { get; set; }
+        public bool IsAvailable { get; set; }
     }
 }

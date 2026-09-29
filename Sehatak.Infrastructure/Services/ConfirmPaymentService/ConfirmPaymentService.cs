@@ -106,7 +106,7 @@ namespace Sehatak.Infrastructure.Services.ConfirmPaymentService
                 throw new BusinessException("LabRequest.AlreadyPaid");
 
 
-            var amount = labRequest.Items.Sum(i => i.UnitPrice);
+            var amount = labRequest.Items.Where(i => i.IsAvailable).Sum(i => i.UnitPrice);
 
             var payment = new Payment
             {

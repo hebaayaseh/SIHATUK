@@ -126,10 +126,10 @@ namespace Sehatak.API.Controllers.LabController
 
         [Authorize(Policy = "TechnicianOnly")]
         [HttpPut("technician-collected-lab-request/{centerId}/{labRequestId}")]
-        public async Task<IActionResult> TechnicianCollectedLabRequestAsync(int centerId, int labRequestId)
+        public async Task<IActionResult> TechnicianCollectedLabRequestAsync(int centerId, int labRequestId,[FromBody] List<int>? unavailableItemIds)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
-            var result = await lab.LabCollectSample(centerId, userId, labRequestId);
+            var result = await lab.LabCollectSample(centerId, userId, labRequestId,unavailableItemIds);
             return Ok(result);
         }
 

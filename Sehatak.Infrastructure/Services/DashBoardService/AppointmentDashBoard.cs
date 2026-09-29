@@ -132,7 +132,8 @@ namespace Sehatak.Infrastructure.Services.DashBoardService
 
             var query = db.Appointments
                 .Where(a => a.appointmentDate == date
-                       && a.appointmentStatus == AppointmentStatus.Confirmed)
+                       && (a.appointmentStatus == AppointmentStatus.Confirmed)
+                       || a.appointmentStatus == AppointmentStatus.Completed)
                 .OrderBy(a => a.timeSlot)
                 .Select(a => new ReceptionistAppointmentResponseDto
                 {

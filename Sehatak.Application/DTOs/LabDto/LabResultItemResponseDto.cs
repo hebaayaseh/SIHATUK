@@ -11,6 +11,7 @@ namespace Sehatak.Application.DTOs.LabDto
         public string? ResultFileUrl { get; set; }
         public string ServicePriceName { get; set; }
         public int ServicePriceId { get; set; }
+        public bool IsAvailable {get;set;}
 
     }
 }

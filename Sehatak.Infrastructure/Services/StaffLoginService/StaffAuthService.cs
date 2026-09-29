@@ -1,4 +1,5 @@
-﻿using Sehatak.Application.DTOs.Exceptions;
+﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.StaffLogIn;
 using Sehatak.Application.Interfaces.IAuth;
 using Sehatak.Application.Interfaces.IEmail;
@@ -23,15 +24,16 @@ namespace Sehatak.Infrastructure.Services.StaffLogin
             this.tokenService = tokenService;
         }
 
-        public async Task<StaffLoginResponseDto> StaffLoginAsync(int CenterId, StaffLoginRequestDto request)
+        public async Task<StaffLoginResponseDto> StaffLoginAsync(int centerId, StaffLoginRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
-                .FindAsync(CenterId);
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
-            using var db = contextFactory.CreateForCenter(CenterId);
+            using var db = contextFactory.CreateForCenter(centerId);
 
             var user =  db.Users.FirstOrDefault(u => u.email == request.Email && u.isActive);
             if (user == null)
@@ -53,7 +55,7 @@ namespace Sehatak.Infrastructure.Services.StaffLogin
                 name: $"{user.firstName}{user.lastName}",
                 email: user.email,
                 role: user.role.ToString(),
-                centerId: CenterId,
+                centerId: centerId,
                 ownerType: TokenOwnerType.TenantUser
             );
             return new StaffLoginResponseDto

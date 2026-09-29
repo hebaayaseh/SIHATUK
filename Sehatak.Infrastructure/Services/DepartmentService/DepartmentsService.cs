@@ -10,6 +10,7 @@ using Sehatak.Infrastructure.Data;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Concurrent;
+using Sehatak.Domain.Enums.SharedEnums;
 
 namespace Sehatak.Infrastructure.Services.DepartmentService
 {
@@ -43,7 +44,8 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
         public async Task<DepartmentResponseDto> AddDepartmentAsync(int centerId,DepartmentRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
-                .FindAsync(centerId);
+                .FirstOrDefaultAsync(c=>c.Id==centerId
+                                     && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
                 throw new BusinessException("Center.NotFound");
@@ -89,7 +91,8 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
         public async Task<DepartmentResponseDto> UpdateDepartmentAsync(int centerId, DepartmentUpdateRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
-               .FindAsync(centerId);
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
                 throw new BusinessException("Center.NotFound");
@@ -131,7 +134,8 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
         public async Task<string> RemoveDepartmentAsync(int centerId, DepartmentRemoveRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
-                .FindAsync(centerId);
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
                 throw new BusinessException("Center.NotFound");
@@ -152,7 +156,8 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
         public async Task<GetDepartmentResponseDto> GetDepartmentsAsync(int centerId)
         {
             var center = await sharedDbContext.MedicalCenters
-                .FindAsync(centerId);
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
                 throw new BusinessException("Center.NotFound");
@@ -184,7 +189,8 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
     public async Task<DoctorResponseDto> RegisterDoctorAsync(int centerId, DoctorRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
-                .FirstOrDefaultAsync(c => c.Id == centerId);
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
                 throw new BusinessException("Center.NotFound");

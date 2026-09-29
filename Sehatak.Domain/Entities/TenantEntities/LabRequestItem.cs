@@ -12,6 +12,7 @@ namespace Sehatak.Domain.Entities.TenantEntities
         public decimal UnitPrice { get; set; }
         public decimal? ResultValue { get; set; }
         public string? ResultFileUrl { get; set; }
+        public bool IsAvailable { get; set; } = true;
 
         // Navigation Properties :
         public LabRequest LabRequest { get; set; } = null!;
