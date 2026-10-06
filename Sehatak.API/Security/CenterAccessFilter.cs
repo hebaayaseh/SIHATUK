@@ -39,7 +39,13 @@ namespace Sehatak.API.Security
             }
 
             if (!int.TryParse(routeValue?.ToString(), out var routeCenterId))
+            {
+                context.Result = new ObjectResult(new { error = "Auth.CenterIdRequired" })
+                {
+                    StatusCode = StatusCodes.Status403Forbidden
+                };
                 return Task.CompletedTask;
+            }
 
             var claim = user.FindFirst("CenterId");
             if (claim == null || !int.TryParse(claim.Value, out var tokenCenterId) || tokenCenterId != routeCenterId)

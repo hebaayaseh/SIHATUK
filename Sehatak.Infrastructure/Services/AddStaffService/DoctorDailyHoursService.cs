@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.Office2016.Excel;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AddDoctorDailyHour;
 using Sehatak.Application.DTOs.AddDoctorDailyHourDto;
@@ -14,6 +13,7 @@ using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
 using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Concurrent;
+using Sehatak.Application.Interfaces.AuditLog;
 
 namespace Sehatak.Infrastructure.Services.AddStaff
 {
@@ -22,11 +22,13 @@ namespace Sehatak.Infrastructure.Services.AddStaff
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
         private readonly IMemoryCache cache;
-        public DoctorDailyHoursService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory,IMemoryCache cache)
+        private readonly IAuditLog auditLog;
+        public DoctorDailyHoursService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory, IMemoryCache cache, IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
             this.cache = cache;
+            this.auditLog = auditLog;
         }
         private static string CacheKey(int centerId, int doctorId, int pageNumber, int pageSize) =>
             $"doctorschedule:{centerId}:{doctorId}:{pageNumber}:{pageSize}";
@@ -89,10 +91,30 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 EndTime = request.EndTime
 
             };
-
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.DoctorSchedules.AddAsync(doctorScheduale);
             await db.SaveChangesAsync();
+
             InvalidateDoctorScheduleCache(centerId,doctorId);
+
+            var auditEntry = auditLog.Build(
+            action: "AddDoctorSchedule",
+            entityType: "DoctorSchedule",
+            entityId: doctorScheduale.Id,
+            newValue: new 
+            {
+
+              doctorId,
+              dayOfWeek = doctorScheduale.DayOfWeek.ToString(),
+              doctorScheduale.SlotDurationMinutes,
+              startTime = doctorScheduale.StartTime.ToString(),
+              endTime = doctorScheduale.EndTime.ToString()
+            });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return new AddDoctorDailyHoursResponse
             {
@@ -136,9 +158,9 @@ namespace Sehatak.Infrastructure.Services.AddStaff
 
 
             var alreadyBlocked = await db.DoctorBlockedDays
-                .AnyAsync(d => d.doctorId == doctorId 
-                          && d.date == date 
-                          && d.isBlocked 
+                .AnyAsync(d => d.doctorId == doctorId
+                          && d.date == date
+                          && d.isBlocked
                           && d.timeSlot == null);
 
             if (alreadyBlocked)
@@ -173,6 +195,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                     AppointmentId = appointment.Id,
                     Reason = "إلغاء مواعيد اليوم من قبل الطبيب.",
                     Status = PostponeStatus.Active,
+                    CreatedAt = DateTime.UtcNow
                 });
 
                 db.Notifications.Add(new Notification
@@ -191,14 +214,16 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 }
             }
 
-            db.DoctorBlockedDays.Add(new DoctorBlockedDay
+            var blockedDay = new DoctorBlockedDay
             {
                 doctorId = doctorId,
                 date = date,
                 Reason = "إلغاء من قبل الطبيب",
-                isBlocked = true
-            });
-            
+                isBlocked = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.DoctorBlockedDays.Add(blockedDay);
+
 
             var waitList = await db.Waitlists
                  .Include(w => w.Patient).ThenInclude(p => p.user)
@@ -221,8 +246,21 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 });
             }
 
-            await db.SaveChangesAsync();
+            var auditEntry = auditLog.Build(
+            action: "CancelDoctorDay",
+            entityType: "DoctorBlockedDay",
+            entityId: blockedDay.Id,
+            newValue: new 
+            {
+                doctorId,
+                date = date.ToString("yyyy-MM-dd"),
+                cancelledAppointmentIds = appointmentIds,
+                exitedWaitlistCount = waitList.Count
+             });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
 
+            await db.SaveChangesAsync();
             return appointments.Any()
                 ? "تم إلغاء مواعيد اليوم بنجاح ومنع الحجز الجديد لهذا التاريخ."
                 : "تم حظر هذا اليوم من الحجز بنجاح.";
@@ -341,6 +379,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                     AppointmentId = appointment.Id,
                     Reason = "تعديل جدول دوام الطبيب من قبل الإدارة",
                     Status = PostponeStatus.Active,
+                    CreatedAt = DateTime.UtcNow
                 });
                 db.Notifications.Add(new Notification
                 {
@@ -378,6 +417,15 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                     IsRead = false
                 });
             }
+            var oldSchedule = new
+            {
+                doctorSchedual.Id,
+                dayOfWeek = doctorSchedual.DayOfWeek.ToString(),
+                doctorSchedual.SlotDurationMinutes,
+                startTime = doctorSchedual.StartTime.ToString(),
+                endTime = doctorSchedual.EndTime.ToString(),
+                isActive = doctorSchedual.IsActive
+            };
 
             doctorSchedual.IsActive = false;
 
@@ -387,12 +435,33 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 DayOfWeek = request.DayOfWeek,
                 SlotDurationMinutes = request.SlotDurationMinutes,
                 StartTime = request.StartTime,
-                EndTime = request.EndTime
+                EndTime = request.EndTime,
+
             };
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.DoctorSchedules.AddAsync(newSchedule);
 
             await db.SaveChangesAsync();
             InvalidateDoctorScheduleCache(centerId, doctorId);
+            var auditEntry = auditLog.Build(
+            action: "UpdateDoctorSchedule",
+            entityType: "DoctorSchedule",
+            entityId: doctorSchedual.Id,
+            oldValue: oldSchedule,
+            newValue: new
+            {
+              newScheduleId = newSchedule.Id,
+              doctorId,
+              dayOfWeek = newSchedule.DayOfWeek.ToString(),
+              newSchedule.SlotDurationMinutes,
+              startTime = newSchedule.StartTime.ToString(),
+              endTime = newSchedule.EndTime.ToString(),
+              postponedAppointmentIds = affectedAppointments.Select(a => a.Id).ToList()
+            });
+            if( auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return new UpdateDoctorDailyHoursResponse
             {
@@ -427,8 +496,9 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             var appointments = await db.Appointments
                 .Where(a => a.doctorId == doctor.Id
                        && a.appointmentDate == date
-                       && a.appointmentStatus == AppointmentStatus.Confirmed)
-                .OrderBy(a => a.timeSlot.HasValue)
+                       && a.appointmentStatus == AppointmentStatus.Confirmed
+                       && a.timeSlot.HasValue)
+                .OrderBy(a => a.timeSlot)
                 .Select(a => new AppointmentSummaryDto
                 {
                     appointmentId = a.Id,

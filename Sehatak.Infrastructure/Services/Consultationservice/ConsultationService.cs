@@ -3,6 +3,7 @@ using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.ConsultationDto;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.PaymentDto;
+using Sehatak.Application.Interfaces.AuditLog;
 using Sehatak.Application.Interfaces.ConsultaionInterface;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
@@ -16,10 +17,12 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public ConsultationService(SharedDbContext sharedDbContext , TenantDbContextFactory contextFactory)
+        private readonly IAuditLog auditLog;
+        public ConsultationService(SharedDbContext sharedDbContext , TenantDbContextFactory contextFactory,IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
+            this.auditLog = auditLog;
         }
 
         public async Task<string> CancelConsultaion(int centerId, int userId, int consultationId,int? subPatientId)
@@ -67,6 +70,13 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (consultation.Status != ConsultationStatus.Pending)
                 throw new BusinessException("Consultation.CannotCancelAfterConfirmed");
 
+            var oldValue = new
+            {
+                patient = userId,
+                status = consultation.Status,
+                doctor = consultation.DoctorId 
+            };
+
             var hasPayment = await db.Payments
                 .AnyAsync(p => p.ConsultationId == consultationId);
 
@@ -84,6 +94,20 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow
             });
+
+            var auditEntry =  auditLog.Build
+                (
+                action: "CancleConsultation",
+                entityType: "Consultation",
+                entityId: consultation.Id,
+                oldValue : oldValue,
+                newValue : new
+                {
+                    patientId = userId,
+                    status = consultation.Status,
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
 
             await db.SaveChangesAsync();
 
@@ -120,6 +144,12 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             if (consultation == null)
                 throw new BusinessException("Consultation.NotFound");
+            var oldValue = new
+            {
+                patient = consultation.PatientId,
+                status = consultation.Status,
+                doctor = userId
+            };
 
             consultation.Status = ConsultationStatus.Completed;
 
@@ -133,7 +163,22 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             });
 
+            var auditEntry =  auditLog.Build
+                (
+                action: "CompleteConsultation",
+                entityType: "Consultation",
+                entityId: consultation.Id,
+                oldValue: oldValue,
+                newValue: new
+                {
+                    doctorId = userId,
+                    status = consultation.Status,
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
+
             return "تم انهاء الاستشارة بنجاح.";
 
         }
@@ -203,7 +248,26 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                           $"في الموعد {payment.Consultation.ScheduledAt}.{linkText}"
             });
 
+
+            var auditEntry =  auditLog.Build
+                (
+                action: "ConfirmPaymentConsultation",
+                entityType: "Payment",
+                entityId: payment.Id,
+                newValue: new
+                {
+                    patientId = patient.userId,
+                    doctorId = doctorId,
+                    status = payment.Status,
+                    videoLink = payment.Consultation.VideoLink,
+                    date = payment.Consultation.ScheduledAt
+                });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
+
             return true;
         }
 
@@ -300,10 +364,32 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 RecordedByStaffId = null,
                 
             };
+            using var transaction = await db.Database.BeginTransactionAsync();
+
             await db.Payments.AddAsync(payment);
             await db.SaveChangesAsync();
-            return "تم تقديم طلب الدفع بنجاح.";
 
+            var auditEntry =  auditLog.Build
+                (
+                action: "ConsultaionRecorPayment",
+                entityType: "Payment",
+                entityId: payment.Id,
+                newValue: new
+                {
+                    patientId = userId,
+                    paiedAt = payment.PaidAt,
+                    amount = payment.Amount,
+                    method = payment.Method,
+                    status = payment.Status,
+                });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return "تم تقديم طلب الدفع بنجاح.";
         }
 
         public async Task<string> ConsultationRequest(int centerId, int doctorId, int userId,int? subPatientId)
@@ -356,14 +442,16 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (hasPendingRequest)
                 throw new BusinessException("Consultation.AlreadyRequested");
 
-            await db.Consultations
-                .AddAsync(new Consultation
-                {
-                    DoctorId = doctor.Id,
-                    PatientId = actingPatient.patientId,
-                    Status = ConsultationStatus.Pending,
+            var consultaion = new Consultation
+            {
+                DoctorId = doctor.Id,
+                PatientId = actingPatient.patientId,
+                Status = ConsultationStatus.Pending,
 
-                });
+            };
+            using var transaction = await db.Database.BeginTransactionAsync();
+            await db.AddAsync(consultaion);
+
             await db.Notifications
                 .AddAsync(new Notification
                 {
@@ -375,6 +463,24 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                    
                 });
             await db.SaveChangesAsync();
+
+            var auditEntry = auditLog.Build
+                (
+                action: "ConsultaionRequest",
+                entityType: "Consultaion",
+                entityId: consultaion.Id,
+                newValue: new
+                {
+                    patientId = userId,
+                    requestAt = DateTime.UtcNow,
+                    status = consultaion.Status,
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
             return "تم ارسال طلب الاستشارة الى الطبيب بانتظار موافقة الطبيب.";
 
         }
@@ -572,7 +678,25 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 Message = "تم رفض إيصال الدفع، يرجى التأكد من البيانات وإعادة الإرسال."
             });
 
+            var auditEntry = auditLog.Build
+                (
+                action: "RejectConsultationPayment",
+                entityType: "Payment",
+                entityId: payment.Id,
+                newValue: new
+                {
+                    doctorId = userId,
+                    paiedAt = payment.PaidAt,
+                    amount = payment.Amount,
+                    method = payment.Method,
+                    status = payment.Status,
+                    reason = rejectionReason
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
+
             return "تم رفض الدفعة.";
         }
 
@@ -617,7 +741,22 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 Message = "نأسف، تم رفض طلب الاستشارة من قبل الطبيب."
             });
 
+            var auditEntry = auditLog.Build
+                (
+                action: "RejectConsultationRequest",
+                entityType: "Consultation",
+                entityId: consultation.Id,
+                newValue: new
+                {
+                    doctorId = userId,
+                    status = consultation.Status,
+                    reason = rejectionReason
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
+
             return "تم رفض طلب الاستشارة.";
 
         }
@@ -771,7 +910,23 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 Message = $"تم قبول طلب الاستشارة، الموعد المقترح بتاريخ {scheduledAt}. الرجاء إتمام الدفع لتأكيد الحجز."
             });
 
+
+            var auditEntry = auditLog.Build
+                (
+                action: "DoctorScheduleConsultation",
+                entityType: "Consultation",
+                entityId: consultation.Id,
+                newValue: new
+                {
+                    doctor = userId,
+                    scheduledAt = consultation.ScheduledAt,
+                    status = consultation.Status
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
+
             return "تم تحديد موعد الاستشارة، بانتظار الدفع من المريض.";
         }
     }

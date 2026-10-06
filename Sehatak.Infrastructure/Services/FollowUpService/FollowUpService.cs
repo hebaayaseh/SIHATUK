@@ -1,7 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DocumentFormat.OpenXml.Vml.Office;
+using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.FollowUpDto;
+using Sehatak.Application.Interfaces.AuditLog;
+using Sehatak.Application.Interfaces.IEmerngency;
 using Sehatak.Application.Interfaces.IFollowUp;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
@@ -14,10 +17,12 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public FollowUpService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory)
+        private readonly IAuditLog auditLog;
+        public FollowUpService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory,IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
+            this.auditLog = auditLog;
         }
         public async Task<FollowUpResponseDto> DoctorAddFollowUpAsync(int centerId, int userId, DoctorAddFollowUpRequestDto request)
         {
@@ -70,6 +75,8 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                 CreatedAt = now,
                 UpdatedAt = now,
             };
+            using var transaction = await db.Database.BeginTransactionAsync();
+
             await db.FollowUps.AddAsync(followUp);
 
             var patientInfo = await db.Patients
@@ -96,8 +103,28 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                     CreatedAt = now,
                 });
             }
+            
+            await db.SaveChangesAsync();
+
+            var auditEntry =  auditLog.Build(
+            action: "AddFollowUp",
+            entityType: "FollowUp",
+            entityId: followUp.Id,
+            newValue: new
+            {
+                followUp.PatientId,
+                followUp.DoctorId,
+                followUp.CreatedAt,
+                followUp.OriginalAppointmentId,
+                followUp.Status,
+                followUp.AllowFollowUpDate
+            });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
 
             await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
             return new FollowUpResponseDto
             {
                 Id = followUp.Id,
@@ -181,6 +208,12 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
             if (followUp.Status != FollowUpStatus.Pending)
                 throw new BusinessException("FollowUp.CannotBeUpdated");
 
+            var oldValue = new
+            {
+                followUp.AllowFollowUpDate,
+                followUp.Status,
+            };
+
             var patientInfo = await db.Patients
                 .Where(p => p.patientId == followUp.PatientId)
                 .Select(p => new
@@ -209,6 +242,19 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                     Type = NotificationType.Appointment,
                 });
             }
+
+            var auditEntry =  auditLog.Build(
+                action: "UpdateFollowUp",
+                entityType : "FollowUp",
+                entityId :  followUp.Id,
+                oldValue : oldValue,
+                newValue : new
+                {
+                    followUp.AllowFollowUpDate,
+                    followUp.UpdatedAt
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
 
             await db.SaveChangesAsync();
 
@@ -335,6 +381,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                 CreatedAt = now,
                 UpdatedAt = now,
             };
+            var transaction = await db.Database.BeginTransactionAsync();
             await db.FollowUps.AddAsync(followUp);
 
             var notifiableUserExists = await db.Users
@@ -352,6 +399,23 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
             }
 
             await db.SaveChangesAsync();
+            var auditEntry = auditLog.Build(
+            action: "AddFollowUp",
+            entityType: "FollowUp",
+            entityId: followUp.Id,
+            newValue: new
+            {
+                followUp.PatientId,
+                followUp.DoctorId,
+                followUp.CreatedAt,
+                followUp.OriginalAppointmentId,
+                followUp.Status,
+                followUp.AllowFollowUpDate
+            });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return new FollowUpResponseDto
             {
@@ -442,6 +506,12 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
             if (followUp.Status != FollowUpStatus.Pending)
                 throw new BusinessException("FollowUp.CannotBeUpdated");
 
+            var oldValue = new
+            {
+                followUp.AllowFollowUpDate,
+                followUp.Status,
+            };
+
             var info = await db.FollowUps
                 .Where(f => f.Id == followUp.Id)
                 .Select(f => new
@@ -469,6 +539,19 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                     Type = NotificationType.Appointment,
                 });
             }
+
+            var auditEntry = auditLog.Build(
+                action: "UpdateFollowUp",
+                entityType: "FollowUp",
+                entityId: followUp.Id,
+                oldValue: oldValue,
+                newValue: new
+                {
+                    followUp.AllowFollowUpDate,
+                    followUp.UpdatedAt
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
 
             await db.SaveChangesAsync();
 

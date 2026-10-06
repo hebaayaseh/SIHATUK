@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sehatak.Application.DTOs.StaffLogIn;
 using Sehatak.Application.Interfaces.StaffLogin;
 
@@ -14,10 +15,14 @@ namespace Sehatak.API.Controllers.StaffLogin
         {
             this.staffLogin = staffLogin;
         }
+
+        [EnableRateLimiting("LoginPolicy")]
+        [AllowAnonymous]
         [HttpPost("staff-login/{centerId}")]
-        public async Task<IActionResult> MedicalStaffLogin(int centerId,StaffLoginRequestDto request)
+        public async Task<IActionResult> MedicalStaffLogin(int centerId, [FromBody] StaffLoginRequestDto request)
         {
-            var result = await staffLogin.StaffLoginAsync(centerId, request);
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var result = await staffLogin.StaffLoginAsync(centerId, request, ipAddress);
             return Ok(result);
         }
     }

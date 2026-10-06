@@ -13,6 +13,8 @@ using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
 using System.Security.Cryptography;
+using Sehatak.Domain.Entities.SharedEntities;
+using Sehatak.Application.Interfaces.AuditLog;
 
 
 namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
@@ -23,39 +25,55 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
     private readonly IEmailService emailSender;
     private readonly ITokenService tokenService;
     private readonly IWebHostEnvironment env;
+    private readonly IAuditLog auditLog;
 
     public AuthService(SharedDbContext sharedDbContext, TenantDbContextFactory tenantDbContextFactory,
-        IEmailService emailSenderService, ITokenService tokenService, IWebHostEnvironment webHostEnvironment)
+        IEmailService emailSenderService, ITokenService tokenService, IWebHostEnvironment webHostEnvironment , IAuditLog auditLog)
     {
         this.sharedDbContext = sharedDbContext;
         tenantFactory = tenantDbContextFactory;
         emailSender = emailSenderService;
         this.tokenService = tokenService;
         env = webHostEnvironment;
+        this.auditLog = auditLog;
     }
 
-    public async Task<PatientResponseDto> LoginPatientAsync(int centerId, PatientRequestDto request)
+    
+    public async Task<PatientResponseDto> LoginPatientAsync(int centerId, PatientRequestDto request, string? ipAddress)
     {
         var center = await sharedDbContext.MedicalCenters
             .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
         if (center == null)
             throw new BusinessException("Center.NotFound");
 
+        await auditLog.EnsureNotLockedOutAsync(centerId, request.email, LoginUserType.Patient);
+
         using var db = tenantFactory.CreateForCenter(centerId);
 
         var patient = await db.Users
             .FirstOrDefaultAsync(p => p.isActive && p.email == request.email);
 
-        if(patient == null )
+        if (patient == null)
+        {
+            await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: false, LoginUserType.Patient);
             throw new BusinessException("Auth.Unauthorized");
+        }
 
-        if(patient.role != userRole.Patient)
+        if (patient.role != userRole.Patient)
+        {
+            await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: false, LoginUserType.Patient);
             throw new BusinessException("Auth.Forbidden");
+        }
 
         var passwordValid = BCrypt.Net.BCrypt.Verify(request.password, patient.passwordHash);
 
         if (!passwordValid)
+        {
+            await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: false, LoginUserType.Patient);
             throw new BusinessException("Validation.PasswordMismatch");
+        }
+
+        await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: true, LoginUserType.Patient);
 
         var tokens = await tokenService.IssueTokensAsync(
             userId: patient.Id,
@@ -258,12 +276,14 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
         return "تم تعطيل الحساب بنجاح.";
     }
 
-    public async Task<PatientResponseDto> PatientActiveProfileAsync(int centerId, PatientRequestDto request)
+    public async Task<PatientResponseDto> PatientActiveProfileAsync(int centerId, PatientRequestDto request, string? ipAddress)
     {
         var center = await sharedDbContext.MedicalCenters
             .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
         if (center == null)
             throw new BusinessException("Center.NotFound");
+
+        await auditLog.EnsureNotLockedOutAsync(centerId, request.email , LoginUserType.Patient);
 
         using var db = tenantFactory.CreateForCenter(centerId);
 
@@ -271,15 +291,26 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
             .FirstOrDefaultAsync(p => !p.isActive && p.email == request.email);
 
         if (patient == null)
+        {
+            await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: false, LoginUserType.Patient);
             throw new BusinessException("Auth.Unauthorized");
+        }
 
         if (patient.role != userRole.Patient)
+        {
+            await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: false, LoginUserType.Patient);
             throw new BusinessException("Auth.Forbidden");
+        }
 
         var passwordValid = BCrypt.Net.BCrypt.Verify(request.password, patient.passwordHash);
 
         if (!passwordValid)
+        {
+            await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: false, LoginUserType.Patient);
             throw new BusinessException("Validation.PasswordMismatch");
+        }
+
+        await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: true, LoginUserType.Patient);
 
         patient.isActive = true;
         await db.SaveChangesAsync();

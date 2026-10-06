@@ -1,7 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DocumentFormat.OpenXml.Vml.Office;
+using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.LabDto;
+using Sehatak.Application.Interfaces.AuditLog;
 using Sehatak.Application.Interfaces.ILab;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
@@ -15,13 +17,15 @@ namespace Sehatak.Infrastructure.Services.LabService
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public LabService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory)
+        private readonly IAuditLog auditLog;
+        public LabService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory,IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
+            this.auditLog = auditLog;
         }
 
-        public async Task<string> CancleLabReqquestAsync(int centerId, int userId, int labRequestId)
+        public async Task<string> CancleLabRequestAsync(int centerId, int userId, int labRequestId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -47,10 +51,33 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             if (labRequest == null)
                 throw new BusinessException("LabRequest.NotFound");
+            var oldValue = new
+            {
+                patientId = labRequest.PatientId,
+                doctorId = labRequest.DoctorId,
+                appointmentId = labRequest.AppointmentId,
+                status = labRequest.Status,
+                notes = labRequest.Notes,
+                requestedByUserId = labRequest.RequestedByUserId,
+                requstedAt = labRequest.RequstedAt,
+                updatedAt = labRequest.UpdatedAt
+            };
 
             labRequest.Status = LabRequestStatus.Cancelled;
             labRequest.UpdatedAt = DateTime.UtcNow;
+
+            var auditEntry = auditLog.Build(
+                "CancelLabRequest", 
+                "LabRequest",
+                labRequest.Id,
+                oldValue,
+                labRequest.Status);
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
+
             return "تم الغاء الطلب بنجاح.";
         }
 
@@ -105,7 +132,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                 RequestedByUserId = userId,
                 UpdatedAt = DateTime.UtcNow
             };
-
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.LabRequests.AddAsync(labRequest);
 
             var responseItems = new List<LabItemResponseDto>();
@@ -146,6 +173,35 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             await db.SaveChangesAsync();
             var grandTotal = responseItems.Sum(i => i.UnitPrice);
+
+            var auditEntry = auditLog.Build(
+                action: "CreateLabRequest",
+                entityType : "LabRequest",
+                entityId : labRequest.Id,
+                newValue : new
+                { 
+                    labRequest.PatientId,
+                    labRequest.DoctorId,
+                    labRequest.AppointmentId,
+                    labRequest.Status,
+                    labRequest.Notes,
+                    labRequest.RequestedByUserId,
+                    labRequest.RequstedAt,
+                    labRequest.UpdatedAt,
+                    List = responseItems.Select(i => new
+                    {
+                        i.ServicePriceId,
+                        i.ServiceName,
+                        i.UnitPrice,
+                        i.ItemId,
+                        i.IsAvailable
+                    }).ToList()
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return new LabRequestResponseDto
             {
@@ -305,8 +361,7 @@ namespace Sehatak.Infrastructure.Services.LabService
             if (labRequest == null)
                 throw new BusinessException("LabRequest.NotFound");
 
-            if (labRequest.Status != LabRequestStatus.Pending
-                && labRequest.Status != LabRequestStatus.Seen)
+            if (labRequest.Status != LabRequestStatus.Pending)
                 throw new BusinessException("LabRequest.AlreadyCollected");
 
             if (unavailableItemIds != null)
@@ -325,6 +380,30 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             labRequest.Status = LabRequestStatus.Collected;
             labRequest.UpdatedAt = DateTime.UtcNow;
+
+            var auditEntry = auditLog.Build(
+                action: "CollectSample",
+                entityType: "LabRequest",
+                entityId: labRequest.Id,
+                newValue: new
+                {
+                    labRequest.PatientId,
+                    labRequest.Status,
+                    labRequest.Notes,
+                    labRequest.RequestedByUserId,
+                    labRequest.RequstedAt,
+                    labRequest.UpdatedAt,
+                    labGetRequestAsync = labRequest.Items.Select(i => new
+                    {
+                        i.Id,
+                        i.ServicePriceId,
+                        i.UnitPrice,
+                        i.IsAvailable
+                    }).ToList(),
+                });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
 
             await db.SaveChangesAsync();
 
@@ -351,8 +430,8 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             var query = db.LabRequests
                 .Where(l => l.Status == LabRequestStatus.Pending
-                        || l.Status == LabRequestStatus.Seen
-                        || l.Status == LabRequestStatus.Collected)
+                        || l.Status == LabRequestStatus.Collected
+                        || l.Status == LabRequestStatus.Processing)
                 .OrderByDescending(c => c.RequstedAt)
                 .Select(n => new LabGetRequestResponseDto
                 {
@@ -448,8 +527,8 @@ namespace Sehatak.Infrastructure.Services.LabService
             if (labRequest == null)
                 throw new BusinessException("LabRequest.NotFound");
 
-            if (labRequest.Status != LabRequestStatus.Collected)
-                throw new BusinessException("LabRequest.NotCollected");
+            if (labRequest.Status != LabRequestStatus.Processing)   
+                throw new BusinessException("LabRequest.NotProcessing");
 
             var payment = await db.Payments
                 .FirstOrDefaultAsync(p => p.LabRequestId == request.LabRequestId
@@ -457,6 +536,7 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             if (payment == null)
                 throw new BusinessException("Payment.NotCompleted");
+
 
             foreach (var item in request.Results)
             {
@@ -497,7 +577,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                 }
                 Item.ResultFileUrl = result;
             }
-
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.SaveChangesAsync();
 
             var stillPending = await db.LabRequestItems
@@ -515,6 +595,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                     PaymentId = payment.Id,
                     Status = LabStatus.Delivered
                 };
+
                 await db.LabResults.AddAsync(labResult);
                 labRequest.Status = LabRequestStatus.Completed;
 
@@ -545,6 +626,27 @@ namespace Sehatak.Infrastructure.Services.LabService
                 })
                 .ToListAsync();
 
+            var auditEntry = auditLog.Build(
+                action: "UploadLabRequest",
+                entityType: "LabRequest",
+                entityId: labRequest.Id,
+                newValue: new
+                {
+                    labRequest.PatientId,
+                    labRequest.Status,
+                    labRequest.Notes,
+                    labRequest.RequestedByUserId,
+                    labRequest.RequstedAt,
+                    labRequest.UpdatedAt,
+                    currentItems,
+                    labRequest.Payment.Amount,
+                });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
             return new LabUploadResultResponseDto
             {
                 LabRequestId = labRequest.Id,
@@ -708,7 +810,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                 RequestedByUserId = userId,
                 UpdatedAt = DateTime.UtcNow
             };
-
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.LabRequests.AddAsync(labRequest);
 
             var responseItems = new List<LabItemResponseDto>();
@@ -749,6 +851,27 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             await db.SaveChangesAsync();
             var grandTotal = responseItems.Sum(i => i.UnitPrice);
+
+            var auditEntry = auditLog.Build(
+                action: "ReceptionistCreateLabRequest",
+                entityType: "LabRequest",
+                entityId: labRequest.Id,
+                newValue: new
+                {
+                    labRequest.PatientId,
+                    labRequest.Status,
+                    labRequest.Notes,
+                    labRequest.RequestedByUserId,
+                    labRequest.RequstedAt,
+                    labRequest.UpdatedAt,
+                    grandTotal
+                });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return new ReceptionistLabRequestReponseDto
             {
@@ -900,6 +1023,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                 }
             }
             labRequest.UpdatedAt = DateTime.UtcNow;
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.SaveChangesAsync();
 
             var currentItems = await db.LabRequestItems
@@ -917,6 +1041,27 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             var grandTotal = currentItems.Where(i => i.IsAvailable).Sum(i => i.UnitPrice);
 
+            var auditEntry = auditLog.Build(
+            action: "ReceptionistUpdateLabRequest",
+            entityType: "LabRequest",
+            entityId: labRequest.Id,
+            newValue: new
+            {
+                labRequest.PatientId,
+                labRequest.Status,
+                labRequest.Notes,
+                labRequest.RequestedByUserId,
+                labRequest.RequstedAt,
+                labRequest.UpdatedAt,
+                grandTotal
+            });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync(); 
+            
             return new ReceptionistLabRequestReponseDto
             {
                 LabRequestId = labRequest.Id,
@@ -1031,6 +1176,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                 }
             }
             labRequest.UpdatedAt = DateTime.UtcNow;
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.SaveChangesAsync();
 
             var currentItems = await db.LabRequestItems
@@ -1047,6 +1193,27 @@ namespace Sehatak.Infrastructure.Services.LabService
                 .ToListAsync();
 
             var grandTotal = currentItems.Where(i => i.IsAvailable).Sum(i => i.UnitPrice);
+
+            var auditEntry = auditLog.Build(
+            action: "UpdateLabRequest",
+            entityType: "LabRequest",
+            entityId: labRequest.Id,
+            newValue: new
+            {
+                labRequest.PatientId,
+                labRequest.Status,
+                labRequest.Notes,
+                labRequest.RequestedByUserId,
+                labRequest.RequstedAt,
+                labRequest.UpdatedAt,
+                grandTotal
+            });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return new LabRequestResponseDto
             {

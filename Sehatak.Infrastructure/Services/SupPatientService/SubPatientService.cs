@@ -2,16 +2,12 @@
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.SubPatientDto;
+using Sehatak.Application.Interfaces.AuditLog;
 using Sehatak.Application.Interfaces.ISubPatient;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.SupPatientService
 {
@@ -19,10 +15,12 @@ namespace Sehatak.Infrastructure.Services.SupPatientService
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public SubPatientService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory)
+        private readonly IAuditLog auditLog;
+        public SubPatientService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory, IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
+            this.auditLog = auditLog;
         }
         public async Task<List<SummarySubPatientResponseDto>> AddSubPatientAsync(int centerId, int userId, AddSubPatientRequestDto request)
         {
@@ -58,7 +56,7 @@ namespace Sehatak.Infrastructure.Services.SupPatientService
                 ParentPatientId = patient.patientId,
                 NotifiableUserId = patient.userId!.Value,
             }).ToList();
-
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.Patients.AddRangeAsync(newSubPatients);
 
             await db.Notifications.AddAsync(new Notification
@@ -71,7 +69,29 @@ namespace Sehatak.Infrastructure.Services.SupPatientService
             });
 
             await db.SaveChangesAsync();
-            
+
+            var auditEntry = auditLog.Build(
+                action: "AddSubPatient",
+                entityType: "Patient",
+                entityId: patient.patientId,
+                newValue: new
+                {
+                    patientId = patient.patientId,
+                    SubPatients = newSubPatients.Select(sp => new
+                    {
+                        sp.FirstName,
+                        sp.LastName,
+                        sp.DateOfBith,
+                        sp.WhatsappNumber,
+                        sp.BloodType,
+                        sp.Gender
+                    }).ToList()
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return newSubPatients.Select(sp => new SummarySubPatientResponseDto
             {
@@ -149,6 +169,18 @@ namespace Sehatak.Infrastructure.Services.SupPatientService
             if (subPatient == null)
                 throw new BusinessException("SubPatient.NotFound");
 
+            var oldValue = new
+            {
+                subPatientId = subPatient.patientId,
+                SubPatientFirstName = subPatient.FirstName,
+                SubPatientLastName = subPatient.LastName,
+                DateOfBith = subPatient.DateOfBith,
+                Gender = subPatient.Gender,
+                BloodType = subPatient.BloodType,
+                WhatAppNumber = subPatient.WhatsappNumber
+            };
+
+
             if (request.SubPatientFirstName != null)
                 subPatient.FirstName = request.SubPatientFirstName;
 
@@ -166,6 +198,25 @@ namespace Sehatak.Infrastructure.Services.SupPatientService
 
             if (request.BloodType != null)
                 subPatient.BloodType = (BloodType)request.BloodType;
+
+            var auditEntry = auditLog.Build(
+                action: "UpdateSubPatient",
+                entityType: "Patient",
+                entityId: subPatient.patientId,
+                oldValue: oldValue,
+                newValue: new
+                {
+                    subPatientId = subPatient.patientId,
+                    SubPatientFirstName = subPatient.FirstName,
+                    SubPatientLastName = subPatient.LastName,
+                    DateOfBith = subPatient.DateOfBith,
+                    Gender = subPatient.Gender,
+                    BloodType = subPatient.BloodType,
+                    WhatAppNumber = subPatient.WhatsappNumber
+                });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
 
             await db.SaveChangesAsync();
 

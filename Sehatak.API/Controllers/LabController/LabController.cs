@@ -102,7 +102,7 @@ namespace Sehatak.API.Controllers.LabController
         public async Task<IActionResult> CancleLabRequestsAsync(int centerId,int labRequestId)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
-            var result = await lab.CancleLabReqquestAsync(centerId, userId, labRequestId);
+            var result = await lab.CancleLabRequestAsync(centerId, userId, labRequestId);
             return Ok(result);
         }
 

@@ -13,7 +13,15 @@ namespace Sehatak.Application.Validators.Consultation
             RuleFor(x => x.VideoLink).HttpUrl();
         }
     }
-
+    public class DoctorScheduleConsultationRequestValidator : AbstractValidator<DateTime>
+    {
+        public DoctorScheduleConsultationRequestValidator()
+        {
+            RuleFor(x => x)
+                .Must(d => d != default).WithMessage(ValidationKeys.Required)
+                .GreaterThan(_ => DateTime.UtcNow).WithMessage(ValidationKeys.DateInPast);
+        }
+    }
     public class RejectReasonRequestValidator : AbstractValidator<RejectReasonRequest>
     {
         public RejectReasonRequestValidator()

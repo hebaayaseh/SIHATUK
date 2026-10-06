@@ -1,7 +1,10 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.ConfirmPaymentDto;
 using Sehatak.Application.DTOs.Exceptions;
+using Sehatak.Application.Interfaces.ApointmentInterface;
+using Sehatak.Application.Interfaces.AuditLog;
 using Sehatak.Application.Interfaces.IConfirmPayment;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
@@ -15,10 +18,12 @@ namespace Sehatak.Infrastructure.Services.ConfirmPaymentService
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public ConfirmPaymentService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory)
+        private readonly IAuditLog auditLog;
+        public ConfirmPaymentService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory,IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
+            this.auditLog = auditLog;
         }
 
         public async Task<PaymentResponseDto> ReceptionistCollectAppointmentPaymentAsync(int centerId, int userId, int appointmentId, CollectPaymentRequestDto request)
@@ -63,6 +68,20 @@ namespace Sehatak.Infrastructure.Services.ConfirmPaymentService
             appointment.CheckOutTime = DateTime.UtcNow;
             appointment.appointmentStatus = AppointmentStatus.Completed;
 
+
+            var auditEntry = auditLog.Build(
+                action: "AppointmentPay",
+                entityType: "Appointment",
+                entityId: appointmentId,
+                newValue: new
+                {
+                    AppointmentStatus = appointment.appointmentStatus,
+                    payment.Amount,
+                    PaymentStatus = payment.Status
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
 
             return new PaymentResponseDto
@@ -101,6 +120,8 @@ namespace Sehatak.Infrastructure.Services.ConfirmPaymentService
             if (labRequest == null)
                 throw new BusinessException("LabRequest.NotFound");
 
+            if (labRequest.Status != LabRequestStatus.Collected)
+                throw new BusinessException("LabRequest.NotCollected");
 
             if (labRequest.Payment != null)
                 throw new BusinessException("LabRequest.AlreadyPaid");
@@ -117,10 +138,26 @@ namespace Sehatak.Infrastructure.Services.ConfirmPaymentService
                 Method = request.Method,
                 Status = PaymentStatus.Paid,
                 RecordedByStaffId = userId,
-                PaidAt = DateTime.UtcNow
+                PaidAt = ClinicClock.Now
             };
 
             await db.Payments.AddAsync(payment);
+            labRequest.Status = LabRequestStatus.Processing;
+            labRequest.UpdatedAt = ClinicClock.Now;
+
+            var auditEntry = auditLog.Build(
+            action: "PayLabRequest",
+            entityType: "LabRequest",
+            entityId: labRequestId,
+            newValue: new
+            {
+                LabRequestStatus = labRequest.Status,
+                payment.Amount,
+                PaymentStatus = payment.Status,
+            });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
 
             return new PaymentResponseDto

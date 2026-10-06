@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.DepartmentDto;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.StaffSignup;
+using Sehatak.Application.Interfaces.AuditLog;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.SignUp;
 using Sehatak.Domain.Entities.TenantEntities;
@@ -17,19 +19,22 @@ namespace Sehatak.Infrastructure.Services.AddStaff
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
         private readonly IEmailService emailService;
-        public StaffService(SharedDbContext sharedDbContext , TenantDbContextFactory contextFactory , IEmailService emailService)
+        private readonly IAuditLog auditLog;
+        public StaffService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory, IEmailService emailService, IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
             this.emailService = emailService;
+            this.auditLog = auditLog;
         }
 
-        
+
 
         public async Task<AddStafResponseDto> AddStafAsync(int userId, int centerId, AddStaffRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
-               .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
+               .FirstOrDefaultAsync(c => c.Id == centerId 
+                                    && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
                 throw new BusinessException("Center.NotFound");
@@ -79,8 +84,31 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 }
                 newStaff.ProfileImageUrl = $"/uploads/profileImage/{fileName}";
             }
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.Users.AddAsync(newStaff);
             await db.SaveChangesAsync();
+
+            // Audit: لا نسجل passwordHash أبداً
+            var auditEntry = auditLog.Build(
+                action: "CreateStaff",
+                entityType: "User",
+                entityId: newStaff.Id,
+                newValue: new
+                {
+                    newStaff.firstName,
+                    newStaff.lastName,
+                    newStaff.email,
+                    role = newStaff.role.ToString(),
+                    newStaff.phoneNumber,
+                    newStaff.city,
+                    newStaff.isActive
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
             await emailService.SendTempPasswordAsync(
                 request.email,
                  name: $"{request.FirstName} {request.LastName}",
@@ -118,7 +146,17 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             if (user.role == userRole.Patient)
                 throw new BusinessException("Auth.Forbidden");
 
+            var oldIsActive = user.isActive;
             user.isActive = true;
+
+            var auditEntry = auditLog.Build(
+                action: "ActivateStaff",
+                entityType: "User",
+                entityId: user.Id,
+                oldValue: new { isActive = oldIsActive },
+                newValue: new { isActive = true });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
             await db.SaveChangesAsync();
 
             return true;
@@ -141,7 +179,18 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             if (user.role == userRole.Patient)
                 throw new BusinessException("Auth.Forbidden");
 
+            var oldIsActive = user.isActive;
             user.isActive = false;
+            
+
+            var auditEntry = auditLog.Build(
+                action: "DeactivateStaff",
+                entityType: "User",
+                entityId: user.Id,
+                oldValue: new { isActive = oldIsActive },
+                newValue: new { isActive = false });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
             await db.SaveChangesAsync();
 
             return true;

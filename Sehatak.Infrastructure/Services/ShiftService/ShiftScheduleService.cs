@@ -2,6 +2,7 @@
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.ShiftDto;
+using Sehatak.Application.Interfaces.AuditLog;
 using Sehatak.Application.Interfaces.IShiftSchedule;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
@@ -14,10 +15,12 @@ namespace Sehatak.Infrastructure.Services.ShiftService
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public ShiftScheduleService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory)
+        private readonly IAuditLog auditLog;
+        public ShiftScheduleService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory, IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
+            this.auditLog = auditLog;
         }
 
         public async Task<ShiftScheduleResponse> AddShiftSchedule(int centerId, ShiftScheduleRequest request)
@@ -43,9 +46,27 @@ namespace Sehatak.Infrastructure.Services.ShiftService
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
             };
-
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.AddAsync(shiftScedule);
             await db.SaveChangesAsync();
+
+            var auditEntry = auditLog.Build(
+                action : "AddShiftSchedule",
+                entityType : nameof(ShiftSchedule),
+                entityId : shiftScedule.Id,
+                newValue : new Dictionary<string, object>
+                {
+                    { "ShiftName", shiftScedule.ShiftName },
+                    { "StartTime", shiftScedule.StartTime },
+                    { "EndTime", shiftScedule.EndTime }
+                });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
             return new ShiftScheduleResponse
             {
                 Id = shiftScedule.Id,
@@ -101,6 +122,7 @@ namespace Sehatak.Infrastructure.Services.ShiftService
                 ShiftName = request.ShiftName
 
             };
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.AddAsync(StaffShift);
 
             await db.Notifications.AddAsync(new Notification
@@ -114,6 +136,23 @@ namespace Sehatak.Infrastructure.Services.ShiftService
                 $"{scheduleExists.StartTime} - {scheduleExists.EndTime}" 
             });
             await db.SaveChangesAsync();
+
+            var auditEntry = auditLog.Build(
+                action: "AssignShiftToStaff",
+                entityType: nameof(StaffShift),
+                entityId: StaffShift.Id,
+                newValue: new Dictionary<string, object>
+                {
+                    { "UserId", StaffShift.UserId },
+                    { "ShiftDate", StaffShift.ShiftDate },
+                    { "ShiftName", StaffShift.ShiftName },
+                    { "IsActive", StaffShift.IsActive }
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return "تمت العملية بنجاح.";
         }
@@ -157,7 +196,22 @@ namespace Sehatak.Infrastructure.Services.ShiftService
                     staff.IsActive = false;
                 }
             }
+
+            var auditEntry = auditLog.Build(
+                action: "DeleteShiftSchedule",
+                entityType: nameof(ShiftSchedule),
+                entityId: shift.Id,
+                oldValue: new Dictionary<string, object>
+                {
+                    { "ShiftName", shift.ShiftName },
+                    { "StartTime", shift.StartTime },
+                    { "EndTime", shift.EndTime }
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
+
             return "تم الحذف بنجاح.";
         }
 
@@ -326,6 +380,12 @@ namespace Sehatak.Infrastructure.Services.ShiftService
                        && s.ShiftDate >= ClinicClock.Today)
                 .ToListAsync();
 
+            var oldValue = new
+            {
+                ShiftName = shift.ShiftName,
+                StartTime = shift.StartTime,
+                EndTime = shift.EndTime
+            };
 
             if (request.StartTime != null)
                 shift.StartTime = (TimeOnly)request.StartTime;
@@ -352,7 +412,22 @@ namespace Sehatak.Infrastructure.Services.ShiftService
                 }
             }
 
+            var auditEntry = auditLog.Build(
+                action: "UpdateShiftSchedule",
+                entityType: nameof(ShiftSchedule),
+                entityId: shift.Id,
+                oldValue: oldValue,
+                newValue: new
+                {
+                    ShiftName = shift.ShiftName,
+                    StartTime = shift.StartTime,
+                    EndTime = shift.EndTime
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
+
             return new ShiftScheduleResponse
             {
                 Id = shift.Id,

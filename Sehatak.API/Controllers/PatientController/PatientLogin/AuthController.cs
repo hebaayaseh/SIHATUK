@@ -26,6 +26,7 @@ namespace Sehatak.API.Controllers.PatientController.Patient
             var result = await authService.RegisterAsync(centerId,registerRequestDto);
             return Ok(result);
         }
+        [EnableRateLimiting("LoginPolicy")]
         [HttpPost("patient-verify-code/{centerId}")]
         public async Task<IActionResult> VerifyCode(int centerId,[FromBody] VerifyOtpRequestDto request)
         {
@@ -42,7 +43,8 @@ namespace Sehatak.API.Controllers.PatientController.Patient
         [HttpPost("patient-login-patient/{centerId}")]
         public async Task<IActionResult> LoginPatient(int centerId, [FromBody] PatientRequestDto registerRequestDto)
         {
-            var result = await authService.LoginPatientAsync(centerId, registerRequestDto);
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var result = await authService.LoginPatientAsync(centerId, registerRequestDto, ipAddress);
             return Ok(result);
         }
 
@@ -55,10 +57,13 @@ namespace Sehatak.API.Controllers.PatientController.Patient
             return Ok(result);
         }
 
+        [EnableRateLimiting("LoginPolicy")]
+        [AllowAnonymous]
         [HttpPut("patient-active-profile/{centerId}")]
         public async Task<IActionResult> PatientActiveProfile(int centerId, [FromBody] PatientRequestDto request)
         {
-            var result = await authService.PatientActiveProfileAsync(centerId, request);
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var result = await authService.PatientActiveProfileAsync(centerId, request, ipAddress);
             return Ok(result);
         }
     }

@@ -1,8 +1,8 @@
-﻿using DocumentFormat.OpenXml.Office2010.PowerPoint;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.MedicalRecordDto;
+using Sehatak.Application.Interfaces.AuditLog;
 using Sehatak.Application.Interfaces.IMedicalRecord;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
@@ -16,10 +16,12 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public MedicalRecordService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory)
+        private readonly IAuditLog auditLog;
+        public MedicalRecordService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory, IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
+            this.auditLog = auditLog;
         }
 
         public async Task<MedicalRecordDetailResponseDto> AddMedicalRecordAsync(int centerId, int userId, MedicalRecordDetailRequestDto request)
@@ -193,8 +195,34 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
 
                 billAmount = (double)serviceCost.Price; 
             }
+            using var transaction = await db.Database.BeginTransactionAsync();
+            await db.SaveChangesAsync();
+
+            var auditEntry = auditLog.Build(
+                action: "AddMedicalRecord",
+                entityType: "MedicalRecord",
+                entityId: request.AppointmentId ?? request.ConsultationId ?? 0,
+                oldValue: null,
+                newValue: new
+                {
+                    PatientId = request.PatientId,
+                    DoctorId = userId,
+                    Diagnosis = request.Diagnosis,
+                    BillAmount = (decimal?)billAmount,
+                    AppointmentId = request.AppointmentId,
+                    ConsultationCost = request.ConsultationCost,
+                    ConsultationId = request.ConsultationId,
+                    Prescription = request.Prescription,
+                    Notes = request.Notes,
+                    CreatedAt = Create,
+                    UpdateAt = DateTime.UtcNow,
+                    Items = responseItems.Any() ? responseItems : null
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
 
             await db.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return new MedicalRecordDetailResponseDto
             {
@@ -255,6 +283,13 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
 
             if (record == null)
                 throw new BusinessException("Medical.NotFound");
+
+            var oldValue = new
+            {
+                record.Diagnosis,
+                record.Prescription,
+                record.Notes
+            };
 
             var totalCost = 0.0;
             var billAmount = 0.0;
@@ -381,6 +416,32 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                     record.Notes = request.RecordNotes;
                 Create = record.CreatedAt;
             }
+
+
+            var auditEntry = auditLog.Build(
+                action: "EditMedicalRecord",
+                entityType: "MedicalRecord",
+                entityId: request.MedicalRecordId,
+                oldValue: oldValue,
+                newValue: new
+                {
+                    PatientId = request.PatientId,
+                    DoctorId = userId,
+                    Diagnosis = request.Diagnosis,
+                    BillAmount = (decimal?)billAmount,
+                    AppointmentId = request.AppointmentId,
+                    ConsultationCost = request.CustomConsultationPrice,
+                    ConsultationId = request.ConsultationId,
+                    Prescription = record.Prescription,
+                    Notes = record.Notes,
+                    CreatedAt = Create,
+                    UpdateAt = DateTime.UtcNow,
+                    Items = responseItems.Any() ? responseItems : null
+                });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
 
             return new MedicalRecordDetailResponseDto

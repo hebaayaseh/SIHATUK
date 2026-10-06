@@ -81,6 +81,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
                 PlanId = request.PlanId,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.PasswordHash),
                 RequestedAt = DateTime.UtcNow,
+                logo = receiptImageUrl
 
             };
             await sharedDbContext.centerRegistrationRequests.AddAsync(creatCenter);
@@ -320,6 +321,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
 
             newCenter.UniqueUrl = centerUrl;
 
+            using var transaction = await sharedDbContext.Database.BeginTransactionAsync();
             await sharedDbContext.MedicalCenters.AddAsync(newCenter);
             await sharedDbContext.SaveChangesAsync();
 
@@ -352,16 +354,24 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
                     IsEnabled = true
                 });
             }
-
-            await contextFactory.CreateTenantDatabaseAsync(newCenter.Id);
-            newCenter.CenterStatus = CenterStatus.Active;
-
-
             request.Status = CenterRegistrationStatus.Approved;
             request.ReviewedAt = DateTime.UtcNow;
             request.ReviewedBySuperAdminId = superAdminId;
             request.CreatedCenterId = newCenter.Id;
             await sharedDbContext.SaveChangesAsync();
+
+
+            try
+            {
+                await contextFactory.CreateTenantDatabaseAsync(newCenter.Id);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();   
+                throw new BusinessException("CenterRegistration.TenantDatabaseCreationFailed");
+            }
+
+            await transaction.CommitAsync();
 
             try
             {
@@ -386,10 +396,9 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
                 await db.Users.AddAsync(admin);
                 await db.SaveChangesAsync();
             }
-            catch (Exception ex) when (ex is not BusinessException)
+
+            catch (Exception)
             {
-                // فشل إنشاء الأدمن بعد ما المركز والاشتراك انحفظوا فعليًا -
-                // نعلّم المركز يحتاج تدخل يدوي بدل ما نسيبه بحالة متناقضة صامتة
                 newCenter.CenterStatus = CenterStatus.Suspended;
                 await sharedDbContext.SaveChangesAsync();
                 throw new BusinessException("CenterRegistration.AdminCreationFailed");

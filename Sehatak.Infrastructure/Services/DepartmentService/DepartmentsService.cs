@@ -11,6 +11,7 @@ using System.Security.Cryptography;
 using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Concurrent;
 using Sehatak.Domain.Enums.SharedEnums;
+using Sehatak.Application.Interfaces.AuditLog;
 
 namespace Sehatak.Infrastructure.Services.DepartmentService
 {
@@ -20,12 +21,14 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
         private readonly SharedDbContext sharedDbContext;
         private IEmailService emailService;
         private readonly IMemoryCache cache;
-        public DepartmentsService(TenantDbContextFactory contextFactory, SharedDbContext sharedDbContext, IEmailService emailService, IMemoryCache cache)
+        private readonly IAuditLog auditLog;
+        public DepartmentsService(TenantDbContextFactory contextFactory, SharedDbContext sharedDbContext, IEmailService emailService, IMemoryCache cache , IAuditLog auditLog)
         {
             this.contextFactory = contextFactory;
             this.sharedDbContext = sharedDbContext;
             this.emailService = emailService;
             this.cache = cache;
+            this.auditLog = auditLog;
         }
 
         private static string CacheKey(int centerId) =>
@@ -77,8 +80,24 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
                 Description = request.departmentDescription,
                 ImageUrl = imageUrl
             };
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.Departments.AddAsync(newDepartment);
             await db.SaveChangesAsync();
+            var auditEntry = auditLog.Build(
+                action : "AddDepartment",
+                entityType : "Department",
+                entityId : department.Id,
+                oldValue : null,
+                newValue : new
+                {
+                    departmentName = department.Name,
+                    departmentDescription = department.Description,
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return new DepartmentResponseDto
             {
@@ -105,6 +124,12 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
             if (department == null)
                 throw new BusinessException("Department.NotFound");
 
+            var oldValue = new
+            {
+                departmentName = department.Name,
+                departmentDescription = department.Description
+            };
+
             if (request.departmentName != null) department.Name = request.departmentName;
             if (request.departmentdiscription != null) department.Description = request.departmentdiscription;
             if (request.logo!=null)
@@ -120,7 +145,21 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
 
                 department.ImageUrl = $"/uploads/receipts/{fileName}";
             }
+            var auditEntry = auditLog.Build(
+                action: "UpdateDepartment",
+                entityType: "Department",
+                entityId: department.Id,
+                oldValue: oldValue,
+                newValue: new
+                {
+                    departmentName = department.Name,
+                    departmentDescription = department.Description
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
+
             InvalidateDepartmentCache(centerId);
 
             return new DepartmentResponseDto { 
@@ -147,6 +186,19 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
                 throw new BusinessException("Department.NotFound");
 
             db.Departments.Remove(department);
+            var auditEntry = auditLog.Build(
+             action: "RemoveDepartment",
+             entityType: "Department",
+             entityId: department.Id,
+             oldValue: new
+             {
+                 departmentName = department.Name,
+                 departmentDescription = department.Description
+             });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
             InvalidateDepartmentCache(centerId);
 

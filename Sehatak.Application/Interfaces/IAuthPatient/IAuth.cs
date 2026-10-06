@@ -7,9 +7,9 @@ namespace Sehatak.Application.Interfaces.AuthPatient
     {
         Task<RegisterResponseDto> RegisterAsync(int centerId,RegisterRequestDto request);
         Task<VerifyOtpResponseDto> VerifyOtpAsync(int centerId, VerifyOtpRequestDto request);
-        Task<PatientResponseDto> LoginPatientAsync(int centerId, PatientRequestDto request);
+        Task<PatientResponseDto> LoginPatientAsync(int centerId, PatientRequestDto request, string? ipAddress);
         Task<string> PatientDeactiveProfileAsync(int centerId, int userId);
-        Task<PatientResponseDto> PatientActiveProfileAsync(int centerId, PatientRequestDto request);
+        Task<PatientResponseDto> PatientActiveProfileAsync(int centerId, PatientRequestDto request, string? ipAddress);
 
     }
 }

@@ -54,7 +54,5 @@ namespace Sehatak.Infrastructure.Data
 
             return $"{template}Database={dbName};";
         }
-
-
     }
 }

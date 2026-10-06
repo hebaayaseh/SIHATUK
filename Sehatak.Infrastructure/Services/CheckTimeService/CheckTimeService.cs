@@ -1,9 +1,14 @@
 ﻿
 
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
+using Sehatak.Application.Interfaces.AuditLog;
 using Sehatak.Application.Interfaces.ICheckTime;
+using Sehatak.Domain.Entities.General;
+using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
@@ -14,10 +19,12 @@ namespace Sehatak.Infrastructure.Services.CheckTimeService
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public CheckTimeService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory)
+        private readonly IAuditLog auditLog;
+        public CheckTimeService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory,IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
+            this.auditLog = auditLog;
         }
 
         public async Task<string> FinishAppointmentTime(int centerId, int userId, int appointmentId)
@@ -41,8 +48,11 @@ namespace Sehatak.Infrastructure.Services.CheckTimeService
 
             var appointment = await db.Appointments
                 .FirstOrDefaultAsync(a => a.Id == appointmentId
-                                     && a.doctorId == doctor.Id
-                                     && a.appointmentStatus == AppointmentStatus.Confirmed);
+                         && a.doctorId == doctor.Id
+                         && (a.appointmentStatus == AppointmentStatus.InProgress));
+
+            if (appointment == null)
+                throw new BusinessException("Appointment.NotFound");
 
             if (appointment.actualStartTime == null)
                 throw new BusinessException("Appointment.NotStartedYet");
@@ -50,8 +60,31 @@ namespace Sehatak.Infrastructure.Services.CheckTimeService
             if (appointment.actualEndTime != null)
                 throw new BusinessException("Appointment.AlreadyFinished");
 
+            var oldValue = new
+            {
+                appointment.actualStartTime,
+                appointment.actualEndTime,
+                appointment.appointmentStatus,
+                appointment.doctorId,
+                appointment.patientId
+            };
+
             appointment.actualEndTime = DateTime.UtcNow;
             appointment.appointmentStatus = AppointmentStatus.Completed;
+
+            var auditEntry = auditLog.Build(
+             action: "FinishAppointment",
+             entityType: "Appointment",
+             entityId: appointmentId,
+             oldValue: oldValue,
+             newValue: new
+             {
+                 appointment.actualEndTime,
+                 appointment.appointmentStatus
+             });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
 
             return appointment.appointmentStatus.ToString();
@@ -88,12 +121,23 @@ namespace Sehatak.Infrastructure.Services.CheckTimeService
 
             appointment.actualStartTime = DateTime.UtcNow;
             appointment.appointmentStatus = AppointmentStatus.InProgress;
+
+            var auditEntry = auditLog.Build(
+            action: "NextPatient",
+            entityType: "Appointment",
+            entityId: appointmentId,
+            newValue: new
+            {
+                appointment.actualStartTime,
+                appointment.appointmentStatus,
+            });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
             await db.SaveChangesAsync();
 
             return appointment.appointmentStatus.ToString();
 
         }
-
         public async Task<string> ReceptionistCheckInAppointmentAsync(int centerId, int userId, int appointmentId)
         {
             var center = await sharedDbContext.MedicalCenters
@@ -123,6 +167,18 @@ namespace Sehatak.Infrastructure.Services.CheckTimeService
                 throw new BusinessException("Appointment.AlreadyCheckedIn");
 
             appointment.CheckInTime = DateTime.UtcNow;
+
+            var auditEntry = auditLog.Build(
+            action: "ReceptionistCheckInAppointment",
+            entityType: "Appointment",
+            entityId: appointmentId,
+            newValue: new
+            {
+                appointment.CheckInTime,
+                appointment.appointmentStatus,
+            });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
             await db.SaveChangesAsync();
 
             return "تم تسجيل وصول المريض.";

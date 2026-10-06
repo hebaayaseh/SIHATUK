@@ -88,6 +88,7 @@ using Serilog;
 using System;
 using System.Text;
 using System.Threading.RateLimiting;
+using Sehatak.Infrastructure.Services.AuditLogService;
 namespace Sehatak.API
 {
     public class Program
@@ -391,8 +392,8 @@ namespace Sehatak.API
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRequestLocalization();
-            app.UseCors("SehatakPolicy");
             app.UseRouting();
+            app.UseCors("SehatakPolicy");
             app.UseRateLimiter();
             app.UseAuthentication();
             app.UseAuthorization();

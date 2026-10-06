@@ -107,7 +107,7 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
                   ServiceName = s.ServiceName,
                   Price = s.Price
                 }).ToList(),
-
+                CreatedAt = DateTime.UtcNow
             };
 
         }
@@ -230,7 +230,8 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
                 Id = updateService.Id,
                 Price = updateService.Price,
                 ServiceName = updateService.ServiceName,
-                Type = updateService.Type
+                Type = updateService.Type,
+                UpdatedAt = updateService.UpdatedAt
             };
 
         }

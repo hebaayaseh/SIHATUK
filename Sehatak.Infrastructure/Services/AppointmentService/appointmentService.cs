@@ -4,6 +4,7 @@ using Sehatak.Application.DTOs.AppointmentDto;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.GetStaffDto;
 using Sehatak.Application.Interfaces.ApointmentInterface;
+using Sehatak.Application.Interfaces.AuditLog;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.PostponeEnums;
@@ -18,16 +19,19 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
         private readonly GenerateTheoreticalSlots generateTheoreticalSlots;
-        public appointmentService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory, GenerateTheoreticalSlots generateTheoreticalSlot)
+        private readonly IAuditLog auditLog;
+        public appointmentService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory, GenerateTheoreticalSlots generateTheoreticalSlot, IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
             this.generateTheoreticalSlots = generateTheoreticalSlot;
+            this.auditLog = auditLog;
         }
 
         public async Task<AvailableDoctorSlot> GetAvailableDoctorSlot(int centerId, int doctorId, DateOnly date)
         {
-            var today = ClinicClock.Today; if (date < today)
+            var today = ClinicClock.Today;
+            if (date < today)
 
                 throw new BusinessException("Date.Invalid");
 
@@ -276,7 +280,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 createdAt = DateTime.UtcNow
 
             };
-
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.Appointments.AddAsync(newAppointment);
 
             if (followUp != null)
@@ -293,10 +297,18 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 Type = NotificationType.Appointment,
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
-                Message = $"تم حجز موعد لك بتاريخ {request.dateOnly} الساعة {request.timeSlot} من قبل الاستقبال."
+                Message = $"تم حجز موعد لك بتاريخ {request.dateOnly} الساعة {request.timeSlot} بنجاح."
             });
 
             await db.SaveChangesAsync();
+
+            var auditEntry = auditLog.Build("BookAppointment", "Appointment", newAppointment.Id,
+                newValue: new { newAppointment.doctorId, newAppointment.patientId, newAppointment.appointmentDate, newAppointment.timeSlot });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return new BookAppointmentRespesponse
             {
@@ -384,6 +396,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                         AppointmentId = bookedSlot.Id,
                         Reason = request.Reason ?? "تم إلغاء الموعد من قبل الطبيب.",
                         Status = PostponeStatus.Active,
+                        CreatedAt = DateTime.UtcNow
                     });
 
                 db.Notifications.Add(new Notification
@@ -407,6 +420,11 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             });
 
 
+            var auditEntry = auditLog.Build("BlockDoctorSlot", "Appointment", bookedSlot?.Id,
+                newValue: new { doctorId, date = request.date, timeSlot = request.timeSlot, request.Reason });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
             await db.SaveChangesAsync();
 
             return "تم الغاء الموعد المحدد في نجاح.";
@@ -521,6 +539,12 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                     Message = $"توفر لك موعد في تاريخ {request.date} في الوقت {request.timeSlot}"
                 });
             }
+
+            var auditEntry = auditLog.Build("CancelAppointment", "Appointment", appointment.Id,
+                newValue: new { request.Resone });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
             await db.SaveChangesAsync();
 
             return "تم الغاء موعدك بنجاح";
@@ -674,6 +698,12 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 Type = NotificationType.Appointment
             });
 
+            var auditEntry = auditLog.Build("RescheduleAppointment", "Appointment", appintment.Id,
+                oldValue: new { date = oldDate, timeSlot = oldTimeSlot },
+                newValue: new { date = request.date, timeSlot = request.timeSlot });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
             await db.SaveChangesAsync();
 
             return new BookAppointmentRespesponse
@@ -684,7 +714,6 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             };
 
         }
-
         public async Task<string> JoinWaitListAsync(int centerId, int doctorId, int userId, DateOnly date, int? subPatientId)
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -740,19 +769,26 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             if (alreadyInWaitlist)
                 throw new BusinessException("Waitlist.AlreadyJoined");
 
-            await db.Waitlists
-                .AddAsync(new Waitlist
-                {
-                    PatientId = actingPatient.patientId,
-                    DoctorId = doctorId,
-                    PreferredDate = date,
-                    CreatedAt = DateTime.UtcNow,
-                    Status = WaitlistStatus.Waiting,
-                });
-
-
-
+            var waitlistEntry = new Waitlist
+            {
+                PatientId = actingPatient.patientId,
+                DoctorId = doctorId,
+                PreferredDate = date,
+                CreatedAt = DateTime.UtcNow,
+                Status = WaitlistStatus.Waiting,
+            };
+            using var transaction = await db.Database.BeginTransactionAsync();
+            await db.Waitlists.AddAsync(waitlistEntry);
             await db.SaveChangesAsync();
+
+            var auditEntry = auditLog.Build("JoinWaitList", "Waitlist", waitlistEntry.Id,
+                newValue: new { doctorId, preferredDate = date });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
             return "تم إضافتك لقائمة الانتظار، سيتم إعلامك عند توفر موعد.";
 
         }
@@ -876,18 +912,18 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             using var db = contextFactory.CreateForCenter(centerId);
 
             var result = await db.Doctors
-        .Include(u => u.user)
-        .Where(d => d.Id == doctorId && d.user.isActive)
-        .Select(doctor => new GetDoctorSummaryResponse
-        {
-            DoctorId = doctor.Id,
-            DoctorName = doctor.user.firstName + " " + doctor.user.lastName,
-            Bio = doctor.Bio,
-            Specialization = doctor.Specialization,
-            AvrageRating = doctor.doctorRatings.Any() ? doctor.doctorRatings.Average(r => r.Rating) : 0,
-            Reviews = doctor.doctorRatings.Select(r => r.Review).ToList()
-        })
-        .FirstOrDefaultAsync();
+               .Include(u => u.user)
+               .Where(d => d.Id == doctorId && d.user.isActive)
+               .Select(doctor => new GetDoctorSummaryResponse
+               {
+                   DoctorId = doctor.Id,
+                   DoctorName = doctor.user.firstName + " " + doctor.user.lastName,
+                   Bio = doctor.Bio,
+                   Specialization = doctor.Specialization,
+                   AvrageRating = doctor.doctorRatings.Any() ? doctor.doctorRatings.Average(r => r.Rating) : 0,
+                   Reviews = doctor.doctorRatings.Select(r => r.Review).ToList()
+               })
+               .FirstOrDefaultAsync();
 
             if (result == null)
                 throw new BusinessException("Doctor.NotFound");
@@ -1080,7 +1116,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                         DoctorId = doctorId,
                         PreferredDate = request.dateOnly,
                         Status = WaitlistStatus.Waiting,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = ClinicClock.Now
                     });
                     await db.SaveChangesAsync();
                     return new BookAppointmentRespesponse
@@ -1104,7 +1140,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 createdAt = DateTime.UtcNow,
                 ReceptionistId = userId
             };
-
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.Appointments.AddAsync(newAppointment);
 
             if (followUp != null)
@@ -1126,6 +1162,14 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             await db.SaveChangesAsync();
 
+            var auditEntry = auditLog.Build("BookAppointment", "Appointment", newAppointment.Id,
+                newValue: new { newAppointment.doctorId, newAppointment.patientId, newAppointment.appointmentDate, newAppointment.timeSlot });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
             return new BookAppointmentRespesponse
             {
                 Message = "تم حجز الموعد بنجاح",
@@ -1133,6 +1177,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 AlternativeSlots = null
             };
         }
+
 
         public async Task<string> ReceptionistCancelAppointmentAsync(int centerId, int doctorId, int userId, ReceptionistCancelAppointmentRequest request)
         {
@@ -1243,9 +1288,15 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                     Message = $"توفر لك موعد في تاريخ {request.date} في الوقت {request.timeSlot}"
                 });
             }
+
+            var auditEntry = auditLog.Build("CancelAppointment", "Appointment", appointment.Id,
+                newValue: new { request.Resone });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
             await db.SaveChangesAsync();
 
-            return "تم الغاء موعدك بنجاح";
+            return "تم الغاء الموعد بنجاح";
         }
 
         public async Task<BookAppointmentRespesponse> ReceptionistRescheduleAppointmentAsync(int centerId, int doctorId, int userId, ReceptionistRescheduleAppointmentRequest request)
@@ -1404,6 +1455,14 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 Type = NotificationType.Appointment
             });
 
+
+            var auditEntry = auditLog.Build("RescheduleAppointment", "Appointment", appintment.Id,
+                oldValue: new { date = oldDate, timeSlot = oldTimeSlot },
+                newValue: new { date = request.date, timeSlot = request.timeSlot });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
 
             return new BookAppointmentRespesponse
@@ -1414,4 +1473,5 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             };
         }
     }
+
 }

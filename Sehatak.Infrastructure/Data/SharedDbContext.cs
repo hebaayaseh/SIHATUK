@@ -24,7 +24,7 @@ namespace Sehatak.Infrastructure.Data
         public DbSet<emailVerificationCode> emailVerificationCodes => Set<emailVerificationCode>();
         public DbSet<CenterRegistrationRequest> centerRegistrationRequests => Set<CenterRegistrationRequest>();
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-
+        public DbSet<LoginAttempt> LoginAttempts { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // PlatFormFeature 
@@ -302,6 +302,27 @@ namespace Sehatak.Infrastructure.Data
 
             });
 
+            // LoginAttempt
+            modelBuilder.Entity<LoginAttempt>(entity =>
+            {
+                entity.ToTable("login_attempts");
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Email)
+                      .IsRequired()
+                      .HasMaxLength(150);
+
+                entity.Property(e => e.IpAddress)
+                      .HasMaxLength(45);
+
+                entity.Property(e => e.UserType)
+                      .HasConversion<string>()
+                      .HasMaxLength(20);
+
+                entity.HasIndex(e => new { e.CenterId, e.Email, e.AttemptedAt });
+            });
+
         }
     }
 }
+

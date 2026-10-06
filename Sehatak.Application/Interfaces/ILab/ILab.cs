@@ -14,7 +14,7 @@ namespace Sehatak.Application.Interfaces.ILab
         Task<PagedResult<PatientGetLabResultReponseDto>> PatientGetLabResultAsync(int centerId, int userId, PagedRequest request, int? subPatientId);
         Task<ReceptionistLabRequestReponseDto> ReceptionistCreateLabRequestAsync(int centerId, int userId, ReceptionistCreateLabRequestDto request);
         Task<ReceptionistLabRequestReponseDto> ReceptionistUpdateLabRequestAsync(int centerId , int userId ,  ReceptionistUpdateLabRequestDto request);
-        Task<string> CancleLabReqquestAsync(int centerId,int userId , int labRequestId);
+        Task<string> CancleLabRequestAsync(int centerId,int userId , int labRequestId);
         Task<PagedResult<LabGetRequestResponseDto>> LabGetPendingRequestsAsync(int centerId, int userId , PagedRequest request);
         Task<LabGetRequestResponseDto> labGetRequestAsync(int centerId,int userId, int labRequestId);
         Task<string> LabCollectSample(int centerId,int userId, int labRequestId,List<int>? unavailableItemIds);

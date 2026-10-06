@@ -2,6 +2,7 @@
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.EmergencyDto;
 using Sehatak.Application.DTOs.Exceptions;
+using Sehatak.Application.Interfaces.AuditLog;
 using Sehatak.Application.Interfaces.IEmerngency;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
@@ -14,10 +15,12 @@ namespace Sehatak.Infrastructure.Services.EmergencyService
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
-        public EmergencyService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory)
+        private readonly IAuditLog auditLog;
+        public EmergencyService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory,IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
+            this.auditLog = auditLog;
         }
 
         public async Task<EmergencyResponseDto> EditPatientEmergencyAsync(int centerId, int userId, UpdateEmergencyRequestDto request)
@@ -37,6 +40,15 @@ namespace Sehatak.Infrastructure.Services.EmergencyService
             if (emergency == null)
                 throw new BusinessException("Emergency.NotFound");
 
+            var oldValue = new
+            {
+                AmointPaid = emergency.AmountPaid,
+                PatientName = emergency.PatientName,
+                IsInsurance = emergency.IsInsurance,
+                CreaditAt = emergency.CreatedAt,
+                DoctorUserId = emergency.DoctorUserId
+            };
+
             if(request.PatientName!=null)
                 emergency.PatientName = request.PatientName;
 
@@ -48,7 +60,25 @@ namespace Sehatak.Infrastructure.Services.EmergencyService
 
             emergency.UpdatedAt = DateTime.UtcNow;
 
+
+            var auditEntry = auditLog.Build(
+              action: "EditEmergency",
+              entityType: "EmergencyCase",
+              entityId: emergency.Id,
+                oldValue: oldValue,
+                newValue: new
+                {
+                    AmountPaid = emergency.AmountPaid,
+                    PatientName = emergency.PatientName,
+                    IsInsurance = emergency.IsInsurance,
+                    UpdatedAt = emergency.UpdatedAt
+                });
+
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
             await db.SaveChangesAsync();
+
             return new EmergencyResponseDto 
             { 
                 Id = emergency.Id,
@@ -172,8 +202,28 @@ namespace Sehatak.Infrastructure.Services.EmergencyService
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
+
+            using var transaction = await db.Database.BeginTransactionAsync();
             await db.EmergencyCases.AddAsync(patientEmergency);
             await db.SaveChangesAsync();
+
+            var auditEntry = auditLog.Build(
+                action: "RegisterEmergency",
+                entityType: "EmergencyCase",
+                entityId: patientEmergency.Id,
+                newValue: new
+                {
+                    AmointPaid = patientEmergency.AmountPaid,
+                    PatientName = patientEmergency.PatientName,
+                    IsInsurance = patientEmergency.IsInsurance,
+                    CreaditAt = patientEmergency.CreatedAt,
+                    DoctorUserId = patientEmergency.DoctorUserId
+                });
+            if (auditEntry != null)
+                db.AuditLogs.Add(auditEntry);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return new EmergencyResponseDto
             { 
