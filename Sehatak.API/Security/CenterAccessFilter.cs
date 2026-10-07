@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -19,11 +18,7 @@ namespace Sehatak.API.Security
 
             if (!context.RouteData.Values.TryGetValue("centerId", out var routeValue))
             {
-                // ما في centerId بالـ route. سابقاً كان هذا بيمر بصمت — بيفتح باب
-                // لأي endpoint جديد ينسى المطوّر يحط centerId بالـ route فيصير
-                // بدون فحص عزل بين المراكز إطلاقاً. هلأ نرفض افتراضياً، ونسمح
-                // فقط للـ endpoints المعلّمة صراحة بـ [CenterAgnostic] (بيانات
-                // عامة مشتركة بين كل المراكز، زي كتالوج الخطط والمزايا).
+                
                 var isCenterAgnostic = context.ActionDescriptor is ControllerActionDescriptor cad &&
                     cad.MethodInfo.GetCustomAttributes(typeof(CenterAgnosticAttribute), false).Any();
 

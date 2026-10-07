@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Sehatak.API.Controllers.ConfirmPaymentController;
 using Sehatak.API.Hubs;
 using Sehatak.API.Middleware;
+using Sehatak.API.Validation;
 using Sehatak.Application.Interfaces.AddDoctorDailyHours;
 using Sehatak.Application.Interfaces.ApointmentInterface;
 using Sehatak.Application.Interfaces.AuditLog;
@@ -26,6 +28,7 @@ using Sehatak.Application.Interfaces.IFinancialReports;
 using Sehatak.Application.Interfaces.IFollowUp;
 using Sehatak.Application.Interfaces.ILab;
 using Sehatak.Application.Interfaces.IMedicalRecord;
+using Sehatak.Application.Interfaces.IMedicationReminder;
 using Sehatak.Application.Interfaces.INotification;
 using Sehatak.Application.Interfaces.IPatientCenter;
 using Sehatak.Application.Interfaces.IProfileInterface;
@@ -43,12 +46,14 @@ using Sehatak.Application.Interfaces.ServicePriceInterface;
 using Sehatak.Application.Interfaces.SignUp;
 using Sehatak.Application.Interfaces.StaffLogin;
 using Sehatak.Application.Interfaces.SuperAdminInterface;
+using Sehatak.Application.Validators;
 using Sehatak.Infrastructure.CalculateSlot;
 using Sehatak.Infrastructure.Data;
 using Sehatak.Infrastructure.Security;
 using Sehatak.Infrastructure.Services;
 using Sehatak.Infrastructure.Services.AddStaff;
 using Sehatak.Infrastructure.Services.AppointmentService;
+using Sehatak.Infrastructure.Services.AuditLogService;
 using Sehatak.Infrastructure.Services.BillPaymentService;
 using Sehatak.Infrastructure.Services.CheckTimeService;
 using Sehatak.Infrastructure.Services.ConfirmPaymentService;
@@ -63,6 +68,7 @@ using Sehatak.Infrastructure.Services.FollowUpService;
 using Sehatak.Infrastructure.Services.GetStaff;
 using Sehatak.Infrastructure.Services.LabService;
 using Sehatak.Infrastructure.Services.MedicalRecordService;
+using Sehatak.Infrastructure.Services.MedicationReminderService;
 using Sehatak.Infrastructure.Services.NotificationService;
 using Sehatak.Infrastructure.Services.PatientService.PatientProfile;
 using Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
@@ -81,14 +87,10 @@ using Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth;
 using Sehatak.Infrastructure.Services.SupPatientService;
 using Sehatak.Infrastructure.Services.tokenService;
 using Sehatak.Infrastructure.Services.ViewProfileService;
-using FluentValidation.AspNetCore;
-using Sehatak.API.Validation;
-using Sehatak.Application.Validators;
 using Serilog;
 using System;
 using System.Text;
 using System.Threading.RateLimiting;
-using Sehatak.Infrastructure.Services.AuditLogService;
 namespace Sehatak.API
 {
     public class Program
@@ -336,6 +338,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<ISubscriptionPayment, SubscriptionPaymentService>();
             builder.Services.AddHostedService<SubscriptionActivationService>();
             builder.Services.AddHostedService<DelayMonitorJobs>();
+            builder.Services.AddHostedService<MedicationReminderJob>();
             builder.Services.AddScoped<IAdminBulkEmailService, AdminBulkEmailService>();
             builder.Services.AddScoped<IStaffLogin, StaffAuthService>();
             builder.Services.AddScoped<IFinancialReport, FinancialReportService>();
@@ -371,6 +374,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IConfirmPayment, ConfirmPaymentService>();
             builder.Services.AddScoped<ICheckTime, CheckTimeService>();
             builder.Services.AddScoped<IBillPayment, BillPaymentService>();
+            builder.Services.AddScoped<IMedicationReminder, MedicationReminderService>();
 
             var app = builder.Build();
 

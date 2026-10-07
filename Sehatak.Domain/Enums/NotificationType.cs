@@ -10,6 +10,7 @@ namespace Sehatak.Domain.Enums
         LabResult = 4,
         System = 5,
         Waitlist = 6,
-        Shift = 7
+        Shift = 7,
+        MedicationReminder = 8
     }
 }

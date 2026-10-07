@@ -12,8 +12,8 @@ namespace Sehatak.Application.DTOs.MedicalRecordDto
         public int? AppointmentId { get; set; }
         public int? ConsultationId { get; set; }
         public string? Diagnosis { get; set; }
-        public string Prescription { get; set; } = string.Empty;
-        public string Notes { get; set; } = string.Empty;
+        public string? Prescription { get; set; } = string.Empty;
+        public string? Notes { get; set; } = string.Empty;
         public decimal? ConsultationCost { get; set; }
         public decimal? BillAmount { get; set; }
         public List<MedicalRecordItemResponseDto>? Items { get; set; }

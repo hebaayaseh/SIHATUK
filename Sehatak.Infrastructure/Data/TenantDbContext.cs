@@ -44,6 +44,7 @@ namespace Sehatak.Infrastructure.Data
         public DbSet<DoctorBlockedDay> DoctorBlockedDays => Set<DoctorBlockedDay>();
         public DbSet<ShiftSchedule> shiftSchedules => Set<ShiftSchedule>();
         public DbSet<EmergencyCase> EmergencyCases => Set<EmergencyCase>();
+        public DbSet<MedicationReminder> MedicationReminders => Set<MedicationReminder>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -364,6 +365,9 @@ namespace Sehatak.Infrastructure.Data
                 entity.Property(e => e.Prescription)
                 .HasMaxLength(500);
 
+                entity.Property(e => e.Diagnosis)
+               .HasMaxLength(1000);
+
                 entity.HasOne(e => e.Patient)
                       .WithMany(p => p.MedicalRecords)
                       .HasForeignKey(e => e.PatientId)
@@ -667,7 +671,7 @@ namespace Sehatak.Infrastructure.Data
             modelBuilder.Entity<EmailVerificationCode>(e =>
             {
                 e.ToTable("email_verification_codes");
-                e.HasKey("Id");
+                e.HasKey(e => e.Id);
 
                 e.HasOne(e => e.User)
                 .WithMany()
@@ -678,6 +682,24 @@ namespace Sehatak.Infrastructure.Data
 
             });
 
+            // MedicationReminder 
+            modelBuilder.Entity<MedicationReminder>(e =>
+            {
+                e.ToTable("medication_reminders");
+                e.HasKey(e => e.Id);
+
+                e.Property(e => e.MedicationName)
+                .IsRequired()
+                .HasMaxLength(150);
+
+                e.HasOne(e => e.Patient)
+                .WithMany()
+                .HasForeignKey(e => e.PatientId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasIndex(x => x.PatientId);
+                e.HasIndex(e => new { e.IsActive, e.ReminderTime });
+            });
 
         }
     }

@@ -15,8 +15,8 @@ namespace Sehatak.Domain.Entities.TenantEntities
  
 
         // If you add a pharmacy, the prescription must be complete. If you don't add one, you can use the AI-powered prescription generator.
-        public string Prescription { get; set; }
-        public string Notes { get; set; }
+        public string? Prescription { get; set; }
+        public string? Notes { get; set; }
         public string? Diagnosis { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

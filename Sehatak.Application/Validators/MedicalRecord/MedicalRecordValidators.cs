@@ -24,7 +24,7 @@ namespace Sehatak.Application.Validators.MedicalRecord
             RuleFor(x => x.ConsultationId).ValidOptionalId();
 
             // medical_records.Prescription / Notes are NOT NULL, max 500.
-            RuleFor(x => x.Prescription).RequiredText(500);
+            RuleFor(x => x.Prescription).OptionalText(500);
             RuleFor(x => x.Diagnosis).OptionalText(1000);
             RuleFor(x => x.ConsultationCost).OptionalMoney();
 

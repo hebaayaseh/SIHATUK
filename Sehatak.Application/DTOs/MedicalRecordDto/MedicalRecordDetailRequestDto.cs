@@ -8,8 +8,8 @@ namespace Sehatak.Application.DTOs.MedicalRecordDto
         public int? AppointmentId { get; set; }
         public int? ConsultationId { get; set; }
         public string? Diagnosis { get; set; }
-        public string Prescription { get; set; } = string.Empty;
-        public string Notes { get; set; } = string.Empty;
+        public string? Prescription { get; set; } 
+        public string? Notes { get; set; } 
         public decimal? ConsultationCost { get; set; }
         public List<MedicalRecordItemDto>? Items { get; set; }
     }
