@@ -45,6 +45,9 @@ namespace Sehatak.Infrastructure.Data
         public DbSet<ShiftSchedule> shiftSchedules => Set<ShiftSchedule>();
         public DbSet<EmergencyCase> EmergencyCases => Set<EmergencyCase>();
         public DbSet<MedicationReminder> MedicationReminders => Set<MedicationReminder>();
+        public DbSet<DoctorSalary> DoctorSalaries => Set<DoctorSalary>();
+        public DbSet<MonthlySalary> MonthlySalaries => Set<MonthlySalary>(); 
+        public DbSet<Expense> Expenses => Set<Expense>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -699,6 +702,59 @@ namespace Sehatak.Infrastructure.Data
 
                 e.HasIndex(x => x.PatientId);
                 e.HasIndex(e => new { e.IsActive, e.ReminderTime });
+            });
+
+            // Expense 
+            modelBuilder.Entity<Expense>(e =>
+            {
+                e.ToTable("expenses");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Name).HasMaxLength(150);
+                e.Property(x => x.Amount).HasPrecision(10, 2);
+                e.Property(x => x.Section).HasConversion<string>().HasMaxLength(30);
+
+                e.HasOne(x => x.CreatedByUser)
+                 .WithMany()
+                 .HasForeignKey(x => x.CreatedByUserId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasIndex(x => new { x.ExpenseDate, x.Section });
+            });
+
+            // MonthlySalary
+            modelBuilder.Entity<MonthlySalary>(e =>
+            {
+                e.ToTable("monthly_salaries");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Amount).HasPrecision(10, 2);
+                e.Property(x => x.Category).HasConversion<string>().HasMaxLength(30);
+
+                e.HasOne(x => x.UpdatedByUser)
+                 .WithMany()
+                 .HasForeignKey(x => x.UpdatedByUserId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasIndex(x => new { x.Year, x.Month, x.Category }).IsUnique();   // صف واحد لكل فئة بالشهر
+            });
+
+            // Doctor Salary
+            modelBuilder.Entity<DoctorSalary>(e =>
+            {
+                e.ToTable("doctor_salaries");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Amount).HasPrecision(10, 2);
+
+                e.HasOne(x => x.Doctor)
+                 .WithMany()
+                 .HasForeignKey(x => x.DoctorId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.UpdatedByUser)
+                 .WithMany()
+                 .HasForeignKey(x => x.UpdatedByUserId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasIndex(x => new { x.DoctorId, x.Year, x.Month }).IsUnique();   // راتب واحد للدكتور بالشهر
             });
 
         }
