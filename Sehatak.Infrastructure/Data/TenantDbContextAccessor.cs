@@ -24,9 +24,10 @@ namespace Sehatak.Infrastructure.Data
             var connectionString = BuildConnectionString(centerId);
 
             var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
-            optionsBuilder.UseMySql(connectionString, TenantServerVersionCache.Get(connectionString));
+            optionsBuilder.UseSqlServer(connectionString);
 
             return new TenantDbContext(optionsBuilder.Options);
+
         }
 
         private int GetCenterIdFromToken()

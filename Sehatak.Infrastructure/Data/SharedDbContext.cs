@@ -1,11 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Sehatak.Domain.Entities.General;
 using Sehatak.Domain.Entities.SharedEntities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Data
 {

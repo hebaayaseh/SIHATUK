@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using MySqlConnector;
+
 
 namespace Sehatak.Infrastructure.Data
 {
@@ -18,10 +18,9 @@ namespace Sehatak.Infrastructure.Data
         {
             var connectionString = BuildConnectionString(centerId);
             var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
-            optionsBuilder.UseMySql(
+            optionsBuilder.UseSqlServer(
                 connectionString,
-                TenantServerVersionCache.Get(connectionString),
-                mySqlOptions => mySqlOptions.MigrationsAssembly("Sehatak.Infrastructure")
+                sqlOptions => sqlOptions.MigrationsAssembly("Sehatak.Infrastructure")
             );
             return new TenantDbContext(optionsBuilder.Options);
         }
@@ -76,13 +75,13 @@ namespace Sehatak.Infrastructure.Data
 
         private async Task EnsureDatabaseCreated(string connectionString)
         {
-            var builder = new MySqlConnectionStringBuilder(connectionString);
-            var databaseName = builder.Database;
-            builder.Database = "";
-            using var connection = new MySqlConnection(builder.ConnectionString);
+            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connectionString);
+            var databaseName = builder.InitialCatalog;
+            builder.InitialCatalog = "master";
+            using var connection = new Microsoft.Data.SqlClient.SqlConnection(builder.ConnectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = $"CREATE DATABASE IF NOT EXISTS `{databaseName}`;";
+            command.CommandText = $"IF DB_ID('{databaseName}') IS NULL CREATE DATABASE [{databaseName}];";
             await command.ExecuteNonQueryAsync();
         }
     }

@@ -226,6 +226,10 @@ namespace Sehatak.Infrastructure.Data
                 entity.HasIndex(e => new { e.patientId, e.appointmentStatus });
                 entity.HasIndex(e => new { e.doctorId, e.appointmentDate });
 
+                entity.HasIndex(e => new { e.doctorId, e.appointmentDate, e.timeSlot })
+                      .IsUnique()
+                      .HasFilter("[timeSlot] IS NOT NULL AND [appointmentStatus] IN ('Pending','Confirmed','CheckedIn','InProgress','Completed')");
+
                 entity.Property(e => e.prepayment)
                       .HasPrecision(10, 2);
 

@@ -7,12 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Data\Migrations\TenantMigrations\**" />
-    <EmbeddedResource Remove="Data\Migrations\TenantMigrations\**" />
-    <None Remove="Data\Migrations\TenantMigrations\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Sehatak.Application\Sehatak.Application.csproj" />
     <ProjectReference Include="..\Sehatak.Domain\Sehatak.Domain.csproj" />
   </ItemGroup>

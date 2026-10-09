@@ -175,9 +175,8 @@ namespace Sehatak.API
 
             // 4. SHARED DATABASE
             builder.Services.AddDbContext<SharedDbContext>(options =>
-                options.UseMySql(
-                    builder.Configuration.GetConnectionString("SharedDb"),
-                    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("SharedDb"))
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("SharedDb")
                 )
             );
 
@@ -382,8 +381,9 @@ namespace Sehatak.API
             builder.Services.AddScoped<IBillPayment, BillPaymentService>();
             builder.Services.AddScoped<IMedicationReminder, MedicationReminderService>();
             builder.Services.AddScoped<IExpense, ExpenseService>();
-            builder.Services.AddScoped<ISalary, SalaryService>();
             builder.Services.AddScoped<IFinancialSummary, FinancialSummaryService>();
+            builder.Services.AddScoped<SalaryService>();
+            builder.Services.AddScoped<ISalary>(sp => sp.GetRequiredService<SalaryService>());
 
             var app = builder.Build();
 

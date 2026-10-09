@@ -9,13 +9,10 @@ public class TenantDbContextDesignTimeFactory
     public TenantDbContext CreateDbContext(string[] args)
     {
         var connectionString =
-            "Server=localhost;Database=sehatak_design;User=root;Password=;";
+            "Server=localhost;Database=sehatak_design;Trusted_Connection=True;TrustServerCertificate=True;";
 
         var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
-        optionsBuilder.UseMySql(
-            connectionString,
-            new MySqlServerVersion(new Version(8, 0, 30))
-        );
+        optionsBuilder.UseSqlServer(connectionString);
 
         return new TenantDbContext(optionsBuilder.Options);
     }

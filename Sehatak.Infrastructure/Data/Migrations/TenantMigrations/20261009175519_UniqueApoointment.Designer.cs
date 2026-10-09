@@ -12,18 +12,64 @@ using Sehatak.Infrastructure.Data;
 namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 {
     [DbContext(typeof(TenantDbContext))]
-    [Migration("20260727223933_check8")]
-    partial class check8
+    [Migration("20261009175519_UniqueApoointment")]
+    partial class UniqueApoointment
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.25")
-                .HasAnnotation("Relational:MaxIdentifierLength", 64);
+                .HasAnnotation("ProductVersion", "8.0.31")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("MedicationReminder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Days")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateOnly?>("LastNotifiedDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("MedicationName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("ReminderTime")
+                        .HasColumnType("time");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId");
+
+                    b.HasIndex("IsActive", "ReminderTime");
+
+                    b.ToTable("medication_reminders", (string)null);
+                });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.General.AuditLog", b =>
                 {
@@ -31,27 +77,27 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Action")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("EntityId")
                         .HasColumnType("int");
 
                     b.Property<string>("EntityType")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("NewValue")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OldValue")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -73,17 +119,17 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsRead")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Message")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ReceiverId")
                         .HasColumnType("int");
@@ -92,7 +138,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("SentAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -109,27 +155,27 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsUsed")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("bit");
 
                     b.Property<string>("PendingValue")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Purpose")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -147,13 +193,13 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("bit");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(10, 2)
@@ -162,14 +208,14 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Property<string>("ServiceName")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -184,26 +230,29 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal?>("BillAmount")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime?>("CheckInTime")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("CheckOutTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<decimal>("ConsultationCost")
-                        .HasColumnType("decimal(65,30)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("DelayProcessed")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("bit");
 
-                    b.Property<bool>("IsEmergency")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<bool>("IsFollowUp")
+                        .HasColumnType("bit");
 
                     b.Property<decimal>("ItemsTotal")
-                        .HasColumnType("decimal(65,30)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("ReceptionistId")
                         .HasColumnType("int");
@@ -212,23 +261,23 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("actualEndTime")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("actualStartTime")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateOnly>("appointmentDate")
                         .HasColumnType("date");
 
                     b.Property<string>("appointmentStatus")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("cancellationReason")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("createdAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("doctorId")
                         .HasColumnType("int");
@@ -244,18 +293,22 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasColumnType("int");
 
                     b.Property<TimeOnly?>("timeSlot")
-                        .HasColumnType("time(6)");
+                        .HasColumnType("time");
 
                     b.Property<DateTime>("updateAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ReceptionistId");
 
-                    b.HasIndex("doctorId");
+                    b.HasIndex("doctorId", "appointmentDate");
 
-                    b.HasIndex("patientId");
+                    b.HasIndex("patientId", "appointmentStatus");
+
+                    b.HasIndex("doctorId", "appointmentDate", "timeSlot")
+                        .IsUnique()
+                        .HasFilter("[timeSlot] IS NOT NULL AND [appointmentStatus] IN ('Pending','Confirmed','CheckedIn','InProgress','Completed')");
 
                     b.ToTable("appointments", (string)null);
                 });
@@ -266,7 +319,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AppointmentId")
                         .HasColumnType("int");
@@ -300,38 +353,32 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("DoctorId")
                         .HasColumnType("int");
 
                     b.Property<string>("Notes")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PaymentId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("ScheduledAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("VideoLink")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("DoctorId");
 
                     b.HasIndex("PatientId");
-
-                    b.HasIndex("PaymentId")
-                        .IsUnique();
 
                     b.ToTable("consultations", (string)null);
                 });
@@ -342,18 +389,18 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ImageUrl")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -366,22 +413,22 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Bio")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("ConsultationCostId")
                         .HasColumnType("int");
 
                     b.Property<bool>("OnlineEnabled")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Specialization")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<int>("departmentId")
                         .HasColumnType("int");
@@ -407,13 +454,13 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Reason")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateOnly>("date")
                         .HasColumnType("date");
@@ -422,10 +469,10 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasColumnType("int");
 
                     b.Property<bool>("isBlocked")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("bit");
 
                     b.Property<TimeOnly?>("timeSlot")
-                        .HasColumnType("time(6)");
+                        .HasColumnType("time");
 
                     b.HasKey("Id");
 
@@ -440,13 +487,13 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AppointmentId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("DoctorId")
                         .HasColumnType("int");
@@ -459,21 +506,58 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasAnnotation("Range", new[] { 1, 5 });
 
                     b.Property<string>("Review")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("UpdateAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AppointmentId")
                         .IsUnique();
 
-                    b.HasIndex("DoctorId");
-
                     b.HasIndex("PatientId");
 
+                    b.HasIndex("DoctorId", "PatientId");
+
                     b.ToTable("doctor_ratings", (string)null);
+                });
+
+            modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.DoctorSalary", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("DoctorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UpdatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("DoctorId", "Year", "Month")
+                        .IsUnique();
+
+                    b.ToTable("doctor_salaries", (string)null);
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Doctorschedule", b =>
@@ -482,26 +566,26 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("DayOfWeek")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("DoctorId")
                         .HasColumnType("int");
 
                     b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("time(6)");
+                        .HasColumnType("time");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("bit");
 
                     b.Property<int?>("SlotDurationMinutes")
                         .HasColumnType("int");
 
                     b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("time(6)");
+                        .HasColumnType("time");
 
                     b.HasKey("Id");
 
@@ -510,19 +594,99 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.ToTable("doctor_schedules", (string)null);
                 });
 
+            modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.EmergencyCase", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AmountPaid")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DoctorUserId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsInsurance")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PatientName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("ReceptionistId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DoctorUserId");
+
+                    b.HasIndex("ReceptionistId");
+
+                    b.ToTable("emergency_cases", (string)null);
+                });
+
+            modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Expense", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("ExpenseDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Section")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("ExpenseDate", "Section");
+
+                    b.ToTable("expenses", (string)null);
+                });
+
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.FollowUp", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateOnly?>("AllowFollowUpDate")
                         .HasColumnType("date");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("DoctorId")
                         .HasColumnType("int");
@@ -533,7 +697,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ReceptionistId")
+                    b.Property<int?>("ReceptionistId")
                         .HasColumnType("int");
 
                     b.Property<int?>("ScheduledAppointmentId")
@@ -541,7 +705,10 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -564,32 +731,40 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("AppointmentId")
                         .HasColumnType("int");
 
-                    b.Property<int>("DoctorId")
+                    b.Property<int?>("DoctorId")
                         .HasColumnType("int");
 
                     b.Property<string>("Notes")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
 
+                    b.Property<int>("RequestedByUserId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("RequstedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AppointmentId");
 
                     b.HasIndex("DoctorId");
+
+                    b.HasIndex("RequestedByUserId");
 
                     b.HasIndex("PatientId", "Status");
 
@@ -602,13 +777,28 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
 
                     b.Property<int>("LabRequestId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ResultFileUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<decimal?>("ResultValue")
+                        .HasPrecision(10, 3)
+                        .HasColumnType("decimal(10,3)");
+
                     b.Property<int>("ServicePriceId")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
 
                     b.HasKey("Id");
 
@@ -625,13 +815,13 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AiSummary")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("LabRequestId")
                         .HasColumnType("int");
@@ -643,11 +833,11 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasColumnType("int");
 
                     b.Property<string>("ResultFileUrl")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("TechnicianId")
                         .HasColumnType("int");
@@ -655,10 +845,12 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.HasKey("Id");
 
                     b.HasIndex("LabRequestId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[LabRequestId] IS NOT NULL");
 
                     b.HasIndex("PaymentId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[PaymentId] IS NOT NULL");
 
                     b.HasIndex("TechnicianId");
 
@@ -673,40 +865,45 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("AppointmentId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ConsultationId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Diagnosis")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<int>("DoctorId")
                         .HasColumnType("int");
 
                     b.Property<string>("Notes")
-                        .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
 
                     b.Property<string>("Prescription")
-                        .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AppointmentId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[AppointmentId] IS NOT NULL");
+
+                    b.HasIndex("ConsultationId");
 
                     b.HasIndex("DoctorId");
 
@@ -715,27 +912,66 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.ToTable("medical_records", (string)null);
                 });
 
+            modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.MonthlySalary", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UpdatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("Year", "Month", "Category")
+                        .IsUnique();
+
+                    b.ToTable("monthly_salaries", (string)null);
+                });
+
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Notification", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsRead")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Message")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -753,41 +989,52 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("patientId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("patientId"));
 
                     b.Property<string>("BloodType")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateOnly>("DateOfBith")
                         .HasColumnType("date");
 
+                    b.Property<string>("FirstName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<string>("Gender")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("SubPatientId")
+                    b.Property<string>("LastName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("NotifiableUserId")
                         .HasColumnType("int");
 
-                    b.Property<string>("SubPatientName")
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
+                    b.Property<int?>("ParentPatientId")
+                        .HasColumnType("int");
 
                     b.Property<string>("WhatsappNumber")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("userId")
                         .HasColumnType("int");
 
                     b.HasKey("patientId");
 
-                    b.HasIndex("SubPatientId");
+                    b.HasIndex("ParentPatientId");
 
                     b.HasIndex("userId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[userId] IS NOT NULL");
 
-                    b.ToTable("patients", (string)null);
+                    b.ToTable("patients", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_patients_SubPatientName", "`userId` IS NOT NULL OR (`FirstName` IS NOT NULL AND `LastName` IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Payment", b =>
@@ -796,7 +1043,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Amount")
                         .HasPrecision(10, 2)
@@ -809,40 +1056,61 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("LabRequestId")
+                        .HasColumnType("int");
 
                     b.Property<int?>("LabResultId")
                         .HasColumnType("int");
 
                     b.Property<string>("Method")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("PaidAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ReceptionistId")
+                    b.Property<string>("ReceiptImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("RecordedByStaffId")
                         .HasColumnType("int");
+
+                    b.Property<string>("ReferenceNumber")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AppointmentId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[AppointmentId] IS NOT NULL");
+
+                    b.HasIndex("ConsultationId")
+                        .IsUnique()
+                        .HasFilter("[ConsultationId] IS NOT NULL");
+
+                    b.HasIndex("LabRequestId")
+                        .IsUnique()
+                        .HasFilter("[LabRequestId] IS NOT NULL");
 
                     b.HasIndex("PatientId");
 
-                    b.HasIndex("ReceptionistId");
+                    b.HasIndex("RecordedByStaffId");
 
                     b.ToTable("payments", (string)null);
                 });
@@ -853,7 +1121,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("AppointmentId")
                         .HasColumnType("int");
@@ -862,7 +1130,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("CreatedByUserId")
                         .HasColumnType("int");
@@ -871,21 +1139,21 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasColumnType("date");
 
                     b.Property<DateTime?>("NewTimeSlot")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
 
                     b.Property<string>("Reason")
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -900,38 +1168,60 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.ToTable("postponed_services", (string)null);
                 });
 
+            modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.ShiftSchedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("ShiftName")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("staff_schedule", (string)null);
+                });
+
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.StaffAttendance", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateOnly>("AttendanceDate")
                         .HasColumnType("date");
 
                     b.Property<DateTime?>("CheckInTime")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("CheckOutTime")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("StaffId")
-                        .HasColumnType("int");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("StaffShiftId")
                         .HasColumnType("int");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.Property<string>("attendanceStatus")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("StaffShiftId");
 
-                    b.HasIndex("StaffId", "AttendanceDate")
+                    b.HasIndex("UserId", "AttendanceDate")
                         .IsUnique();
 
                     b.ToTable("staff_attendance", (string)null);
@@ -943,32 +1233,25 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("DayOfWeek")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("time(6)");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("bit");
 
-                    b.Property<string>("ShiftName")
+                    b.Property<string>("ShiftDate")
                         .IsRequired()
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int>("ShiftName")
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("int");
 
-                    b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("time(6)");
-
-                    b.Property<int>("staffId")
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("staffId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("staff_shifts", (string)null);
                 });
@@ -979,57 +1262,57 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ProfileImageUrl")
                         .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("address")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("city")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("createdAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("email")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("firstName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("isActive")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("lastLogin")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("lastName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("passwordHash")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("phoneNumber")
                         .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("role")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -1038,7 +1321,8 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasFilter("email IS NOT NULL");
 
                     b.HasIndex("phoneNumber")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[phoneNumber] IS NOT NULL");
 
                     b.ToTable("users", (string)null);
                 });
@@ -1049,10 +1333,10 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("DoctorId")
                         .HasColumnType("int");
@@ -1071,7 +1355,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -1084,6 +1368,17 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.HasIndex("ReceptionistId");
 
                     b.ToTable("waitlists", (string)null);
+                });
+
+            modelBuilder.Entity("MedicationReminder", b =>
+                {
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.Patient", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.General.AuditLog", b =>
@@ -1186,24 +1481,16 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.Payment", "Payment")
-                        .WithOne("Consultation")
-                        .HasForeignKey("Sehatak.Domain.Entities.TenantEntities.Consultation", "PaymentId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
-
-                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Doctor", b =>
                 {
                     b.HasOne("Sehatak.Domain.Entities.ServicePrice", "ConsultationCost")
                         .WithMany()
-                        .HasForeignKey("ConsultationCostId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("ConsultationCostId");
 
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.Department", "department")
                         .WithMany("Doctors")
@@ -1261,6 +1548,25 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Navigation("Patient");
                 });
 
+            modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.DoctorSalary", b =>
+                {
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.Doctor", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Doctor");
+
+                    b.Navigation("UpdatedByUser");
+                });
+
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Doctorschedule", b =>
                 {
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.Doctor", "doctor")
@@ -1270,6 +1576,36 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .IsRequired();
 
                     b.Navigation("doctor");
+                });
+
+            modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.EmergencyCase", b =>
+                {
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "DoctorUser")
+                        .WithMany()
+                        .HasForeignKey("DoctorUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "Receptionist")
+                        .WithMany()
+                        .HasForeignKey("ReceptionistId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DoctorUser");
+
+                    b.Navigation("Receptionist");
+                });
+
+            modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Expense", b =>
+                {
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.FollowUp", b =>
@@ -1295,12 +1631,12 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "Receptionist")
                         .WithMany()
                         .HasForeignKey("ReceptionistId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.Appointment", "ScheduledAppointment")
                         .WithMany()
-                        .HasForeignKey("ScheduledAppointmentId");
+                        .HasForeignKey("ScheduledAppointmentId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Doctor");
 
@@ -1323,12 +1659,17 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.Doctor", "Doctor")
                         .WithMany()
                         .HasForeignKey("DoctorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.Patient", "Patient")
                         .WithMany()
                         .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1337,6 +1678,8 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
+
+                    b.Navigation("RequestedByUser");
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.LabRequestItem", b =>
@@ -1398,6 +1741,11 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasForeignKey("Sehatak.Domain.Entities.TenantEntities.MedicalRecord", "AppointmentId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.Consultation", "Consultation")
+                        .WithMany()
+                        .HasForeignKey("ConsultationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.Doctor", "Doctor")
                         .WithMany("medicicalRecord")
                         .HasForeignKey("DoctorId")
@@ -1412,9 +1760,22 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 
                     b.Navigation("Appointment");
 
+                    b.Navigation("Consultation");
+
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.MonthlySalary", b =>
+                {
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Notification", b =>
@@ -1432,7 +1793,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                 {
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.Patient", "ParentPatient")
                         .WithMany("SubPatients")
-                        .HasForeignKey("SubPatientId")
+                        .HasForeignKey("ParentPatientId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "user")
@@ -1452,22 +1813,36 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .HasForeignKey("Sehatak.Domain.Entities.TenantEntities.Payment", "AppointmentId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.Consultation", "Consultation")
+                        .WithOne("Payment")
+                        .HasForeignKey("Sehatak.Domain.Entities.TenantEntities.Payment", "ConsultationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.LabRequest", "LabRequest")
+                        .WithOne("Payment")
+                        .HasForeignKey("Sehatak.Domain.Entities.TenantEntities.Payment", "LabRequestId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.Patient", "Patient")
                         .WithMany("payments")
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "Receptionist")
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "Staff")
                         .WithMany()
-                        .HasForeignKey("ReceptionistId")
+                        .HasForeignKey("RecordedByStaffId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Appointment");
 
+                    b.Navigation("Consultation");
+
+                    b.Navigation("LabRequest");
+
                     b.Navigation("Patient");
 
-                    b.Navigation("Receptionist");
+                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.PostponedService", b =>
@@ -1505,32 +1880,32 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.StaffAttendance", b =>
                 {
-                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("StaffId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.StaffShift", "Shift")
                         .WithMany()
                         .HasForeignKey("StaffShiftId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "Staff")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Shift");
 
-                    b.Navigation("User");
+                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.StaffShift", b =>
                 {
-                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "User")
+                    b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "Staff")
                         .WithMany("Shifts")
-                        .HasForeignKey("staffId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Waitlist", b =>
@@ -1577,6 +1952,11 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Navigation("Rating");
                 });
 
+            modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Consultation", b =>
+                {
+                    b.Navigation("Payment");
+                });
+
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Department", b =>
                 {
                     b.Navigation("Doctors");
@@ -1602,6 +1982,8 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Navigation("Items");
 
                     b.Navigation("LabResult");
+
+                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Patient", b =>
@@ -1625,8 +2007,6 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 
             modelBuilder.Entity("Sehatak.Domain.Entities.TenantEntities.Payment", b =>
                 {
-                    b.Navigation("Consultation");
-
                     b.Navigation("LabResult");
                 });
 
