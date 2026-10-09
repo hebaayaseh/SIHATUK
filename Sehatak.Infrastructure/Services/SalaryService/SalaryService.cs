@@ -7,7 +7,7 @@ using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
 
-namespace Sehatak.Infrastructure.Services.SalaryService
+namespace Sehatak.Infrastructure.Services.SalaryServices
 {
     public class SalaryService : ISalary
     {
@@ -151,7 +151,7 @@ namespace Sehatak.Infrastructure.Services.SalaryService
             return await LoadMonthlySalariesAsync(db, year, month);
         }
 
-        private static async Task<MonthlySalariesResponseDto> LoadMonthlySalariesAsync(TenantDbContext db, int year, int month)
+        public async Task<MonthlySalariesResponseDto> LoadMonthlySalariesAsync(TenantDbContext db, int year, int month)
         {
             var saved = await db.MonthlySalaries
                 .Where(s => s.Year == year && s.Month == month)

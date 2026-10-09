@@ -26,6 +26,7 @@ using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.IEmerngency;
 using Sehatak.Application.Interfaces.IExpense;
 using Sehatak.Application.Interfaces.IFinancialReports;
+using Sehatak.Application.Interfaces.IFinancialSummary;
 using Sehatak.Application.Interfaces.IFollowUp;
 using Sehatak.Application.Interfaces.ILab;
 using Sehatak.Application.Interfaces.IMedicalRecord;
@@ -67,6 +68,7 @@ using Sehatak.Infrastructure.Services.EditProfileService;
 using Sehatak.Infrastructure.Services.EmergencyService;
 using Sehatak.Infrastructure.Services.ExpenseService;
 using Sehatak.Infrastructure.Services.FinancialReportServices;
+using Sehatak.Infrastructure.Services.FinancialSummaryService;
 using Sehatak.Infrastructure.Services.FollowUpService;
 using Sehatak.Infrastructure.Services.GetStaff;
 using Sehatak.Infrastructure.Services.LabService;
@@ -76,7 +78,7 @@ using Sehatak.Infrastructure.Services.NotificationService;
 using Sehatak.Infrastructure.Services.PatientService.PatientProfile;
 using Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
 using Sehatak.Infrastructure.Services.PtientCenterService;
-using Sehatak.Infrastructure.Services.SalaryService;
+using Sehatak.Infrastructure.Services.SalaryServices;
 using Sehatak.Infrastructure.Services.SearchDoctorService;
 using Sehatak.Infrastructure.Services.ServicePriceService;
 using Sehatak.Infrastructure.Services.ShiftService;
@@ -381,6 +383,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IMedicationReminder, MedicationReminderService>();
             builder.Services.AddScoped<IExpense, ExpenseService>();
             builder.Services.AddScoped<ISalary, SalaryService>();
+            builder.Services.AddScoped<IFinancialSummary, FinancialSummaryService>();
 
             var app = builder.Build();
 
