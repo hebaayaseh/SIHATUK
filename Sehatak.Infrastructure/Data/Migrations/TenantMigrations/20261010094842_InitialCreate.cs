@@ -317,7 +317,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_patients", x => x.patientId);
-                    table.CheckConstraint("CK_patients_SubPatientName", "`userId` IS NOT NULL OR (`FirstName` IS NOT NULL AND `LastName` IS NOT NULL)");
+                    table.CheckConstraint("CK_patients_SubPatientName", "[userId] IS NOT NULL OR ([FirstName] IS NOT NULL AND [LastName] IS NOT NULL)");
                     table.ForeignKey(
                         name: "FK_patients_patients_ParentPatientId",
                         column: x => x.ParentPatientId,
@@ -1006,6 +1006,13 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                 name: "IX_appointments_doctorId_appointmentDate",
                 table: "appointments",
                 columns: new[] { "doctorId", "appointmentDate" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_appointments_doctorId_appointmentDate_timeSlot",
+                table: "appointments",
+                columns: new[] { "doctorId", "appointmentDate", "timeSlot" },
+                unique: true,
+                filter: "[timeSlot] IS NOT NULL AND [appointmentStatus] IN ('Pending','Confirmed','CheckedIn','InProgress','Completed')");
 
             migrationBuilder.CreateIndex(
                 name: "IX_appointments_patientId_appointmentStatus",

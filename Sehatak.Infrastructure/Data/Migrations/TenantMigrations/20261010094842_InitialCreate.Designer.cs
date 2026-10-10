@@ -12,7 +12,7 @@ using Sehatak.Infrastructure.Data;
 namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 {
     [DbContext(typeof(TenantDbContext))]
-    [Migration("20261009174755_InitialCreate")]
+    [Migration("20261010094842_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -305,6 +305,10 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.HasIndex("doctorId", "appointmentDate");
 
                     b.HasIndex("patientId", "appointmentStatus");
+
+                    b.HasIndex("doctorId", "appointmentDate", "timeSlot")
+                        .IsUnique()
+                        .HasFilter("[timeSlot] IS NOT NULL AND [appointmentStatus] IN ('Pending','Confirmed','CheckedIn','InProgress','Completed')");
 
                     b.ToTable("appointments", (string)null);
                 });

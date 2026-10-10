@@ -86,7 +86,8 @@ namespace Sehatak.Infrastructure.Data
                         .HasMaxLength(500);
 
                 entity.Property(e => e.role)
-                      .HasConversion<string>();
+                      .HasConversion<string>()
+                      .HasMaxLength(100);
             });
             // EMERGENCY CASE
             modelBuilder.Entity<EmergencyCase>(entity =>
@@ -121,6 +122,9 @@ namespace Sehatak.Infrastructure.Data
                 entity.Property(e => e.Name)
                       .IsRequired()
                       .HasMaxLength(100);
+
+                entity.Property(e => e.Description)
+                      .HasMaxLength(500);
             });
 
             //  DOCTOR 
@@ -175,9 +179,10 @@ namespace Sehatak.Infrastructure.Data
 
                 entity.Property(e => e.FirstName).HasMaxLength(200);
                 entity.Property(e => e.LastName).HasMaxLength(200);
+
                 entity.ToTable(tb => tb.HasCheckConstraint(
                    "CK_patients_SubPatientName",
-                   "`userId` IS NOT NULL OR (`FirstName` IS NOT NULL AND `LastName` IS NOT NULL)"));
+                   "[userId] IS NOT NULL OR ([FirstName] IS NOT NULL AND [LastName] IS NOT NULL)"));
 
                 entity.Property(e => e.BloodType)
                       .HasConversion<string>();
@@ -210,7 +215,8 @@ namespace Sehatak.Infrastructure.Data
                       .HasConversion<string>();
 
                 entity.Property(e => e.ShiftName)
-                      .HasMaxLength(100);
+                     .HasConversion<string>()
+                     .HasMaxLength(100);
 
                 entity.HasOne(e => e.Staff)
                       .WithMany(u => u.Shifts)
@@ -582,6 +588,9 @@ namespace Sehatak.Infrastructure.Data
             {
                 entity.ToTable("staff_schedule");
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.ShiftName)
+                      .HasConversion<string>()
+                      .HasMaxLength(100);
             });
 
 

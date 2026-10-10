@@ -9,7 +9,7 @@ public class TenantDbContextDesignTimeFactory
     public TenantDbContext CreateDbContext(string[] args)
     {
         var connectionString =
-            "Server=localhost;Database=sehatak_design;Trusted_Connection=True;TrustServerCertificate=True;";
+            "Server=localhost;Database=sihatuk_design;Trusted_Connection=True;TrustServerCertificate=True;";
 
         var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
         optionsBuilder.UseSqlServer(connectionString);

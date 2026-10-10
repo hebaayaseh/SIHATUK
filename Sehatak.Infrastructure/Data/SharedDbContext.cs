@@ -90,6 +90,10 @@ namespace Sehatak.Infrastructure.Data
                 entity.Property(e => e.phone)
                 .IsRequired()
                 .HasMaxLength(20);
+
+                entity.Property(e => e.role)
+                      .HasConversion<string>()
+                      .HasMaxLength(100);
             });
             
 

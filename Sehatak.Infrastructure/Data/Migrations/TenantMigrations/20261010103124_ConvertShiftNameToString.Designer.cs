@@ -12,8 +12,8 @@ using Sehatak.Infrastructure.Data;
 namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 {
     [DbContext(typeof(TenantDbContext))]
-    [Migration("20261009175519_UniqueApoointment")]
-    partial class UniqueApoointment
+    [Migration("20261010103124_ConvertShiftNameToString")]
+    partial class ConvertShiftNameToString
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -392,7 +392,8 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
@@ -1033,7 +1034,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 
                     b.ToTable("patients", null, t =>
                         {
-                            t.HasCheckConstraint("CK_patients_SubPatientName", "`userId` IS NOT NULL OR (`FirstName` IS NOT NULL AND `LastName` IS NOT NULL)");
+                            t.HasCheckConstraint("CK_patients_SubPatientName", "[userId] IS NOT NULL OR ([FirstName] IS NOT NULL AND [LastName] IS NOT NULL)");
                         });
                 });
 
@@ -1179,8 +1180,10 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Property<TimeOnly>("EndTime")
                         .HasColumnType("time");
 
-                    b.Property<int>("ShiftName")
-                        .HasColumnType("int");
+                    b.Property<string>("ShiftName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
@@ -1242,9 +1245,10 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                         .IsRequired()
                         .HasColumnType("nvarchar(10)");
 
-                    b.Property<int>("ShiftName")
+                    b.Property<string>("ShiftName")
+                        .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -1312,7 +1316,8 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 
                     b.Property<string>("role")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
