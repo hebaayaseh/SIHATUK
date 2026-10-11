@@ -33,5 +33,14 @@ namespace Sehatak.API.Controllers.NotificationController
             var result = await notification.MarkNotificationReadAsync(centerId, userId, notificationId);
             return Ok(result);
         }
+
+        [Authorize]
+        [HttpPut("register-device-token/{centerId}")]
+        public async Task<IActionResult> RegisterDeviceToken(int centerId, [FromBody] string token)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            await notification.RegisterDeviceTokenAsync(centerId, userId, token);
+            return Ok();
+        }
     }
 }

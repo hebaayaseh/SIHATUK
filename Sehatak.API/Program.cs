@@ -97,6 +97,11 @@ using Serilog;
 using System;
 using System.Text;
 using System.Threading.RateLimiting;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using Sehatak.Application.Interfaces.IPushNotification;
+using Sehatak.Infrastructure.Services.PushNotificationService;
+
 namespace Sehatak.API
 {
     public class Program
@@ -172,6 +177,18 @@ namespace Sehatak.API
                        .AddSupportedCultures(supportedCultures)
                        .AddSupportedUICultures(supportedCultures);
             });
+
+            // FirebaseApp 
+            var firebaseCredPath = Path.Combine(builder.Environment.ContentRootPath,
+               builder.Configuration["Firebase:CredentialsPath"]!);
+
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                FirebaseApp.Create(new AppOptions
+                {
+                    Credential = GoogleCredential.FromFile(firebaseCredPath)
+                });
+            }
 
             // 4. SHARED DATABASE
             builder.Services.AddDbContext<SharedDbContext>(options =>
@@ -384,6 +401,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<IFinancialSummary, FinancialSummaryService>();
             builder.Services.AddScoped<SalaryService>();
             builder.Services.AddScoped<ISalary>(sp => sp.GetRequiredService<SalaryService>());
+            builder.Services.AddSingleton<IPushNotification, FcmPushService>();
 
             var app = builder.Build();
 

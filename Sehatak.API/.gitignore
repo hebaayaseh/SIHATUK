@@ -14,3 +14,4 @@ Sehatak.API/Logs/
 
 # ملفات المستخدمين المرفوعة (صور بروفايل، إيصالات، إلخ)
 Sehatak.API/wwwroot/uploads/
+firebase-service-account.json

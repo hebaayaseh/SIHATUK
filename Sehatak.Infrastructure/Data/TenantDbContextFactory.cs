@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Sehatak.Application.Interfaces.IPushNotification;
 
 
 namespace Sehatak.Infrastructure.Data
@@ -7,10 +8,12 @@ namespace Sehatak.Infrastructure.Data
     public class TenantDbContextFactory
     {
         private readonly IConfiguration _config;
+        private readonly IPushNotification _pushSender;
 
-        public TenantDbContextFactory(IConfiguration config)
+        public TenantDbContextFactory(IConfiguration config, IPushNotification pushSender)
         {
             _config = config;
+            _pushSender = pushSender;
         }
 
         // بتبني TenantDbContext لمركز معين بناءً على الـ CenterId
@@ -22,6 +25,8 @@ namespace Sehatak.Infrastructure.Data
                 connectionString,
                 sqlOptions => sqlOptions.MigrationsAssembly("Sehatak.Infrastructure")
             );
+            optionsBuilder.AddInterceptors(new NotificationPushInterceptor(_pushSender));
+
             return new TenantDbContext(optionsBuilder.Options);
         }
 

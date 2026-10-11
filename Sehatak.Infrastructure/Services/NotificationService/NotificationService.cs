@@ -89,5 +89,23 @@ namespace Sehatak.Infrastructure.Services.NotificationService
                 Type = notification.Type.ToString()
             };
         }
+
+        public async Task RegisterDeviceTokenAsync(int centerId, int userId, string token)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId && u.isActive);
+            if (user == null)
+                throw new BusinessException("User.NotFound");
+
+            user.FcmToken = token;
+            await db.SaveChangesAsync();
+        }
     }
 }

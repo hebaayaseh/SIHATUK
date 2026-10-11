@@ -27,6 +27,7 @@ namespace Sehatak.Domain.Entities.TenantEntities
         public bool isActive { get; set; }
         public DateTime lastLogin { get; set; }
         public string? ProfileImageUrl { get; set; }
+        public string? FcmToken { get; set; }
 
         // Navigation Properties :
         // use it because the Doctor and Pation have unique table 

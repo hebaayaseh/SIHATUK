@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Sehatak.Application.Interfaces.IPushNotification;
 
 
 namespace Sehatak.Infrastructure.Data
@@ -9,13 +10,16 @@ namespace Sehatak.Infrastructure.Data
     {
         private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IPushNotification _pushSender;
 
         public TenantDbContextAccessor(
             IConfiguration config,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IPushNotification pushSender)
         {
             _config = config;
             _httpContextAccessor = httpContextAccessor;
+            _pushSender = pushSender;
         }
 
         public TenantDbContext GetCurrentTenantDb()
@@ -25,6 +29,7 @@ namespace Sehatak.Infrastructure.Data
 
             var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
             optionsBuilder.UseSqlServer(connectionString);
+            optionsBuilder.AddInterceptors(new NotificationPushInterceptor(_pushSender));
 
             return new TenantDbContext(optionsBuilder.Options);
 
