@@ -86,12 +86,13 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
             var auditEntry = auditLog.Build(
                 action : "AddDepartment",
                 entityType : "Department",
-                entityId : department.Id,
+                entityId : newDepartment.Id,
                 oldValue : null,
                 newValue : new
                 {
-                    departmentName = department.Name,
-                    departmentDescription = department.Description,
+                    departmentName = newDepartment.Name,
+                    departmentDescription = newDepartment.Description,
+                    logo = newDepartment.ImageUrl
                 });
             if (auditEntry != null)
                 db.AuditLogs.Add(auditEntry);

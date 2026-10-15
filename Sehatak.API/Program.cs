@@ -431,6 +431,7 @@ namespace Sehatak.API
             app.MapControllers();
             app.MapHub<ChatHubs>("/hubs/chat");
             app.Lifetime.ApplicationStopping.Register(() => Log.CloseAndFlush());
+            app.MapGet("/health", () => Results.Ok("OK"));
 
             app.Run();
         }
