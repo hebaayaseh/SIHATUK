@@ -1,4 +1,6 @@
-﻿using FluentValidation.AspNetCore;
+﻿using FirebaseAdmin;
+using FluentValidation.AspNetCore;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -25,6 +27,7 @@ using Sehatak.Application.Interfaces.IDoctorRating;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.IEmerngency;
 using Sehatak.Application.Interfaces.IExpense;
+using Sehatak.Application.Interfaces.IFeedback;
 using Sehatak.Application.Interfaces.IFinancialReports;
 using Sehatak.Application.Interfaces.IFinancialSummary;
 using Sehatak.Application.Interfaces.IFollowUp;
@@ -35,6 +38,7 @@ using Sehatak.Application.Interfaces.INotification;
 using Sehatak.Application.Interfaces.IPatientCenter;
 using Sehatak.Application.Interfaces.IProfileInterface;
 using Sehatak.Application.Interfaces.IProfileInterface.ProfileAdmin;
+using Sehatak.Application.Interfaces.IPushNotification;
 using Sehatak.Application.Interfaces.ISalary;
 using Sehatak.Application.Interfaces.IShiftSchedule;
 using Sehatak.Application.Interfaces.IStaffAttendance;
@@ -67,6 +71,7 @@ using Sehatak.Infrastructure.Services.DoctorRatingService;
 using Sehatak.Infrastructure.Services.EditProfileService;
 using Sehatak.Infrastructure.Services.EmergencyService;
 using Sehatak.Infrastructure.Services.ExpenseService;
+using Sehatak.Infrastructure.Services.FeedbackService;
 using Sehatak.Infrastructure.Services.FinancialReportServices;
 using Sehatak.Infrastructure.Services.FinancialSummaryService;
 using Sehatak.Infrastructure.Services.FollowUpService;
@@ -78,6 +83,7 @@ using Sehatak.Infrastructure.Services.NotificationService;
 using Sehatak.Infrastructure.Services.PatientService.PatientProfile;
 using Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
 using Sehatak.Infrastructure.Services.PtientCenterService;
+using Sehatak.Infrastructure.Services.PushNotificationService;
 using Sehatak.Infrastructure.Services.SalaryServices;
 using Sehatak.Infrastructure.Services.SearchDoctorService;
 using Sehatak.Infrastructure.Services.ServicePriceService;
@@ -97,10 +103,6 @@ using Serilog;
 using System;
 using System.Text;
 using System.Threading.RateLimiting;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
-using Sehatak.Application.Interfaces.IPushNotification;
-using Sehatak.Infrastructure.Services.PushNotificationService;
 
 namespace Sehatak.API
 {
@@ -402,6 +404,7 @@ namespace Sehatak.API
             builder.Services.AddScoped<SalaryService>();
             builder.Services.AddScoped<ISalary>(sp => sp.GetRequiredService<SalaryService>());
             builder.Services.AddSingleton<IPushNotification, FcmPushService>();
+            builder.Services.AddScoped<IFeedback, FeedbackService>();
 
             var app = builder.Build();
 

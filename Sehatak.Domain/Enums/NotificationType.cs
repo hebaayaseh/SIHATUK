@@ -11,6 +11,7 @@ namespace Sehatak.Domain.Enums
         System = 5,
         Waitlist = 6,
         Shift = 7,
-        MedicationReminder = 8
+        MedicationReminder = 8,
+        Feedback = 9
     }
 }

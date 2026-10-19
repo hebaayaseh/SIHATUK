@@ -180,6 +180,72 @@ namespace Sehatak.Infrastructure.Data.Migrations.SharedMigrations
                     b.ToTable("center_subscriptions", (string)null);
                 });
 
+            modelBuilder.Entity("Sehatak.Domain.Entities.SharedEntities.Feedback", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CenterId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RepliedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("RepliedBySuperAdminId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reply")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SenderEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SenderName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SenderPhone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SenderRole")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("SenderUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CenterId");
+
+                    b.HasIndex("RepliedBySuperAdminId");
+
+                    b.ToTable("Feedbacks");
+                });
+
             modelBuilder.Entity("Sehatak.Domain.Entities.SharedEntities.LoginAttempt", b =>
                 {
                     b.Property<int>("Id")
@@ -501,6 +567,39 @@ namespace Sehatak.Infrastructure.Data.Migrations.SharedMigrations
                     b.ToTable("super_admins", (string)null);
                 });
 
+            modelBuilder.Entity("Sehatak.Domain.Entities.SharedEntities.SuperAdminNotification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("FeedbackId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SuperAdminId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeedbackId");
+
+                    b.HasIndex("SuperAdminId");
+
+                    b.ToTable("SuperAdminNotifications");
+                });
+
             modelBuilder.Entity("Sehatak.Domain.Entities.SharedEntities.emailVerificationCode", b =>
                 {
                     b.Property<int>("Id")
@@ -594,6 +693,21 @@ namespace Sehatak.Infrastructure.Data.Migrations.SharedMigrations
                     b.Navigation("Plan");
                 });
 
+            modelBuilder.Entity("Sehatak.Domain.Entities.SharedEntities.Feedback", b =>
+                {
+                    b.HasOne("Sehatak.Domain.Entities.SharedEntities.MedicalCenter", "Center")
+                        .WithMany()
+                        .HasForeignKey("CenterId");
+
+                    b.HasOne("Sehatak.Domain.Entities.SharedEntities.SuperAdmin", "RepliedBySuperAdmin")
+                        .WithMany()
+                        .HasForeignKey("RepliedBySuperAdminId");
+
+                    b.Navigation("Center");
+
+                    b.Navigation("RepliedBySuperAdmin");
+                });
+
             modelBuilder.Entity("Sehatak.Domain.Entities.SharedEntities.MedicalCenter", b =>
                 {
                     b.HasOne("Sehatak.Domain.Entities.SharedEntities.SuperAdmin", "AddedByAdmin")
@@ -651,6 +765,23 @@ namespace Sehatak.Infrastructure.Data.Migrations.SharedMigrations
                     b.Navigation("Request");
 
                     b.Navigation("Subscription");
+                });
+
+            modelBuilder.Entity("Sehatak.Domain.Entities.SharedEntities.SuperAdminNotification", b =>
+                {
+                    b.HasOne("Sehatak.Domain.Entities.SharedEntities.Feedback", "Feedback")
+                        .WithMany()
+                        .HasForeignKey("FeedbackId");
+
+                    b.HasOne("Sehatak.Domain.Entities.SharedEntities.SuperAdmin", "SuperAdmin")
+                        .WithMany()
+                        .HasForeignKey("SuperAdminId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Feedback");
+
+                    b.Navigation("SuperAdmin");
                 });
 
             modelBuilder.Entity("Sehatak.Domain.Entities.SharedEntities.emailVerificationCode", b =>

@@ -120,10 +120,11 @@ ENTRIES = {
     "Validation.InvalidTarget": ("The selected target is not valid.", "الفئة المستهدفة غير صالحة."),
     "Verify.Code": ("The verification code is invalid or expired.", "رمز التحقق غير صالح أو منتهي الصلاحية."),
     "WaitList.NotFound": ("Waitlist entry not found.", "طلب قائمة الانتظار غير موجود."),
+    "Feedback.NotFound": ("Feedback not found.", "التعليق غير موجود.")
 }
 
 TEMPLATE = '  <data name="{key}" xml:space="preserve">\n    <value>{value}</value>\n  </data>\n'
-
+  
 
 def xml_escape(text: str) -> str:
     return (text.replace("&", "&amp;")

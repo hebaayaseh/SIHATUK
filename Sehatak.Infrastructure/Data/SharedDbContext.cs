@@ -19,6 +19,8 @@ namespace Sehatak.Infrastructure.Data
         public DbSet<CenterRegistrationRequest> centerRegistrationRequests => Set<CenterRegistrationRequest>();
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<LoginAttempt> LoginAttempts { get; set; }
+        public DbSet<Feedback> Feedbacks { get; set; }
+        public DbSet<SuperAdminNotification> SuperAdminNotifications { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // PlatFormFeature 
