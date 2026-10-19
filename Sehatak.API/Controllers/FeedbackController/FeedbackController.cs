@@ -19,11 +19,13 @@ namespace Sehatak.API.Controllers.FeedbackController
             this.feedback = feedback;
         }
 
+
+
         [Authorize]
-        [HttpPost("submit-feedback")]
-        public async Task<IActionResult> SubmitFeedback([FromBody] SubmitFeedbackRequestDto request)
+        [HttpPost("submit-feedback/{centerId}")]
+        public async Task<IActionResult> SubmitFeedback(int centerId, [FromBody] SubmitFeedbackRequestDto request)
         {
-            var (centerId, userId) = GetTenantIdentity();
+            var userId = GetTenantUserId();
             var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
             var name = User.FindFirst(ClaimTypes.Name)?.Value ?? string.Empty;
             var email = User.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
@@ -33,13 +35,15 @@ namespace Sehatak.API.Controllers.FeedbackController
         }
 
         [Authorize]
-        [HttpGet("get-my-feedbacks")]
-        public async Task<IActionResult> GetMyFeedbacks([FromQuery] PagedRequest request)
+        [HttpGet("get-my-feedbacks/{centerId}")]
+        public async Task<IActionResult> GetMyFeedbacks(int centerId, [FromQuery] PagedRequest request)
         {
-            var (centerId, userId) = GetTenantIdentity();
+            var userId = GetTenantUserId();
             var result = await feedback.GetMyFeedbacksAsync(centerId, userId, request);
             return Ok(result);
         }
+
+
 
         [AllowAnonymous]
         [EnableRateLimiting("LoginPolicy")]
@@ -49,6 +53,7 @@ namespace Sehatak.API.Controllers.FeedbackController
             var result = await feedback.SubmitGuestAsync(request);
             return Ok(result);
         }
+
 
         [Authorize(Policy = "SuperAdminOnly")]
         [HttpGet("superAdmin-get-feedbacks")]
@@ -115,15 +120,12 @@ namespace Sehatak.API.Controllers.FeedbackController
             return Ok(new { success = true });
         }
 
-
-        private (int CenterId, int UserId) GetTenantIdentity()
+        private int GetTenantUserId()
         {
-            var centerClaim = User.FindFirst("CenterId")?.Value;
-            if (centerClaim == null)
+            if (User.FindFirst("CenterId") == null)
                 throw new UnauthorizedAccessException();
 
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            return (int.Parse(centerClaim), userId);
+            return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         }
     }
 }
