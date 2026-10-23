@@ -71,7 +71,7 @@ namespace Sehatak.Infrastructure.Services.StaffLogin
 
             var tokens = await tokenService.IssueTokensAsync(
                 userId: user.Id,
-                name: $"{user.firstName}{user.lastName}",
+                name: $"{user.firstName} {user.lastName}",
                 email: user.email,
                 role: user.role.ToString(),
                 centerId: centerId,
