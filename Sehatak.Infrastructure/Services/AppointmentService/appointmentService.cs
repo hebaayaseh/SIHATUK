@@ -97,7 +97,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             if (date == today)
             {
-                var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
+                var nowTime = TimeOnly.FromDateTime(ClinicClock.Now);
                 availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
             }
 
@@ -116,7 +116,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
         public async Task<BookAppointmentRespesponse> BookAppointmentAsync(int centerId, int doctorId, int userId, BookAppointmentRequest request)
         {
 
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = ClinicClock.Today;
             if (request.dateOnly < today)
                 throw new BusinessException("Date.Invalid");
 
@@ -228,7 +228,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             if (request.dateOnly == today)
             {
-                var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
+                var nowTime = TimeOnly.FromDateTime(ClinicClock.Now);
                 availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
             }
 
@@ -321,7 +321,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
         }
         public async Task<string> DeleteDoctorSlotAsync(int centerId, int userId, DeleteDoctorSlotRequest request)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = ClinicClock.Today;
             if (request.date < today)
                 throw new BusinessException("Date.Invalid");
 
@@ -552,7 +552,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         public async Task<BookAppointmentRespesponse> RescheduleAppointmentAsync(int centerId, int doctorId, int userId, RescheduleAppointmentRequest request)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = ClinicClock.Today;
             if (request.date < today)
                 throw new BusinessException("Date.Invalid");
 
@@ -652,7 +652,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             if (request.date == today)
             {
-                var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
+                var nowTime = TimeOnly.FromDateTime(ClinicClock.Now);
                 availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
             }
 
@@ -716,7 +716,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
         }
         public async Task<string> JoinWaitListAsync(int centerId, int doctorId, int userId, DateOnly date, int? subPatientId)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = ClinicClock.Today;
             if (date < today)
                 throw new BusinessException("Date.Invalid");
 
@@ -965,7 +965,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         public async Task<BookAppointmentRespesponse> ReceptionistBookAppointmentAsync(int centerId, int userId, int doctorId, ReceptionistBookRequestDto request)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = ClinicClock.Today;
             if (request.dateOnly < today)
                 throw new BusinessException("Date.Invalid");
 
@@ -1088,7 +1088,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             if (request.dateOnly == ClinicClock.Today)
             {
-                var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
+                var nowTime = TimeOnly.FromDateTime(ClinicClock.Now);
                 availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
             }
 
@@ -1116,7 +1116,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                         DoctorId = doctorId,
                         PreferredDate = request.dateOnly,
                         Status = WaitlistStatus.Waiting,
-                        CreatedAt = ClinicClock.Now
+                        CreatedAt = DateTime.UtcNow
                     });
                     await db.SaveChangesAsync();
                     return new BookAppointmentRespesponse
@@ -1301,7 +1301,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         public async Task<BookAppointmentRespesponse> ReceptionistRescheduleAppointmentAsync(int centerId, int doctorId, int userId, ReceptionistRescheduleAppointmentRequest request)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = ClinicClock.Today;
             if (request.date < today)
                 throw new BusinessException("Date.Invalid");
 
@@ -1409,7 +1409,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             if (request.date == today)
             {
-                var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
+                var nowTime = TimeOnly.FromDateTime(ClinicClock.Now);
                 availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
             }
 

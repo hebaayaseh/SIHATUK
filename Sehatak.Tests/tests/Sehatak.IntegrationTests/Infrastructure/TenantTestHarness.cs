@@ -1,6 +1,8 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Sehatak.Domain.Entities.SharedEntities;
+using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
 
 namespace Sehatak.IntegrationTests.Infrastructure;
@@ -59,6 +61,34 @@ public sealed class TenantTestHarness
         if (!result.Success)
             throw new InvalidOperationException($"Tenant migration failed for center {centerId}: {result.ErrorMessage}");
         return centerId;
+    }
+
+    /// <summary>
+    /// Creates a real center: a row in the Shared DB (its identity Id decides the tenant DB name,
+    /// exactly like production) plus the migrated tenant database, seeded with an admin and a department.
+    /// </summary>
+    public async Task<TestCenter> CreateCenterAsync(CenterStatus status = CenterStatus.Active)
+    {
+        int id;
+        await using (var shared = NewSharedDb())
+        {
+            var center = new MedicalCenter
+            {
+                Name = "Test Center", UniqueUrl = Guid.NewGuid().ToString("N"),
+                Phone = "0590000000", Address = "Hebron", CenterStatus = status
+            };
+            shared.MedicalCenters.Add(center);
+            await shared.SaveChangesAsync();
+            id = center.Id;
+        }
+
+        var result = await TenantFactory.MigrateSingleTenantAsync(id);
+        if (!result.Success)
+            throw new InvalidOperationException($"Tenant migration failed for center {id}: {result.ErrorMessage}");
+
+        var tc = new TestCenter(this, id);
+        await tc.InitAsync();
+        return tc;
     }
 
     public TenantDbContext Tenant(int centerId) => TenantFactory.CreateForCenter(centerId);
