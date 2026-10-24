@@ -1,17 +1,24 @@
-﻿
-namespace Sehatak.Infrastructure.CalculateSlot
+﻿namespace Sehatak.Infrastructure.CalculateSlot
 {
     public class GenerateTheoreticalSlots
     {
         public List<TimeOnly?> GenerateTheoreticalSlot(TimeOnly startTime, TimeOnly endTime, int slotDurationMinutes)
         {
             var slots = new List<TimeOnly?>();
-            var current = startTime;
-            while (current.AddMinutes(slotDurationMinutes) <= endTime)
+
+            if (slotDurationMinutes <= 0)
+                return slots;
+
+            var current = startTime.ToTimeSpan();
+            var end = endTime.ToTimeSpan();
+            var step = TimeSpan.FromMinutes(slotDurationMinutes);
+
+            while (current + step <= end)
             {
-                slots.Add(current);
-                current = current.AddMinutes(slotDurationMinutes);
+                slots.Add(TimeOnly.FromTimeSpan(current));
+                current += step;
             }
+
             return slots;
         }
     }
