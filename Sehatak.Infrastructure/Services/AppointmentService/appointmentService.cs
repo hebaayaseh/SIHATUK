@@ -622,7 +622,8 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                .FirstOrDefaultAsync();
 
             if (schedule == null)
-                throw new BusinessException("Doctor.NotFound");
+                if (schedule == null)
+                    throw new BusinessException("Schedule.NotFound");
 
             var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(
                 schedule.StartTime, schedule.EndTime,
