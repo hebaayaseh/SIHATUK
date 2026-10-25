@@ -37,9 +37,12 @@ namespace Sehatak.Infrastructure.Services.ConfirmPaymentService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            var user = await db.Users
+            var receptionist = await db.Users
                 .FirstOrDefaultAsync(u => u.Id == userId
-                                     && u.isActive);
+                         && u.isActive);
+
+            if (receptionist == null)
+                throw new BusinessException("Receptionist.NotFound");
 
             var payment = await db.Payments
                 .FirstOrDefaultAsync(p => p.AppointmentId == appointmentId
@@ -49,6 +52,7 @@ namespace Sehatak.Infrastructure.Services.ConfirmPaymentService
                 throw new BusinessException("Payment.NotFound");
 
             payment.Status = PaymentStatus.Paid;
+            payment.PaidAt = DateTime.UtcNow;
             payment.Method = request.Method;
             payment.RecordedByStaffId = userId;
 
@@ -105,12 +109,12 @@ namespace Sehatak.Infrastructure.Services.ConfirmPaymentService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            var user = await db.Users
+            var receptionist = await db.Users
                 .FirstOrDefaultAsync(u => u.Id == userId
-                                     && u.isActive);
+                         && u.isActive);
 
-            if (user == null)
-                throw new BusinessException("User.NotFound");
+            if (receptionist == null)
+                throw new BusinessException("Receptionist.NotFound");
 
             var labRequest = await db.LabRequests
                 .Include(p => p.Payment)
@@ -138,12 +142,12 @@ namespace Sehatak.Infrastructure.Services.ConfirmPaymentService
                 Method = request.Method,
                 Status = PaymentStatus.Paid,
                 RecordedByStaffId = userId,
-                PaidAt = ClinicClock.Now
+                PaidAt = DateTime.UtcNow
             };
 
             await db.Payments.AddAsync(payment);
             labRequest.Status = LabRequestStatus.Processing;
-            labRequest.UpdatedAt = ClinicClock.Now;
+            labRequest.UpdatedAt = DateTime.UtcNow;
 
             var auditEntry = auditLog.Build(
             action: "PayLabRequest",

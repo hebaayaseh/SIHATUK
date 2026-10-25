@@ -49,7 +49,7 @@ namespace Sehatak.Infrastructure.Services.BillPaymentService
                                         && s.patientId == subPatientId);
 
                 if (subPatient == null)
-                    throw new BusinessException("SubPatient.NotFound");
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
 
                 actingPatient = subPatient;
             }
@@ -115,7 +115,7 @@ namespace Sehatak.Infrastructure.Services.BillPaymentService
                                         && s.patientId == subPatientId);
 
                 if (subPatient == null)
-                    throw new BusinessException("SubPatient.NotFound");
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
 
                 actingPatient = subPatient;
             }
@@ -171,7 +171,7 @@ namespace Sehatak.Infrastructure.Services.BillPaymentService
                                         && s.patientId == subPatientId);
 
                 if (subPatient == null)
-                    throw new BusinessException("SubPatient.NotFound");
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
 
                 actingPatient = subPatient;
             }
