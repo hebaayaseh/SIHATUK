@@ -78,7 +78,11 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var bookedSlots = await db.Appointments
                 .Where(a => a.doctorId == doctorId
-                       && a.appointmentStatus == AppointmentStatus.Confirmed
+                       && (a.appointmentStatus == AppointmentStatus.Pending
+                            || a.appointmentStatus == AppointmentStatus.Confirmed
+                            || a.appointmentStatus == AppointmentStatus.CheckedIn
+                            || a.appointmentStatus == AppointmentStatus.InProgress
+                            || a.appointmentStatus == AppointmentStatus.Completed)
                        && a.appointmentDate == date)
                        .Select(a => a.timeSlot)
                        .ToListAsync();
@@ -202,7 +206,11 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var bookedSlots = await db.Appointments
                 .Where(a => a.doctorId == doctorId
-                       && a.appointmentStatus == AppointmentStatus.Confirmed
+                       && (a.appointmentStatus == AppointmentStatus.Pending
+                            || a.appointmentStatus == AppointmentStatus.Confirmed
+                            || a.appointmentStatus == AppointmentStatus.CheckedIn
+                            || a.appointmentStatus == AppointmentStatus.InProgress
+                            || a.appointmentStatus == AppointmentStatus.Completed)
                        && a.appointmentDate == request.dateOnly)
                       .Select(a => a.timeSlot)
                       .ToListAsync();
@@ -631,7 +639,11 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var bookedSlots = await db.Appointments
                  .Where(a => a.doctorId == doctorId
-                 && a.appointmentStatus == AppointmentStatus.Confirmed
+                 && (a.appointmentStatus == AppointmentStatus.Pending
+                      || a.appointmentStatus == AppointmentStatus.Confirmed
+                      || a.appointmentStatus == AppointmentStatus.CheckedIn
+                      || a.appointmentStatus == AppointmentStatus.InProgress
+                      || a.appointmentStatus == AppointmentStatus.Completed)
                  && a.appointmentDate == request.date)
                 .Select(a => a.timeSlot)
                 .ToListAsync();
@@ -759,6 +771,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
                 actingPatient = subPatient;
             }
+            var available = await GetAvailableDoctorSlot(centerId, doctorId, date);
+            if (available.dateAvailable.Any())
+                throw new BusinessException("Waitlist.SlotsAvailable");
 
             var alreadyInWaitlist = await db.Waitlists
                 .AnyAsync(w => w.DoctorId == doctorId
@@ -818,7 +833,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .Include(p => p.Patient)
                 .Where(d => d.DoctorId == doctor.Id
                        && d.PreferredDate == date)
-                .OrderByDescending(d => d.PreferredDate)
+                .OrderByDescending(d => d.CreatedAt)
                 .Select(w => new GetPatientWaitList
                 {
                     WaitLisId = w.Id,
@@ -892,7 +907,8 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                     : n.Patient.FirstName + " " + n.Patient.LastName,
                     PhoneNumber = n.Patient.userId != null ? n.Patient.user.phoneNumber : n.Patient.ParentPatient.user.phoneNumber,
                     Email = n.Patient.userId != null ? n.Patient.user.email : n.Patient.ParentPatient.user.email,
-                    status = n.Status
+                    status = n.Status,
+                    date = n.PreferredDate
                 }).FirstOrDefaultAsync();
 
             if (waitList == null)
@@ -1063,7 +1079,11 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var bookedSlots = await db.Appointments
                 .Where(a => a.doctorId == doctorId
-                       && a.appointmentStatus == AppointmentStatus.Confirmed
+                       && (a.appointmentStatus == AppointmentStatus.Pending
+                            || a.appointmentStatus == AppointmentStatus.Confirmed
+                            || a.appointmentStatus == AppointmentStatus.CheckedIn
+                            || a.appointmentStatus == AppointmentStatus.InProgress
+                            || a.appointmentStatus == AppointmentStatus.Completed)
                        && a.appointmentDate == request.dateOnly)
                       .Select(a => a.timeSlot)
                       .ToListAsync();
@@ -1190,6 +1210,14 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
+            var receptionist = await db.Users
+                .FirstOrDefaultAsync(u => u.Id == userId
+                                     && u.isActive
+                                     && u.role == userRole.Receptionist);
+
+            if (receptionist == null)
+                throw new BusinessException("Receptionist.NotFound");
+
             var doctor = await db.Doctors
                 .Include(u => u.user)
                 .FirstOrDefaultAsync(d => d.Id == doctorId
@@ -1205,6 +1233,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                                      && u.user.isActive);
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
+
 
             Patient actingPatient = patient;
 
@@ -1388,7 +1417,11 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var bookedSlots = await db.Appointments
                  .Where(a => a.doctorId == doctorId
-                 && a.appointmentStatus == AppointmentStatus.Confirmed
+                 && (a.appointmentStatus == AppointmentStatus.Pending
+                    || a.appointmentStatus == AppointmentStatus.Confirmed
+                    || a.appointmentStatus == AppointmentStatus.CheckedIn
+                    || a.appointmentStatus == AppointmentStatus.InProgress
+                    || a.appointmentStatus == AppointmentStatus.Completed)
                  && a.appointmentDate == request.date)
                 .Select(a => a.timeSlot)
                 .ToListAsync();

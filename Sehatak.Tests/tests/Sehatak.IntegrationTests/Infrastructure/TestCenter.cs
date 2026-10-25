@@ -86,6 +86,15 @@ public sealed class TestCenter
         return new PatientInfo(user.Id, patient.patientId);
     }
 
+    public async Task<int> AddReceptionistAsync(bool active = true)
+    {
+        await using var db = Harness.Tenant(Id);
+        var user = NewUser(userRole.Receptionist, active);
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+        return user.Id;
+    }
+
     /// <summary>A dependent (child) record: no login of its own, owned by the parent patient.</summary>
     public async Task<PatientInfo> AddSubPatientAsync(PatientInfo parent)
     {

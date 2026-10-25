@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AppointmentDto;
+using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.IntegrationTests.Infrastructure;
 using Shouldly;
@@ -262,4 +263,33 @@ public class RescheduleAppointmentTests(SqlServerFixture fx) : AppointmentTestBa
         await ShouldFailWith("Schedule.NotFound",
             () => DoMove(Pat.UserId, Move(id, S1000, TestCenter.FutureDate(DayOfWeek.Tuesday))));
     }
+    [Fact]
+    public async Task Rescheduling_frees_the_old_slot_but_does_not_promote_anyone_from_the_waitlist()
+    {
+        var filler = await C.AddPatientAsync();
+        var waiting = await C.AddPatientAsync();
+        var id = await C.AddAppointmentAsync(Doc.DoctorId, Pat.PatientId, Date, S0900);
+        foreach (var s in new[] { S0930, S1000, S1030 })
+            await C.AddAppointmentAsync(Doc.DoctorId, filler.PatientId, Date, s);
+        await using (var seed = Db())
+        {
+            seed.Waitlists.Add(new Waitlist
+            {
+                PatientId = waiting.PatientId,
+                DoctorId = Doc.DoctorId,
+                PreferredDate = Date,
+                Status = WaitlistStatus.Waiting,
+                CreatedAt = DateTime.UtcNow
+            });
+            await seed.SaveChangesAsync();
+        }
+
+    (await DoMove(Pat.UserId, Move(id, S0900, Date.AddDays(7)))).Success.ShouldBeTrue();
+
+        await using var db = Db();
+        (await db.Waitlists.SingleAsync()).Status.ShouldBe(WaitlistStatus.Waiting);
+        (await db.Appointments.CountAsync(a => a.appointmentDate == Date && a.timeSlot == S0900
+            && a.appointmentStatus == AppointmentStatus.Confirmed)).ShouldBe(0);
+    }
 }
+

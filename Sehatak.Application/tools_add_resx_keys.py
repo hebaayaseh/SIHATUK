@@ -120,7 +120,8 @@ ENTRIES = {
     "Validation.InvalidTarget": ("The selected target is not valid.", "الفئة المستهدفة غير صالحة."),
     "Verify.Code": ("The verification code is invalid or expired.", "رمز التحقق غير صالح أو منتهي الصلاحية."),
     "WaitList.NotFound": ("Waitlist entry not found.", "طلب قائمة الانتظار غير موجود."),
-    "Feedback.NotFound": ("Feedback not found.", "التعليق غير موجود.")
+    "Feedback.NotFound": ("Feedback not found.", "التعليق غير موجود."),
+    "Waitlist.SlotsAvailable": ("There are available slots for this doctor.", "هناك مواعيد متاحة لهذا الطبيب.")
 }
 
 TEMPLATE = '  <data name="{key}" xml:space="preserve">\n    <value>{value}</value>\n  </data>\n'
