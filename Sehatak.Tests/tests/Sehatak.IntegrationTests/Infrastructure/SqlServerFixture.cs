@@ -11,6 +11,7 @@ public sealed class SqlServerFixture : IAsyncLifetime
 {
     private readonly MsSqlContainer _container = new MsSqlBuilder()
         .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+        .WithEnvironment("MSSQL_MEMORY_LIMIT_MB", "2048")
         .Build();
 
     public TenantTestHarness Harness { get; private set; } = null!;

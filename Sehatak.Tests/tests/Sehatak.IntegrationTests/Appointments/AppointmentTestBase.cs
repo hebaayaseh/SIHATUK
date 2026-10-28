@@ -32,7 +32,7 @@ public abstract class AppointmentTestBase(SqlServerFixture fx) : IAsyncLifetime
         await C.AddScheduleAsync(Doc.DoctorId, DayOfWeek.Monday, S0900, new TimeOnly(11, 0), 30);
     }
 
-    public Task DisposeAsync() => Task.CompletedTask;
+    public virtual Task DisposeAsync() => Fx.Harness.DropTenantAsync(C.Id);
 
     protected TenantDbContext Db() => Fx.Harness.Tenant(C.Id);
 

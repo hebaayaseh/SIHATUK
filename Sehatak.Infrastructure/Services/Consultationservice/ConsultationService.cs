@@ -97,7 +97,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             var auditEntry =  auditLog.Build
                 (
-                action: "CancleConsultation",
+                action: "CancelConsultation",
                 entityType: "Consultation",
                 entityId: consultation.Id,
                 oldValue : oldValue,
@@ -223,7 +223,19 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 throw new BusinessException("Payment.AlreadyProcessed");
 
             if (payment.Consultation.ScheduledAt == null)
-                throw new BusinessException("Consultation.NotScheduledYet");   
+                throw new BusinessException("Consultation.NotScheduledYet");
+
+
+            var claimed = await db.Payments
+             .Where(p => p.Id == paymentId
+                    && p.Status == PaymentStatus.Pending
+                    && p.RecordedByStaffId == null)
+             .ExecuteUpdateAsync(s => s
+             .SetProperty(p => p.Status, PaymentStatus.Paid)
+             .SetProperty(p => p.RecordedByStaffId, doctor.user.Id));
+
+            if (claimed == 0)
+                throw new BusinessException("Payment.AlreadyProcessed");
 
             var patient = payment.Patient;
 
@@ -312,17 +324,17 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                                     && c.ScheduledAt != null);   
 
             if (consultaion == null)
-                throw new BusinessException("Consultation.NotScheduledYet");   
+                throw new BusinessException("Consultation.NotScheduledYet");
 
-            var paymentExists = await db.Payments
-                .AnyAsync(p => p.ConsultationId == consultationId
-                          && p.Status != PaymentStatus.Failed);
+            var existingPayment = await db.Payments
+              .FirstOrDefaultAsync(p => p.ConsultationId == consultationId);
 
-            if (paymentExists)
+            if (existingPayment != null && existingPayment.Status != PaymentStatus.Failed)
                 throw new BusinessException("Payment.Exists");
 
             var servicePrice = await db.ServicePrices
               .FirstOrDefaultAsync(s => s.Type == ServiceType.ConsultationCost && s.IsActive);
+
             if (servicePrice == null)
                 throw new BusinessException("ServicePrice.NotFound");
 
@@ -349,24 +361,42 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
                 receiptImageUrl = $"/uploads/receipts/{fileName}";
             }
-            var payment = new Payment
+            Payment payment;
+            if (existingPayment != null)           
             {
-                PatientId = actingPatient.patientId,
-                ConsultationId = consultationId,
-                ReceiptImageUrl = receiptImageUrl,
-                Amount = servicePrice.Price,
-                PaidAt = DateTime.UtcNow,
-                Method = request.Method,
-                Type = PaymentType.Consultation,
-                ReferenceNumber = request.ReferenceNumber,
-                Status = PaymentStatus.Pending,
-                Notes = request.Notes,
-                RecordedByStaffId = null,
-                
-            };
+                payment = existingPayment;
+                payment.Amount = servicePrice.Price;
+                payment.PaidAt = DateTime.UtcNow;
+                payment.Method = request.Method;
+                payment.ReferenceNumber = request.ReferenceNumber;
+                payment.ReceiptImageUrl = receiptImageUrl;
+                payment.Notes = request.Notes;
+                payment.Status = PaymentStatus.Pending;
+                payment.RecordedByStaffId = null;
+            }
+            else
+            {
+                payment = new Payment
+                {
+                    PatientId = actingPatient.patientId,
+                    ConsultationId = consultationId,
+                    ReceiptImageUrl = receiptImageUrl,
+                    Amount = servicePrice.Price,
+                    PaidAt = DateTime.UtcNow,
+                    Method = request.Method,
+                    Type = PaymentType.Consultation,
+                    ReferenceNumber = request.ReferenceNumber,
+                    Status = PaymentStatus.Pending,
+                    Notes = request.Notes,
+                    RecordedByStaffId = null,
+                };
+            }
+
             using var transaction = await db.Database.BeginTransactionAsync();
 
-            await db.Payments.AddAsync(payment);
+            if (existingPayment == null)
+                await db.Payments.AddAsync(payment);
+
             await db.SaveChangesAsync();
 
             var auditEntry =  auditLog.Build
@@ -602,6 +632,8 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             var payment = await db.Payments
                 .Include(p => p.Consultation)
+                .Include(p => p.Patient)
+                .ThenInclude(x => x.user)
                 .FirstOrDefaultAsync(p => p.Id == paymentId);
 
             if (payment == null)
@@ -623,6 +655,9 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             {
                 Id = payment.Id,
                 patientId = payment.PatientId,
+                PatientName = payment.Patient.userId != null
+                ? payment.Patient.user.firstName + " " + payment.Patient.user.lastName
+                : payment.Patient.FirstName + " " + payment.Patient.LastName,   
                 PaidAt = payment.PaidAt,
                 ReceiptImageUrl = payment.ReceiptImageUrl,
                 ReferenceNumber = payment.ReferenceNumber
@@ -663,6 +698,15 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 throw new BusinessException("Auth.Forbidden");
 
             if (payment.Status != PaymentStatus.Pending)
+                throw new BusinessException("Payment.AlreadyProcessed");
+
+            var claimed = await db.Payments
+              .Where(p => p.Id == paymentId && p.Status == PaymentStatus.Pending)
+              .ExecuteUpdateAsync(s => s
+              .SetProperty(p => p.Status, PaymentStatus.Failed)
+              .SetProperty(p => p.RecordedByStaffId, doctor.user.Id));
+
+            if (claimed == 0)
                 throw new BusinessException("Payment.AlreadyProcessed");
 
             payment.Status = PaymentStatus.Failed;
@@ -870,6 +914,9 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
         }
         public async Task<string> DoctorScheduleConsultationAsync(int centerId, int userId, int consultationId, DateTime scheduledAt)
         {
+            if (scheduledAt <= DateTime.UtcNow)
+                throw new BusinessException("Date.Invalid");
+
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
                                      && c.CenterStatus == CenterStatus.Active);

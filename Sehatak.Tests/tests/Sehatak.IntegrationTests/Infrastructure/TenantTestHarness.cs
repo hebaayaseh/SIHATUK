@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Sehatak.Domain.Entities.SharedEntities;
@@ -15,7 +15,7 @@ namespace Sehatak.IntegrationTests.Infrastructure;
 public sealed class TenantTestHarness
 {
     private static int _nextCenterId = 1000;
-
+    private readonly string _serverConnectionString;
     public IConfiguration Config { get; }
     public FakePushNotification Push { get; } = new();
     public TenantDbContextFactory TenantFactory { get; }
@@ -23,6 +23,7 @@ public sealed class TenantTestHarness
 
     private TenantTestHarness(string serverConnectionString)
     {
+        _serverConnectionString = serverConnectionString;
         var sb = new SqlConnectionStringBuilder(serverConnectionString) { InitialCatalog = "" };
         sb.Remove("Initial Catalog");
         var template = sb.ConnectionString.TrimEnd(';') + ";";   // factory appends "Database=sehatak_center_{id};"
@@ -42,6 +43,23 @@ public sealed class TenantTestHarness
         TenantFactory = new TenantDbContextFactory(Config, Push);
     }
 
+    /// <summary>يحذف قاعدة المركز بعد التيست لتوفير الذاكرة.</summary>
+    public async Task DropTenantAsync(int centerId)
+    {
+        SqlConnection.ClearAllPools();   // يسكّر الاتصالات المفتوحة على القاعدة
+        var master = new SqlConnectionStringBuilder(_serverConnectionString) { InitialCatalog = "master" };
+        await using var conn = new SqlConnection(master.ConnectionString);
+        await conn.OpenAsync();
+        var name = $"sehatak_center_{centerId}";
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = $@"
+        IF DB_ID('{name}') IS NOT NULL
+        BEGIN
+            ALTER DATABASE [{name}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+            DROP DATABASE [{name}];
+        END";
+        await cmd.ExecuteNonQueryAsync();
+    }
     public static async Task<TenantTestHarness> CreateAsync(string serverConnectionString)
     {
         var h = new TenantTestHarness(serverConnectionString);
