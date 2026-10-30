@@ -89,6 +89,7 @@ ENTRIES = {
     "LabRequest.DuplicateItem": ("This test is already in the lab request.", "هذا الفحص موجود بالفعل في الطلب."),
     "LabRequest.NotCollected": ("The samples have not been collected yet.", "لم يتم سحب العينات بعد."),
     "LabRequest.NotFound": ("Lab request not found.", "طلب المختبر غير موجود."),
+    "LabRequest.NoItems" : ("No item in the lab request. ","لا يوجد عناصر في الطلب"),
     "LabRequestItemNotFound": ("Lab request item not found.", "عنصر طلب المختبر غير موجود."),
     "LabResult.NotFound": ("Lab result not found.", "نتيجة المختبر غير موجودة."),
     "Medical.NotFound": ("Medical record not found.", "السجل الطبي غير موجود."),

@@ -46,11 +46,11 @@ namespace Sehatak.Infrastructure.Services.LabService
             var labRequest = await db.LabRequests
                 .FirstOrDefaultAsync(l => l.Id == labRequestId
                                      && l.RequestedByUserId == userId
-                                     && (l.Status != LabRequestStatus.Collected
-                                     && l.Status != LabRequestStatus.Completed));
+                                     && l.Status == LabRequestStatus.Pending);
 
             if (labRequest == null)
                 throw new BusinessException("LabRequest.NotFound");
+
             var oldValue = new
             {
                 patientId = labRequest.PatientId,
@@ -120,6 +120,8 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             if (appointment == null)
                 throw new BusinessException("Appointment.NotFound");
+            if (request.LabItems == null || request.LabItems.Count == 0)      
+                throw new BusinessException("LabRequest.NoItems");
 
             var labRequest = new LabRequest
             {
@@ -136,42 +138,46 @@ namespace Sehatak.Infrastructure.Services.LabService
             await db.LabRequests.AddAsync(labRequest);
 
             var responseItems = new List<LabItemResponseDto>();
-            if (request.LabItems != null)
-            {
+            var createdItems = new List<(LabRequestItem Entity, LabItemResponseDto Dto)>();
+
+            
                 var seenIds = new HashSet<int>();
-                foreach (var Item in request.LabItems)
+            foreach (var Item in request.LabItems)
+            {
+                if (!seenIds.Add(Item.Id))
+                    throw new BusinessException("LabRequest.DuplicateItem");
+
+                var servicePrice = await db.ServicePrices
+                    .FirstOrDefaultAsync(s => s.Id == Item.Id
+                                         && s.Type == ServiceType.LabTest
+                                         && s.IsActive);
+
+                if (servicePrice == null)
+                    throw new BusinessException("ServicePrice.NotFound");
+
+                var item = new LabRequestItem
                 {
-                    if (!seenIds.Add(Item.Id))
-                        throw new BusinessException("LabRequest.DuplicateItem");
+                    ServicePriceId = Item.Id,
+                    LabRequest = labRequest,
+                    UnitPrice = servicePrice.Price,
+                };
+                await db.LabRequestItems.AddAsync(item);
 
-                    var servicePrice = await db.ServicePrices
-                        .FirstOrDefaultAsync(s => s.Id == Item.Id
-                                             && s.Type == ServiceType.LabTest
-                                             && s.IsActive);
-
-                    if (servicePrice == null)
-                        throw new BusinessException("ServicePrice.NotFound");
-
-                    var item = new LabRequestItem
-                    {
-                        ServicePriceId = Item.Id,
-                        LabRequest = labRequest,
-                        UnitPrice = servicePrice.Price,
-                    };
-                    await db.LabRequestItems.AddAsync(item);
-
-                    responseItems.Add(new LabItemResponseDto
-                    {
-                        ServicePriceId = servicePrice.Id,
-                        ServiceName = servicePrice.ServiceName,
-                        UnitPrice = servicePrice.Price,
-                        ItemId = item.Id,
-                        IsAvailable = true
-                    });
-                }
+                var dto = new LabItemResponseDto
+                {
+                    ServicePriceId = servicePrice.Id,
+                    ServiceName = servicePrice.ServiceName,
+                    UnitPrice = servicePrice.Price,
+                    IsAvailable = true
+                };
+                responseItems.Add(dto);
+                createdItems.Add((item, dto));
             }
-
+            
             await db.SaveChangesAsync();
+            foreach (var (entity, dto) in createdItems)                       
+                dto.ItemId = entity.Id;
+
             var grandTotal = responseItems.Sum(i => i.UnitPrice);
 
             var auditEntry = auditLog.Build(
@@ -377,6 +383,16 @@ namespace Sehatak.Infrastructure.Services.LabService
 
             if (labRequest.Items.All(i => !i.IsAvailable))
                 throw new BusinessException("LabRequest.NoAvailableItems");
+            using var transaction = await db.Database.BeginTransactionAsync();
+
+            var claimed = await db.LabRequests
+                .Where(l => l.Id == labRequestId && l.Status == LabRequestStatus.Pending)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(l => l.Status, LabRequestStatus.Collected)
+                    .SetProperty(l => l.UpdatedAt, DateTime.UtcNow));
+
+            if (claimed == 0)
+                throw new BusinessException("LabRequest.AlreadyCollected");
 
             labRequest.Status = LabRequestStatus.Collected;
             labRequest.UpdatedAt = DateTime.UtcNow;
@@ -406,7 +422,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                 db.AuditLogs.Add(auditEntry);
 
             await db.SaveChangesAsync();
-
+            await transaction.CommitAsync();
             return "Collected";
         }
 
@@ -575,7 +591,8 @@ namespace Sehatak.Infrastructure.Services.LabService
 
                     result = $"/uploads/labResult/{fileName}";
                 }
-                Item.ResultFileUrl = result;
+                if (result != null)
+                    Item.ResultFileUrl = result;
             }
             using var transaction = await db.Database.BeginTransactionAsync();
             await db.SaveChangesAsync();
@@ -801,6 +818,9 @@ namespace Sehatak.Infrastructure.Services.LabService
             if (patientExists.userId != null && patientExists.user.isActive == false)
                 throw new BusinessException("Patient.NotFound");
 
+            if (request.LabItems == null || request.LabItems.Count == 0)      
+                throw new BusinessException("LabRequest.NoItems");            
+
             var labRequest = new LabRequest
             {
                 PatientId = patientExists.patientId,
@@ -814,42 +834,46 @@ namespace Sehatak.Infrastructure.Services.LabService
             await db.LabRequests.AddAsync(labRequest);
 
             var responseItems = new List<LabItemResponseDto>();
-            if (request.LabItems != null)
+            var createdItems = new List<(LabRequestItem Entity, LabItemResponseDto Dto)>();   
+
+            var seenIds = new HashSet<int>();
+            foreach (var Item in request.LabItems)
             {
-                var seenIds = new HashSet<int>();
-                foreach (var Item in request.LabItems)
+                if (!seenIds.Add(Item.Id))
+                    throw new BusinessException("LabRequest.DuplicateItem");
+
+                var servicePrice = await db.ServicePrices
+                    .FirstOrDefaultAsync(s => s.Id == Item.Id
+                                         && s.Type == ServiceType.LabTest
+                                         && s.IsActive);
+
+                if (servicePrice == null)
+                    throw new BusinessException("ServicePrice.NotFound");
+
+                var item = new LabRequestItem
                 {
-                    if (!seenIds.Add(Item.Id))
-                        throw new BusinessException("LabRequest.DuplicateItem");
+                    ServicePriceId = Item.Id,
+                    LabRequest = labRequest,
+                    UnitPrice = servicePrice.Price,
+                };
+                await db.LabRequestItems.AddAsync(item);
 
-                    var servicePrice = await db.ServicePrices
-                        .FirstOrDefaultAsync(s => s.Id == Item.Id
-                                             && s.Type == ServiceType.LabTest
-                                             && s.IsActive);
-
-                    if (servicePrice == null)
-                        throw new BusinessException("ServicePrice.NotFound");
-
-                    var item = new LabRequestItem
-                    {
-                        ServicePriceId = Item.Id,
-                        LabRequest = labRequest,
-                        UnitPrice = servicePrice.Price,
-                    };
-                    await db.LabRequestItems.AddAsync(item);
-
-                    responseItems.Add(new LabItemResponseDto
-                    {
-                        ServicePriceId = servicePrice.Id,
-                        ServiceName = servicePrice.ServiceName,
-                        UnitPrice = servicePrice.Price,
-                        ItemId = item.Id,
-                        IsAvailable = true
-                    });
-                }
+                var dto = new LabItemResponseDto                              
+                {
+                    ServicePriceId = servicePrice.Id,
+                    ServiceName = servicePrice.ServiceName,
+                    UnitPrice = servicePrice.Price,
+                    IsAvailable = true
+                };
+                responseItems.Add(dto);
+                createdItems.Add((item, dto));                                
             }
 
             await db.SaveChangesAsync();
+
+            foreach (var (entity, dto) in createdItems)                       
+                dto.ItemId = entity.Id;                                      
+
             var grandTotal = responseItems.Sum(i => i.UnitPrice);
 
             var auditEntry = auditLog.Build(
@@ -885,7 +909,7 @@ namespace Sehatak.Infrastructure.Services.LabService
                 TotalPrice = grandTotal,
                 LabStatus = labRequest.Status.ToString(),
                 Note = labRequest.Notes,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = labRequest.UpdatedAt
             };
         }
 

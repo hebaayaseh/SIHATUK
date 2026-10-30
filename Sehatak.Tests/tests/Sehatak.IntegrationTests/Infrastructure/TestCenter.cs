@@ -186,4 +186,12 @@ public sealed class TestCenter
         FirstName = "P", LastName = "Test", DateOfBith = new DateOnly(1990, 1, 1),
         WhatsappNumber = "0599000000", BloodType = BloodType.O_Positive, Gender = Gender.Male
     };
+    public async Task<int> AddLabTechnicianAsync(bool active = true)
+    {
+        await using var db = Harness.Tenant(Id);
+        var user = NewUser(userRole.LabTechnician, active);
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+        return user.Id;
+    }
 }
