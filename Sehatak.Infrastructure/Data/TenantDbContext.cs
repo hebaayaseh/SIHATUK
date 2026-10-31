@@ -437,6 +437,9 @@ namespace Sehatak.Infrastructure.Data
             {
                 entity.ToTable("follow_ups");
                 entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.OriginalAppointmentId)
+                     .IsUnique()
+                     .HasFilter("[Status] = 'Pending'");
 
                 entity.Property(e => e.Status).HasConversion<string>();
 

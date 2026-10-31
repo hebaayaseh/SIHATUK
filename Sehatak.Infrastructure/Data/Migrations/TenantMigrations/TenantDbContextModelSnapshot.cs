@@ -712,7 +712,9 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 
                     b.HasIndex("DoctorId");
 
-                    b.HasIndex("OriginalAppointmentId");
+                    b.HasIndex("OriginalAppointmentId")
+                        .IsUnique()
+                        .HasFilter("[Status] = 'Pending'");
 
                     b.HasIndex("PatientId");
 

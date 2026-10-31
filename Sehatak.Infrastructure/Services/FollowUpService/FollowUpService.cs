@@ -49,10 +49,12 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                 throw new BusinessException("Doctor.NotFound");
 
             var appointmentExists = await db.Appointments
-                .AnyAsync(a => a.Id == request.OriginalAppointmentId
-                           && a.doctorId == doctor.Id
-                           && a.appointmentStatus == AppointmentStatus.Confirmed
-                           && a.patientId == request.PatientId);
+              .AnyAsync(a => a.Id == request.OriginalAppointmentId
+                        && a.doctorId == doctor.Id
+                        && a.patientId == request.PatientId
+                        && (a.appointmentStatus == AppointmentStatus.Confirmed
+                        || a.appointmentStatus == AppointmentStatus.InProgress
+                        || a.appointmentStatus == AppointmentStatus.Completed));
 
             if (!appointmentExists)
                 throw new BusinessException("Appointment.NotFound");
@@ -103,8 +105,15 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                     CreatedAt = now,
                 });
             }
-            
-            await db.SaveChangesAsync();
+
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 })
+            {
+                throw new BusinessException("FollowUp.AlreadyExists");
+            }
 
             var auditEntry =  auditLog.Build(
             action: "AddFollowUp",
@@ -180,6 +189,9 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
 
         public async Task<FollowUpResponseDto> DoctorUpdateFollowUpAsync(int centerId, int userId, UpdateFollowUpRequestDto request)
         {
+            if (request.AllowFollowUpDate != null && request.AllowFollowUpDate < ClinicClock.Today)
+                throw new BusinessException("Date.Invalid");
+
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
                                      && c.CenterStatus == CenterStatus.Active);
@@ -225,7 +237,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                 })
                 .FirstAsync();
 
-            var now = ClinicClock.Now;
+            var now = DateTime.UtcNow;
             followUp.AllowFollowUpDate = request.AllowFollowUpDate;
             followUp.UpdatedAt = now;
 
@@ -312,6 +324,8 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                 .Select(f => new PatientGetAllFollowUpResponseDto
                 {
                     Id = f.Id,
+                    OriginalAppointmentId = f.OriginalAppointmentId,
+                    ScheduledAppointmentId = f.ScheduledAppointmentId,
                     DoctorId = f.DoctorId,
                     DoctorName = f.Doctor.user.firstName + " " + f.Doctor.user.lastName,
                     AllowFollowUpDate = f.AllowFollowUpDate,
@@ -348,7 +362,9 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
               .Include(a => a.Patient)
               .ThenInclude(p => p.user)
               .FirstOrDefaultAsync(a => a.Id == request.OriginalAppointmentId
-                         && a.appointmentStatus == AppointmentStatus.Confirmed
+                         && (a.appointmentStatus == AppointmentStatus.Confirmed
+                          || a.appointmentStatus == AppointmentStatus.InProgress
+                          || a.appointmentStatus == AppointmentStatus.Completed)
                          && a.patientId == request.PatientId
                          && a.doctorId == request.DoctorId);
 
@@ -369,7 +385,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
             if (duplicateFollowUp)
                 throw new BusinessException("FollowUp.AlreadyExists");
 
-            var now = ClinicClock.Now;
+            var now = DateTime.UtcNow;
             var followUp = new FollowUp
             {
                 OriginalAppointmentId = request.OriginalAppointmentId,
@@ -398,7 +414,15 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                 });
             }
 
-            await db.SaveChangesAsync();
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 })
+            {
+                throw new BusinessException("FollowUp.AlreadyExists");
+            }
+
             var auditEntry = auditLog.Build(
             action: "AddFollowUp",
             entityType: "FollowUp",
@@ -431,6 +455,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                 Status = followUp.Status,
                 CreatedAt = followUp.CreatedAt,
                 UpdatedAt = followUp.UpdatedAt,
+                ReceptionistId = followUp.ReceptionistId,
             };
         }
 
@@ -480,6 +505,9 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
 
         public async Task<FollowUpResponseDto> ReceptionistUpdateFollowUpAsync(int centerId, int userId, UpdateFollowUpRequestDto request)
         {
+            if (request.AllowFollowUpDate != null && request.AllowFollowUpDate < ClinicClock.Today)
+                throw new BusinessException("Date.Invalid");
+
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
                                      && c.CenterStatus == CenterStatus.Active);
