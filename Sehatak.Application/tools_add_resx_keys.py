@@ -122,10 +122,12 @@ ENTRIES = {
     "Verify.Code": ("The verification code is invalid or expired.", "رمز التحقق غير صالح أو منتهي الصلاحية."),
     "WaitList.NotFound": ("Waitlist entry not found.", "طلب قائمة الانتظار غير موجود."),
     "Feedback.NotFound": ("Feedback not found.", "التعليق غير موجود."),
-    "Waitlist.SlotsAvailable": ("There are available slots for this doctor.", "هناك مواعيد متاحة لهذا الطبيب.")
+    "Waitlist.SlotsAvailable": ("There are available slots for this doctor.", "هناك مواعيد متاحة لهذا الطبيب."),
+    "MedicalRecord.AlreadyExists": ("A medical record already exists for this appointment.","يوجد سجل طبي مسبق لهذا الموعد.")
 }
 
 TEMPLATE = '  <data name="{key}" xml:space="preserve">\n    <value>{value}</value>\n  </data>\n'
+
   
 
 def xml_escape(text: str) -> str:

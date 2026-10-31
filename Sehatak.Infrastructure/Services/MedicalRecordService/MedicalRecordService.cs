@@ -60,7 +60,10 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
             var totalCost = 0.0;
             var billAmount = 0.0;
             DateTime Create;
+            MedicalRecord record;                                                                  
+            var createdItems = new List<(AppointmentItem Entity, MedicalRecordItemResponseDto Dto)>(); 
             var responseItems = new List<MedicalRecordItemResponseDto>();
+
             if (request.AppointmentId != null)
             {
                 var doctorAppointment = await db.Appointments
@@ -72,7 +75,10 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                 if (doctorAppointment == null)
                     throw new BusinessException("Appointment.NotFound");
 
-                var record = new MedicalRecord
+                if (await db.MedicalRecords.AnyAsync(r => r.AppointmentId == request.AppointmentId))  
+                    throw new BusinessException("MedicalRecord.AlreadyExists");
+
+                record = new MedicalRecord
                 {
                     Diagnosis = request.Diagnosis,
                     Notes = request.Notes,
@@ -136,14 +142,16 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                         await db.AppointmentItems.AddAsync(Item);
                         totalCost += (double)itemTotal;
 
-                        responseItems.Add(new MedicalRecordItemResponseDto   
+                        var itemDto = new MedicalRecordItemResponseDto
                         {
-                            Id = servicePrice.Id,
-                            ServiceName = servicePrice.ServiceName,           
+                            ServicePriceId = servicePrice.Id,          
+                            ServiceName = servicePrice.ServiceName,
                             UnitPrice = servicePrice.Price,
                             Quantity = item.Quantity,
-                            TotalPrice = itemTotal                            
-                        });
+                            TotalPrice = itemTotal
+                        };
+                        responseItems.Add(itemDto);
+                        createdItems.Add((Item, itemDto));
                     }
                 }
 
@@ -166,12 +174,13 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                   .FirstOrDefaultAsync(c => c.DoctorId == doctor.Id
                           && c.PatientId == request.PatientId
                           && c.Id == request.ConsultationId
-                          && c.Status != ConsultationStatus.Rejected);
+                          && (c.Status == ConsultationStatus.Accepted
+                          || c.Status == ConsultationStatus.Completed));
 
                 if (doctorConsultation == null)
                     throw new BusinessException("Consultation.NotFound");
 
-                var record = new MedicalRecord
+                 record = new MedicalRecord
                 {
                     Diagnosis = request.Diagnosis,
                     Notes = request.Notes,
@@ -197,11 +206,13 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
             }
             using var transaction = await db.Database.BeginTransactionAsync();
             await db.SaveChangesAsync();
+            foreach (var (entity, dto) in createdItems)
+                dto.Id = entity.Id;
 
             var auditEntry = auditLog.Build(
                 action: "AddMedicalRecord",
                 entityType: "MedicalRecord",
-                entityId: request.AppointmentId ?? request.ConsultationId ?? 0,
+                entityId: record.Id,
                 oldValue: null,
                 newValue: new
                 {
@@ -226,11 +237,12 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
 
             return new MedicalRecordDetailResponseDto
             {
+                Id = record.Id,
                 PatientId = request.PatientId,
                 PatientName = patientExists.userId != null
                 ? patientExists.user.firstName + " " + patientExists.user.lastName
                 : patientExists.FirstName + " " + patientExists.LastName,
-                DoctorId = userId,
+                DoctorId = doctor.Id,
                 Diagnosis = request.Diagnosis,
                 BillAmount = (decimal?)billAmount,
                 DoctorName = $"{doctor.user.firstName} {doctor.user.lastName}",
@@ -279,9 +291,14 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                 throw new BusinessException("Patient.NotFound");
 
             var record = await db.MedicalRecords
-                .FirstOrDefaultAsync(m => m.Id == request.MedicalRecordId);
+                .FirstOrDefaultAsync(m => m.Id == request.MedicalRecordId
+                                     && m.DoctorId == doctor.Id
+                                     && m.PatientId == request.PatientId);
 
-            if (record == null)
+            if (record == null
+                || record.AppointmentId != request.AppointmentId
+                || record.ConsultationId != request.ConsultationId)
+
                 throw new BusinessException("Medical.NotFound");
 
             var oldValue = new
@@ -290,10 +307,11 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                 record.Prescription,
                 record.Notes
             };
-
+            record.UpdatedAt = DateTime.UtcNow;
             var totalCost = 0.0;
             var billAmount = 0.0;
             DateTime Create;
+            var createdItems = new List<(AppointmentItem Entity, MedicalRecordItemResponseDto Dto)>();  
             var responseItems = new List<MedicalRecordItemResponseDto>();
 
             if (request.AppointmentId != null)
@@ -370,15 +388,19 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                         await db.AppointmentItems.AddAsync(Item);
                         billAmount += (double)itemTotal;
 
-                        responseItems.Add(new MedicalRecordItemResponseDto
+                        await db.AppointmentItems.AddAsync(Item);
+                        totalCost += (double)itemTotal;
+
+                        var itemDto = new MedicalRecordItemResponseDto
                         {
-                            Id = servicePrice.Id,
+                            ServicePriceId = servicePrice.Id,         
                             ServiceName = servicePrice.ServiceName,
-                            ServicePriceId = servicePrice.Id,
                             UnitPrice = servicePrice.Price,
                             Quantity = item.Quantity,
                             TotalPrice = itemTotal
-                        });
+                        };
+                        responseItems.Add(itemDto);
+                        createdItems.Add((Item, itemDto));
                     }
                 }
                 var payment = await db.Payments
@@ -401,7 +423,8 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                     .FirstOrDefaultAsync(c => c.Id == request.ConsultationId
                                          && c.DoctorId == doctor.Id
                                          && c.PatientId == request.PatientId
-                                         && c.Status != ConsultationStatus.Rejected);
+                                         && (c.Status == ConsultationStatus.Accepted
+                                         || c.Status == ConsultationStatus.Completed));
 
                 if (consultation == null)
                     throw new BusinessException("Consultation.NotFound");
@@ -443,6 +466,8 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                 db.AuditLogs.Add(auditEntry);
 
             await db.SaveChangesAsync();
+            foreach (var (entity, dto) in createdItems)
+                dto.Id = entity.Id;
 
             return new MedicalRecordDetailResponseDto
             {
@@ -451,8 +476,8 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                 PatientName = patientExists.userId != null
                 ? patientExists.user.firstName + " " + patientExists.user.lastName
                 : patientExists.FirstName + " " + patientExists.LastName,
-                DoctorId = userId,
-                Diagnosis = request.Diagnosis,
+                DoctorId = doctor.Id,
+                Diagnosis = record.Diagnosis,
                 BillAmount = (decimal?)billAmount,
                 DoctorName = $"{doctor.user.firstName} {doctor.user.lastName}",
                 AppointmentId = request.AppointmentId,
@@ -461,7 +486,7 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
                 Prescription = record.Prescription,
                 Notes = record.Notes,
                 CreatedAt = Create,
-                UpdateAt = DateTime.UtcNow,
+                UpdateAt = record.UpdatedAt,
                 Items = responseItems.Any() ? responseItems : null,
 
             };
