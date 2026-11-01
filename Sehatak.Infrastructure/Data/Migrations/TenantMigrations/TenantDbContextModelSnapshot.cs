@@ -474,7 +474,9 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("doctorId");
+                    b.HasIndex("doctorId", "date")
+                        .IsUnique()
+                        .HasFilter("[timeSlot] IS NULL AND [isBlocked] = 1");
 
                     b.ToTable("DoctorBlockedDays");
                 });

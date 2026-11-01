@@ -515,6 +515,13 @@ namespace Sehatak.Infrastructure.Data
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
+            modelBuilder.Entity<DoctorBlockedDay>(entity =>
+            {
+                entity.HasIndex(e => new { e.doctorId, e.date })
+                      .IsUnique()
+                      .HasFilter("[timeSlot] IS NULL AND [isBlocked] = 1");
+            });
+
             // CONSULTATION 
             modelBuilder.Entity<Consultation>(entity =>
             {

@@ -17,10 +17,7 @@ namespace Sehatak.Application.Validators.Emergency
             RuleFor(x => x.DoctorUserId).ValidId();
             RuleFor(x => x.AmountPaid).Money();
 
-            // An insured case is billed to the insurer, not collected at the desk.
-            RuleFor(x => x.AmountPaid)
-                .Equal(0m).WithMessage(ValidationKeys.InvalidValue)
-                .When(x => x.IsInsurance);
+            
         }
     }
 

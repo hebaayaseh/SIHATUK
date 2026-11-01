@@ -34,6 +34,14 @@ namespace Sehatak.Infrastructure.Services.EmergencyService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
+            var receptionist = await db.Users
+                .FirstOrDefaultAsync(r => r.Id == userId
+                                     && r.isActive
+                                     && r.role == userRole.Receptionist);
+
+            if (receptionist == null)
+                throw new BusinessException("Receptionist.NotFound");
+
             var emergency = await db.EmergencyCases
                 .FirstOrDefaultAsync(e => e.Id == request.EmergencyId);
 
@@ -111,9 +119,11 @@ namespace Sehatak.Infrastructure.Services.EmergencyService
             var query =  db.StaffAttendances
                .Where(t => t.Staff.role == userRole.GeneralDoctor
                                    && t.AttendanceDate == date
+                                   && t.Staff.isActive
                                    && t.attendanceStatus != AttendanceStatus.Absent
                                    && t.attendanceStatus != AttendanceStatus.OnLeave)
                 .OrderBy(f => f.AttendanceDate)
+                .ThenBy(f => f.UserId)
                 .Select(n => new GetDoctorGeneralResponseDto
                 {
                     DoctorUserId = n.UserId,
@@ -138,7 +148,7 @@ namespace Sehatak.Infrastructure.Services.EmergencyService
             using var db = contextFactory.CreateForCenter(centerId);
 
             var query = db.EmergencyCases
-                .OrderBy(c=>c.CreatedAt)
+                .OrderByDescending(c => c.CreatedAt)
                 .Select(n => new EmergencyResponseDto
                 {
                     Id = n.Id,
@@ -233,8 +243,8 @@ namespace Sehatak.Infrastructure.Services.EmergencyService
                 DoctorUserId = request.DoctorUserId,
                 IsInsurance = request.IsInsurance,
                 AmountPaid = request.AmountPaid,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = patientEmergency.CreatedAt,
+                UpdatedAt = patientEmergency.UpdatedAt
             };
         }
     }

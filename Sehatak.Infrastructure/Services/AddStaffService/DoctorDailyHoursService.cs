@@ -69,7 +69,8 @@ namespace Sehatak.Infrastructure.Services.AddStaff
 
             var doctor = await db.Doctors
                 .Include(u => u.user)
-                .FirstOrDefaultAsync(d => d.Id == doctorId && d.user.isActive);
+                .FirstOrDefaultAsync(d => d.Id == doctorId 
+                                     && d.user.isActive);
 
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
@@ -78,7 +79,9 @@ namespace Sehatak.Infrastructure.Services.AddStaff
               .AnyAsync(s => s.DoctorId == doctorId
                     && s.DayOfWeek == request.DayOfWeek
                     && request.StartTime < s.EndTime
-                    && request.EndTime > s.StartTime);
+                    && request.EndTime > s.StartTime
+                    && s.IsActive);
+
             if (hasConflict)
                 throw new BusinessException("Schedule.Conflict");
 
@@ -128,6 +131,9 @@ namespace Sehatak.Infrastructure.Services.AddStaff
 
         public async Task<string> CancleDailyHoursAsync(int centerId, int userId, DateOnly date)
         {
+            if (date < ClinicClock.Today)
+                throw new BusinessException("Date.Invalid");
+
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
             if (center == null)
@@ -170,7 +176,8 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 .Include(a => a.Patient).ThenInclude(p => p.user)
                 .Where(a => a.doctorId == doctorId
                          && a.appointmentDate == date
-                         && a.appointmentStatus == AppointmentStatus.Confirmed)
+                         && (a.appointmentStatus == AppointmentStatus.Confirmed
+                         || a.appointmentStatus == AppointmentStatus.Pending))
                 .OrderBy(a => a.timeSlot)
                 .ToListAsync();
 
@@ -246,21 +253,33 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 });
             }
 
-            var auditEntry = auditLog.Build(
-            action: "CancelDoctorDay",
-            entityType: "DoctorBlockedDay",
-            entityId: blockedDay.Id,
-            newValue: new 
+            using var transaction = await db.Database.BeginTransactionAsync();
+
+            try
             {
-                doctorId,
-                date = date.ToString("yyyy-MM-dd"),
-                cancelledAppointmentIds = appointmentIds,
-                exitedWaitlistCount = waitList.Count
-             });
+                await db.SaveChangesAsync();   // الحظر والإلغاءات والإشعارات
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 })
+            {
+                throw new BusinessException("Doctor.DayAlreadyBlocked");
+            }
+
+            var auditEntry = auditLog.Build(
+                action: "CancelDoctorDay",
+                entityType: "DoctorBlockedDay",
+                entityId: blockedDay.Id,       
+                newValue: new
+                {
+                    doctorId,
+                    date = date.ToString("yyyy-MM-dd"),
+                    cancelledAppointmentIds = appointmentIds,
+                    exitedWaitlistCount = waitList.Count
+                });
             if (auditEntry != null)
                 db.AuditLogs.Add(auditEntry);
 
             await db.SaveChangesAsync();
+            await transaction.CommitAsync();
             return appointments.Any()
                 ? "تم إلغاء مواعيد اليوم بنجاح ومنع الحجز الجديد لهذا التاريخ."
                 : "تم حظر هذا اليوم من الحجز بنجاح.";
@@ -288,15 +307,16 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
-            var doctorSchedual = await db.DoctorSchedules
-                .FirstOrDefaultAsync(d => d.DoctorId == doctorId);
-
-            if (doctorSchedual == null)
-                throw new BusinessException("Schedule.NotFound");
 
             var query =  db.DoctorSchedules
                 .Where(d => d.DoctorId == doctorId)
-                .OrderBy(d => d.DayOfWeek)
+                .OrderBy(d => d.DayOfWeek == DayOfWeek.Sunday ? 0
+                         : d.DayOfWeek == DayOfWeek.Monday ? 1
+                         : d.DayOfWeek == DayOfWeek.Tuesday ? 2
+                         : d.DayOfWeek == DayOfWeek.Wednesday ? 3
+                         : d.DayOfWeek == DayOfWeek.Thursday ? 4
+                         : d.DayOfWeek == DayOfWeek.Friday ? 5 : 6)
+                .ThenBy(d => d.StartTime)
                 .Select(n=>new GetDoctorDailyHoursResponse
                 {
                     Id = n.Id,
@@ -355,18 +375,29 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             if (hasConflict)
                 throw new BusinessException("Schedule.Conflict");
 
+            var unchanged = request.DayOfWeek == doctorSchedual.DayOfWeek
+             && request.StartTime == doctorSchedual.StartTime
+             && request.EndTime == doctorSchedual.EndTime
+             && request.SlotDurationMinutes == doctorSchedual.SlotDurationMinutes;
 
-            var affectedAppointments = await db.Appointments
-                .Include(a => a.Patient)
-                .ThenInclude(p => p.user)
-                .Where(a => a.doctorId == doctorId
-                    && a.appointmentStatus == AppointmentStatus.Confirmed
-                    && a.appointmentDate.DayOfWeek == doctorSchedual.DayOfWeek
-                    && a.timeSlot.HasValue
-                    && a.timeSlot.Value >= doctorSchedual.StartTime
-                    && a.timeSlot.Value < doctorSchedual.EndTime)
+            if (unchanged)
+                throw new BusinessException("Schedule.NoChanges");
+
+            var candidates = await db.Appointments
+               .Include(a => a.Patient)
+               .ThenInclude(p => p.user)
+               .Where(a => a.doctorId == doctorId
+                      && a.appointmentStatus == AppointmentStatus.Confirmed
+                      && a.appointmentDate >= ClinicClock.Today
+                      && a.timeSlot.HasValue
+                      && a.timeSlot.Value >= doctorSchedual.StartTime
+                      && a.timeSlot.Value < doctorSchedual.EndTime)
+               .ToListAsync();
+
+            var affectedAppointments = candidates
+                .Where(a => a.appointmentDate.DayOfWeek == doctorSchedual.DayOfWeek)
                 .OrderBy(a => a.appointmentDate)
-                .ToListAsync();
+                .ToList();
 
             foreach (var appointment in affectedAppointments)
             {
@@ -442,7 +473,6 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             await db.DoctorSchedules.AddAsync(newSchedule);
 
             await db.SaveChangesAsync();
-            InvalidateDoctorScheduleCache(centerId, doctorId);
             var auditEntry = auditLog.Build(
             action: "UpdateDoctorSchedule",
             entityType: "DoctorSchedule",
@@ -462,6 +492,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 db.AuditLogs.Add(auditEntry);
             await db.SaveChangesAsync();
             await transaction.CommitAsync();
+            InvalidateDoctorScheduleCache(centerId, doctorId);
 
             return new UpdateDoctorDailyHoursResponse
             {
