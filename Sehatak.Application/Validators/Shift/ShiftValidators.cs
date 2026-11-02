@@ -68,17 +68,6 @@ namespace Sehatak.Application.Validators.Shift
                 .RealDate()
                 .LessThanOrEqualTo(_ => ValidationRules.Today).WithMessage(ValidationKeys.DateInFuture);
 
-            RuleFor(x => x.CheckTime)
-                .RealDateTime()
-                .LessThanOrEqualTo(_ => DateTime.UtcNow.AddMinutes(5))
-                .WithMessage(ValidationKeys.DateInFuture);
-
-            // The clock-in timestamp has to belong to the day being recorded.
-            RuleFor(x => x)
-                .Must(x => DateOnly.FromDateTime(x.CheckTime) == x.AttendanceDate)
-                .WithMessage(ValidationKeys.InvalidDate)
-                .OverridePropertyName(nameof(StaffAttendanceCheckInRequestDto.CheckTime))
-                .When(x => x.AttendanceDate != default && x.CheckTime != default);
         }
     }
 

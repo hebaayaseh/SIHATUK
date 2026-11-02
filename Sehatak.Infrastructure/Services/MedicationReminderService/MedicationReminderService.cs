@@ -37,7 +37,7 @@ namespace Sehatak.Infrastructure.Services.MedicationReminderService
                                      && p.user.isActive);
 
             if (patient == null)
-                throw new BusinessException("Center.NotFound");
+                throw new BusinessException("Patient.NotFound");
 
             Patient actingPatient = patient;
 
@@ -53,7 +53,7 @@ namespace Sehatak.Infrastructure.Services.MedicationReminderService
                 actingPatient = subPatient;
             }
 
-            var startDate = DateOnly.FromDateTime(DateTime.UtcNow);
+            var startDate = ClinicClock.Today;
 
             var reminder = new MedicationReminder
             {

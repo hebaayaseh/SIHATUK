@@ -20,5 +20,8 @@
         public static DateOnly Today =>
             DateOnly.FromDateTime(Now);
 
+        public static DateTime FromUtc(DateTime utc) =>
+           TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), Zone);
+
     }
 }

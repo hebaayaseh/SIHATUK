@@ -119,6 +119,9 @@ namespace Sehatak.Infrastructure.Services.CheckTimeService
             if (appointment.actualStartTime != null)
                 throw new BusinessException("Appointment.AlreadyStarted");
 
+            if (appointment.appointmentDate != ClinicClock.Today)
+                throw new BusinessException("Appointment.NotToday");
+
             appointment.actualStartTime = DateTime.UtcNow;
             appointment.appointmentStatus = AppointmentStatus.InProgress;
 

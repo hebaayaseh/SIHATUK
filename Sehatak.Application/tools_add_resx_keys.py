@@ -124,7 +124,8 @@ ENTRIES = {
     "Feedback.NotFound": ("Feedback not found.", "التعليق غير موجود."),
     "Waitlist.SlotsAvailable": ("There are available slots for this doctor.", "هناك مواعيد متاحة لهذا الطبيب."),
     "MedicalRecord.AlreadyExists": ("A medical record already exists for this appointment.","يوجد سجل طبي مسبق لهذا الموعد."),
-    "Schedule.NoChanges": ("No changes were made to the schedule.","لم يتم إجراء أي تغييرات على الجدول."),")
+    "Schedule.NoChanges": ("No changes were made to the schedule.","لم يتم إجراء أي تغييرات على الجدول."),
+    "Appointment.NotToday": ("The appointment is not scheduled for today.", "الموعد ليس محددًا لليوم.")
 }
 
 TEMPLATE = '  <data name="{key}" xml:space="preserve">\n    <value>{value}</value>\n  </data>\n'

@@ -36,8 +36,8 @@ namespace Sehatak.Infrastructure.Services.GetStaff
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
-            var targetYear = year ?? DateTime.UtcNow.Year;
-            var targetMonth = month ?? DateTime.UtcNow.Month;
+            var targetYear = year ?? ClinicClock.Today.Year;
+            var targetMonth = month ?? ClinicClock.Today.Month;
 
             var startOfMonth = new DateOnly(targetYear, targetMonth, 1);
             var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);

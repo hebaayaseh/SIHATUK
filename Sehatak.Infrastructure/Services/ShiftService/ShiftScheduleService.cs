@@ -108,7 +108,6 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             var alreadyAssigned = await db.StaffShifts
                .AnyAsync(s => s.UserId == request.UserId &&
                          s.ShiftDate == request.ShiftDate 
-                         && s.ShiftName == request.ShiftName
                          && s.IsActive);
 
             if (alreadyAssigned)
@@ -185,15 +184,18 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             if (staffs.Any())
             {
                 foreach (var staff in staffs)
+                    staff.IsActive = false;
+
+                foreach (var staffUserId in staffs.Select(s => s.UserId).Distinct())
                 {
-                    await db.Notifications.AddRangeAsync(new Notification
+                    db.Notifications.Add(new Notification
                     {
-                        UserId = staff.UserId,
+                        UserId = staffUserId,
                         Type = NotificationType.Shift,
-                        Message = $"تم حذف جدول الدوام انتظروا التعديل ",
+                        Message = "تم حذف جدول الدوام انتظروا التعديل ",
+                        CreatedAt = DateTime.UtcNow,
                         IsRead = false
                     });
-                    staff.IsActive = false;
                 }
             }
 
@@ -282,8 +284,8 @@ namespace Sehatak.Infrastructure.Services.ShiftService
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
-            var targetYear = year ?? DateTime.UtcNow.Year;
-            var targetMonth = month ?? DateTime.UtcNow.Month;
+            var targetYear = year ?? ClinicClock.Today.Year;
+            var targetMonth = month ?? ClinicClock.Today.Month;
 
             var startOfMonth = new DateOnly(targetYear, targetMonth, 1);
             var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
@@ -386,6 +388,13 @@ namespace Sehatak.Infrastructure.Services.ShiftService
                 StartTime = shift.StartTime,
                 EndTime = shift.EndTime
             };
+            if (request.ShiftName != null && request.ShiftName != shift.ShiftName)
+            {
+                var nameTaken = await db.shiftSchedules
+                    .AnyAsync(s => s.ShiftName == request.ShiftName && s.Id != shift.Id);
+                if (nameTaken)
+                    throw new BusinessException("ShiftSchedule.AlreadyExists");
+            }
 
             if (request.StartTime != null)
                 shift.StartTime = (TimeOnly)request.StartTime;
@@ -394,18 +403,21 @@ namespace Sehatak.Infrastructure.Services.ShiftService
                 shift.EndTime = (TimeOnly)request.EndTime;
 
             if (request.ShiftName != null)
-                shift.ShiftName = (ShiftGroup)request.ShiftName;
+            {
+                shift.ShiftName = request.ShiftName.Value;
+                foreach (var staff in staffs)
+                    staff.ShiftName = request.ShiftName.Value;
+            }
 
             if (staffs.Any())
             {
-                foreach (var staff in staffs)
+                foreach (var staffUserId in staffs.Select(s => s.UserId).Distinct())
                 {
-                    await db.Notifications.AddRangeAsync(new Notification
+                    db.Notifications.Add(new Notification
                     {
-                        UserId = staff.UserId,
+                        UserId = staffUserId,
                         Type = NotificationType.Shift,
-                        Message =$"تم تعديل موعد الدوام الى " +
-                        $"\n{shift.StartTime} - {shift.EndTime}",
+                        Message = $"تم تعديل موعد الدوام الى \n{shift.StartTime} - {shift.EndTime}",
                         CreatedAt = DateTime.UtcNow,
                         IsRead = false
                     });
