@@ -34,8 +34,11 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
         private static string CacheKey(int centerId) =>
             $"departmentss:{centerId}";
 
-        private void InvalidateDepartmentCache(int centerId) =>
+        private void InvalidateDepartmentCache(int centerId)
+        {
+            cache.Remove(CacheKey(centerId));
             cacheKeysByCenter.TryRemove(centerId, out _);
+        }
 
         private static readonly ConcurrentDictionary<int, ConcurrentBag<string>> cacheKeysByCenter = new();
 
@@ -44,6 +47,7 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
             var bag = cacheKeysByCenter.GetOrAdd(centerId, _ => new ConcurrentBag<string>());
             bag.Add(key);
         }
+
         public async Task<DepartmentResponseDto> AddDepartmentAsync(int centerId,DepartmentRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
@@ -72,7 +76,7 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
                     await request.logo.CopyToAsync(stream);
                 }
 
-                imageUrl = $"/uploads/receipts/{fileName}";
+                imageUrl = $"/uploads/department/{fileName}";
             }
             var newDepartment = new Department
             { 
@@ -99,6 +103,7 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
 
             await db.SaveChangesAsync();
             await transaction.CommitAsync();
+            InvalidateDepartmentCache(centerId);
 
             return new DepartmentResponseDto
             {
@@ -130,6 +135,9 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
                 departmentName = department.Name,
                 departmentDescription = department.Description
             };
+            if (request.departmentName != null &&
+                   await db.Departments.AnyAsync(d => d.Name == request.departmentName && d.Id != department.Id))
+                throw new BusinessException("Department.Exist");
 
             if (request.departmentName != null) department.Name = request.departmentName;
             if (request.departmentdiscription != null) department.Description = request.departmentdiscription;
@@ -137,7 +145,7 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
             {
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.logo.FileName);
 
-                var path = Path.Combine("wwwroot/uploads/receipts", fileName);
+                var path = Path.Combine("wwwroot/uploads/department", fileName);
 
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
@@ -186,6 +194,8 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
             if (department == null)
                 throw new BusinessException("Department.NotFound");
 
+            if (await db.Doctors.AnyAsync(d => d.departmentId == department.Id))
+                throw new BusinessException("Department.HasDoctors");
             db.Departments.Remove(department);
             var auditEntry = auditLog.Build(
              action: "RemoveDepartment",
@@ -227,6 +237,7 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
                     Id = a.Id,
                     departmentDescription = a.Description,
                     departmentName = a.Name,
+                    logo = a.ImageUrl
                 }).ToListAsync();
 
 
@@ -238,8 +249,8 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
             cache.Set(key, result ,TimeSpan.FromHours(1));
             return result;
         }
-    
-    public async Task<DoctorResponseDto> RegisterDoctorAsync(int centerId, DoctorRequestDto request)
+
+        public async Task<DoctorResponseDto> RegisterDoctorAsync(int centerId, DoctorRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -288,32 +299,44 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
                 }
                 user.ProfileImageUrl = $"/uploads/department/{fileName}";
             }
-            await db.Users.AddAsync(user);
-            await db.SaveChangesAsync();
-
-            var doctor = new Doctor
+            using var transaction = await db.Database.BeginTransactionAsync();
+            try
             {
-                userId = user.Id,
-                Specialization = request.Specialization,
-                Bio = request.Bio,
-                departmentId = request.departmentId,
-                OnlineEnabled = request.OnlineEnabled,
-            };
+                await db.Users.AddAsync(user);
+                await db.SaveChangesAsync();
 
-            await db.Doctors.AddAsync(doctor);
-            await db.SaveChangesAsync();
+                var doctor = new Doctor
+                {
+                    userId = user.Id,
+                    Specialization = request.Specialization,
+                    Bio = request.Bio,
+                    departmentId = request.departmentId,
+                    OnlineEnabled = request.OnlineEnabled,
+                };
+                await db.Doctors.AddAsync(doctor);
+                await db.SaveChangesAsync();
 
-            await emailService.SendTempPasswordAsync(
-                request.email,
-                name: $"{request.doctorFirstName} {request.doctorLastName}",
-                tempPasswored, center.Name);
+                var audit = auditLog.Build("RegisterDoctor", "User", user.Id, null,
+                    new { user.firstName, user.lastName, user.email, doctor.Specialization, doctor.departmentId });
+                if (audit != null) db.AuditLogs.Add(audit);
+                await db.SaveChangesAsync();
 
+                await emailService.SendTempPasswordAsync(request.email,
+                    $"{request.doctorFirstName} {request.doctorLastName}", tempPasswored, center.Name);
+
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 })
+            {
+                throw new BusinessException("Auth.EmailExists");
+            }
             return new DoctorResponseDto
             {
                 UserId = user.Id,
                 Email = request.email,
                 Message = "تم التسجيل، يرجى الانتباه لكلمة المرور وتغيريها في أقرب وقت."
             };
+
         }
         private string GenerateTempPassword()
         {

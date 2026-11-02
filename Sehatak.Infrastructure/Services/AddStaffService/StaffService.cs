@@ -28,12 +28,10 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             this.auditLog = auditLog;
         }
 
-
-
         public async Task<AddStafResponseDto> AddStafAsync(int userId, int centerId, AddStaffRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
-               .FirstOrDefaultAsync(c => c.Id == centerId 
+               .FirstOrDefaultAsync(c => c.Id == centerId
                                     && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
@@ -85,35 +83,44 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 newStaff.ProfileImageUrl = $"/uploads/profileImage/{fileName}";
             }
             using var transaction = await db.Database.BeginTransactionAsync();
-            await db.Users.AddAsync(newStaff);
-            await db.SaveChangesAsync();
+            try
+            {
+                await db.Users.AddAsync(newStaff);
+                await db.SaveChangesAsync();
 
-            // Audit: لا نسجل passwordHash أبداً
-            var auditEntry = auditLog.Build(
-                action: "CreateStaff",
-                entityType: "User",
-                entityId: newStaff.Id,
-                newValue: new
-                {
-                    newStaff.firstName,
-                    newStaff.lastName,
-                    newStaff.email,
-                    role = newStaff.role.ToString(),
-                    newStaff.phoneNumber,
-                    newStaff.city,
-                    newStaff.isActive
-                });
-            if (auditEntry != null)
-                db.AuditLogs.Add(auditEntry);
+                // Audit: لا نسجل passwordHash أبداً
+                var auditEntry = auditLog.Build(
+                    action: "CreateStaff",
+                    entityType: "User",
+                    entityId: newStaff.Id,
+                    newValue: new
+                    {
+                        newStaff.firstName,
+                        newStaff.lastName,
+                        newStaff.email,
+                        role = newStaff.role.ToString(),
+                        newStaff.phoneNumber,
+                        newStaff.city,
+                        newStaff.isActive
+                    });
+                if (auditEntry != null)
+                    db.AuditLogs.Add(auditEntry);
 
-            await db.SaveChangesAsync();
-            await transaction.CommitAsync();
+                await db.SaveChangesAsync();
 
-            await emailService.SendTempPasswordAsync(
-                request.email,
-                 name: $"{request.FirstName} {request.LastName}",
-                 tempPaswored,
-                  center.Name);
+                // الإيميل قبل الـ Commit: إذا فشل، بيعمل Rollback ولا يبقى حساب ناقص
+                await emailService.SendTempPasswordAsync(
+                    request.email,
+                    name: $"{request.FirstName} {request.LastName}",
+                    tempPaswored,
+                    center.Name);
+
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 })
+            {
+                throw new BusinessException("Auth.EmailExists");
+            }
 
             return new AddStafResponseDto
             {
@@ -132,7 +139,8 @@ namespace Sehatak.Infrastructure.Services.AddStaff
         public async Task<bool> ActiveStaffAsync(int centerId, RemoveStaffRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
-              .FindAsync(centerId);
+                .FirstOrDefaultAsync(c => c.Id == centerId 
+                                     && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
                 throw new BusinessException("Center.NotFound");
@@ -142,7 +150,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 .FirstOrDefaultAsync(u => u.Id == request.userId);
 
             if (user == null)
-                throw new BusinessException("General.NotFound");
+                throw new BusinessException("User.NotFound");
             if (user.role == userRole.Patient)
                 throw new BusinessException("Auth.Forbidden");
 
@@ -165,17 +173,20 @@ namespace Sehatak.Infrastructure.Services.AddStaff
         public async Task<bool> RemoveStaffAsync(int centerId, RemoveStaffRequestDto request)
         {
             var center = await sharedDbContext.MedicalCenters
-                .FindAsync(centerId);
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
             var user = await db.Users
-                .FirstOrDefaultAsync(u => u.Id == request.userId);
+                .FirstOrDefaultAsync(u => u.Id == request.userId
+                                     && u.isActive);
 
             if (user == null)
-                throw new BusinessException("General.NotFound");
+                throw new BusinessException("User.NotFound");
+
             if (user.role == userRole.Patient)
                 throw new BusinessException("Auth.Forbidden");
 
@@ -192,6 +203,11 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             if (auditEntry != null)
                 db.AuditLogs.Add(auditEntry);
             await db.SaveChangesAsync();
+            await sharedDbContext.RefreshTokens
+                .Where(t => t.UserId == user.Id 
+                       && t.CenterId == centerId
+                       && t.OwnerType == TokenOwnerType.TenantUser && !t.IsRevoked)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsRevoked, true));
 
             return true;
         }

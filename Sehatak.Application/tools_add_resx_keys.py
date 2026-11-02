@@ -125,7 +125,11 @@ ENTRIES = {
     "Waitlist.SlotsAvailable": ("There are available slots for this doctor.", "هناك مواعيد متاحة لهذا الطبيب."),
     "MedicalRecord.AlreadyExists": ("A medical record already exists for this appointment.","يوجد سجل طبي مسبق لهذا الموعد."),
     "Schedule.NoChanges": ("No changes were made to the schedule.","لم يتم إجراء أي تغييرات على الجدول."),
-    "Appointment.NotToday": ("The appointment is not scheduled for today.", "الموعد ليس محددًا لليوم.")
+    "Appointment.NotToday": ("The appointment is not scheduled for today.", "الموعد ليس محددًا لليوم."),
+    "Department.HasDoctors": ("Cannot delete a department that has doctors.", "لا يمكن حذف قسم يحتوي على أطباء."),
+    "Department.NotFound": ("Department not found.", "القسم غير موجود."),
+    "Department.Exist": ("A department with this name already exists.", "يوجد قسم بهذا الاسم مسبقًا."),
+    "User.NotFound": ("User not found.", "المستخدم غير موجود."),
 }
 
 TEMPLATE = '  <data name="{key}" xml:space="preserve">\n    <value>{value}</value>\n  </data>\n'
