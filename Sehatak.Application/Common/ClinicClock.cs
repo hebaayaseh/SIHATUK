@@ -21,7 +21,10 @@
             DateOnly.FromDateTime(Now);
 
         public static DateTime FromUtc(DateTime utc) =>
-           TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), Zone);
+          TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), Zone);
 
+
+        public static DateTime ToUtc(DateTime clinicLocal) =>
+            TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(clinicLocal, DateTimeKind.Unspecified), Zone);
     }
 }

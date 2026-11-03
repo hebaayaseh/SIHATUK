@@ -54,11 +54,13 @@ namespace Sehatak.Infrastructure.Services.SalaryServices
                 throw new BusinessException("Validation.InvalidMonth");
         }
 
+        private const decimal MaxAmount = 99_999_999m;
+
         public async Task<CategorySalaryItemDto> SetCategorySalaryAsync(int centerId, int userId, SetCategorySalaryRequestDto request)
         {
             ValidateYearMonth(request.Year, request.Month);
 
-            if (request.Amount < 0)
+            if (request.Amount < 0 || request.Amount > MaxAmount)
                 throw new BusinessException("Validation.InvalidAmount");
 
             if (!Enum.IsDefined(request.Category))
@@ -86,7 +88,21 @@ namespace Sehatak.Infrastructure.Services.SalaryServices
             salary.UpdatedByUserId = userId;
             salary.UpdatedAt = DateTime.UtcNow;
 
-            await db.SaveChangesAsync();
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (IsDuplicateKey(ex))
+            {
+                db.ChangeTracker.Clear();
+                salary = await db.MonthlySalaries.FirstAsync(s => s.Year == request.Year
+                                                              && s.Month == request.Month
+                                                              && s.Category == request.Category);
+                salary.Amount = request.Amount;
+                salary.UpdatedByUserId = userId;
+                salary.UpdatedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync();
+            }
 
             return new CategorySalaryItemDto
             {
@@ -99,7 +115,7 @@ namespace Sehatak.Infrastructure.Services.SalaryServices
         {
             ValidateYearMonth(request.Year, request.Month);
 
-            if (request.Amount < 0)
+            if (request.Amount < 0 || request.Amount > MaxAmount)
                 throw new BusinessException("Validation.InvalidAmount");
 
             using var db = await OpenAdminDbAsync(centerId, userId);
@@ -132,12 +148,29 @@ namespace Sehatak.Infrastructure.Services.SalaryServices
             salary.UpdatedByUserId = userId;
             salary.UpdatedAt = DateTime.UtcNow;
 
-            await db.SaveChangesAsync();
+            var doctorId = doctor.Id;
+            var doctorName = $"{doctor.user.firstName} {doctor.user.lastName}";
+
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (IsDuplicateKey(ex))
+            {
+                db.ChangeTracker.Clear();
+                salary = await db.DoctorSalaries.FirstAsync(s => s.DoctorId == doctorId
+                                                             && s.Year == request.Year
+                                                             && s.Month == request.Month);
+                salary.Amount = request.Amount;
+                salary.UpdatedByUserId = userId;
+                salary.UpdatedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync();
+            }
 
             return new DoctorSalaryItemDto
             {
-                DoctorId = doctor.Id,
-                DoctorName = $"{doctor.user.firstName} {doctor.user.lastName}",
+                DoctorId = doctorId,
+                DoctorName = doctorName,
                 Amount = salary.Amount
             };
         }
@@ -198,5 +231,7 @@ namespace Sehatak.Infrastructure.Services.SalaryServices
                 TotalSalaries = categoriesTotal + doctorsTotal
             };
         }
+        private static bool IsDuplicateKey(DbUpdateException ex) =>
+           ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 };
     }
 }

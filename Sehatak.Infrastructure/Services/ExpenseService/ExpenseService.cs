@@ -46,6 +46,7 @@ namespace Sehatak.Infrastructure.Services.ExpenseService
             return db;
         }
 
+        private const decimal MaxAmount = 99_999_999m;
         private static ExpenseResponseDto ToDto(Expense e) => new ExpenseResponseDto
         {
             Id = e.Id,
@@ -59,7 +60,7 @@ namespace Sehatak.Infrastructure.Services.ExpenseService
 
         public async Task<ExpenseResponseDto> AddExpenseAsync(int centerId, int userId, ExpenseRequestDto request)
         {
-            if (request.Amount <= 0)
+            if (request.Amount <= 0 || request.Amount > MaxAmount) 
                 throw new BusinessException("Validation.InvalidAmount");
 
             if (!Enum.IsDefined(request.Section))
@@ -88,7 +89,7 @@ namespace Sehatak.Infrastructure.Services.ExpenseService
 
         public async Task<ExpenseResponseDto> UpdateExpenseAsync(int centerId, int userId, int expenseId , UpdateExpenseRequestDto request)
         {
-            if (request.Amount != null && request.Amount <= 0)
+            if (request.Amount != null && (request.Amount <= 0 || request.Amount > MaxAmount))
                 throw new BusinessException("Validation.InvalidAmount");
 
             if (request.Section != null && !Enum.IsDefined(request.Section.Value))

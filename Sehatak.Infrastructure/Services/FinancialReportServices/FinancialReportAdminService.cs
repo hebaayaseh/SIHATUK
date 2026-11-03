@@ -27,7 +27,8 @@ public class FinancialReportAdminService : IFinancialReportAdmin
     {
         var months = request.Month.HasValue
             ? new List<int> { request.Month.Value }
-            : Enumerable.Range(1, 12).ToList();            // بدون شهر = شيت لكل شهر بالسنة
+            : Enumerable.Range(1, 12).ToList();            
+
 
         using var workbook = new XLWorkbook();
 
@@ -53,7 +54,7 @@ public class FinancialReportAdminService : IFinancialReportAdmin
         var yellow = XLColor.FromHtml("#FFD966");
         var blue = XLColor.FromHtml("#8EA9DB");
 
-        // ===== الترويسة =====
+
         ws.Cell(2, 1).Value = "التاريخ";
         ws.Cell(2, 2).Value = "اليوم";
 
@@ -89,14 +90,14 @@ public class FinancialReportAdminService : IFinancialReportAdmin
             ws.Cell(row, 11).Value = d.Specialty.Total;
 
             ws.Cell(row, 12).Value = d.DayTotal;
-            ws.Cell(row, 13).Value = d.Lab.CardReceipts;   // لفيزا كل الأقسام: d.Lab.CardReceipts + d.Specialty.CardReceipts
+            ws.Cell(row, 13).Value = d.Lab.CardReceipts + d.Specialty.CardReceipts;   
 
             row++;
         }
 
         var totalRow = row;
 
-        // ===== المجموع الشهري =====
+
         ws.Cell(totalRow, 2).Value = "المجموع الشهري";
         ws.Cell(totalRow, 3).Value = s.GeneralMedicine.Expenses;
         ws.Cell(totalRow, 4).Value = s.GeneralMedicine.Receipts;
@@ -108,7 +109,7 @@ public class FinancialReportAdminService : IFinancialReportAdmin
         ws.Cell(totalRow, 10).Value = s.Specialty.Receipts;
         ws.Cell(totalRow, 11).Value = s.Specialty.Total;
         ws.Cell(totalRow, 12).Value = s.MonthTotal;
-        ws.Cell(totalRow, 13).Value = s.Lab.CardReceipts;
+        ws.Cell(totalRow, 13).Value = s.Lab.CardReceipts + s.Specialty.CardReceipts;
 
         var table = ws.Range(1, 1, totalRow, 13);
         table.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -117,7 +118,7 @@ public class FinancialReportAdminService : IFinancialReportAdmin
         ws.Range(1, 1, 2, 13).Style.Font.Bold = true;
         ws.Range(totalRow, 1, totalRow, 13).Style.Font.Bold = true;
 
-        // ===== بلوك حسابات الشهر =====
+
         var blockStart = totalRow + 2;
         ws.Cell(blockStart, 2).Value = "حسابات الشهر";
         ws.Cell(blockStart, 2).Style.Font.Bold = true;
@@ -132,7 +133,7 @@ public class FinancialReportAdminService : IFinancialReportAdmin
         foreach (var c in s.Salaries.Categories)
             AddBlockRow(ws, ref r, CategoryLabels.GetValueOrDefault(c.Category, c.Category), c.Amount);
 
-        // ===== صافي حساب الشهر =====
+
         ws.Cell(r + 1, 2).Value = "صافي حساب الشهر";
         ws.Cell(r + 1, 3).Value = s.NetProfit;
         var net = ws.Range(r + 1, 2, r + 1, 3);
@@ -140,7 +141,7 @@ public class FinancialReportAdminService : IFinancialReportAdmin
         net.Style.Font.Bold = true;
         net.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
 
-        // للعلم فقط، خارج أي حساب
+
         ws.Cell(r + 3, 2).Value = "مقبوضات الطب العام بتأمين (للعلم)";
         ws.Cell(r + 3, 3).Value = s.GeneralInsuranceReceipts;
 

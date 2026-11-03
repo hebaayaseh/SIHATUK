@@ -54,8 +54,7 @@ namespace Sehatak.Infrastructure.Services.FinancialSummaryService
             var utcFrom = start.ToDateTime(TimeOnly.MinValue).AddDays(-1);  
             var utcTo = end.ToDateTime(TimeOnly.MinValue).AddDays(1);
 
-            var offset = TimeSpan.FromMinutes(Math.Round((ClinicClock.Now - DateTime.UtcNow).TotalMinutes));
-            DateOnly ToClinicDate(DateTime utc) => DateOnly.FromDateTime(utc.Add(offset));
+            DateOnly ToClinicDate(DateTime utc) => DateOnly.FromDateTime(ClinicClock.FromUtc(utc));
 
             var payments = await db.Payments
                 .Where(p => p.Status == PaymentStatus.Paid
