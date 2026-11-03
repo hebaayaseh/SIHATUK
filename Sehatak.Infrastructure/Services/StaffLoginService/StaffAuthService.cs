@@ -31,7 +31,7 @@ namespace Sehatak.Infrastructure.Services.StaffLogin
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
-                                     && c.CenterStatus == CenterStatus.Active);
+                         && c.CenterStatus != CenterStatus.Pending);
 
             if (center == null)
                 throw new BusinessException("Center.NotFound");
@@ -47,18 +47,13 @@ namespace Sehatak.Infrastructure.Services.StaffLogin
                 throw new BusinessException("Auth.Unauthorized");
             }
 
-            if (center.CenterStatus == CenterStatus.Suspended && user.role != userRole.Admin)
-            {
-                await auditLog.RecordLoginAttemptAsync(centerId, request.Email, ipAddress, success: false, LoginUserType.Staff);
-                throw new BusinessException("Center.Suspended");
-            }
 
             var valid = BCrypt.Net.BCrypt.Verify(request.Password, user.passwordHash);
 
             if (!valid)
             {
                 await auditLog.RecordLoginAttemptAsync(centerId, request.Email, ipAddress, success: false, LoginUserType.Staff);
-                throw new BusinessException("Validation.PasswordMismatch");
+                throw new BusinessException("Auth.Unauthorized");
             }
 
             if (user.role == userRole.Patient)
@@ -67,11 +62,17 @@ namespace Sehatak.Infrastructure.Services.StaffLogin
                 throw new BusinessException("Auth.Forbidden");
             }
 
+            if (center.CenterStatus == CenterStatus.Suspended && user.role != userRole.Admin)
+            {
+                await auditLog.RecordLoginAttemptAsync(centerId, request.Email, ipAddress, success: false, LoginUserType.Staff);
+                throw new BusinessException("Center.Suspended");
+            }
+
             await auditLog.RecordLoginAttemptAsync(centerId, request.Email, ipAddress, success: true, LoginUserType.Staff);
 
             var tokens = await tokenService.IssueTokensAsync(
                 userId: user.Id,
-                name: $"{user.firstName}{user.lastName}",
+                name: $"{user.firstName} {user.lastName}",
                 email: user.email,
                 role: user.role.ToString(),
                 centerId: centerId,

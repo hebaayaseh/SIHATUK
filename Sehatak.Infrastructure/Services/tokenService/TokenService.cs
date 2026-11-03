@@ -84,7 +84,7 @@ namespace Sehatak.Infrastructure.Services.tokenService
             if (existing.OwnerType == TokenOwnerType.SuperAdmin)
             {
                 var superAdmin = await sharedDbContext.SuperAdmins.FindAsync(existing.UserId);
-                if (superAdmin == null)
+                if (superAdmin == null || !superAdmin.IsActive)
                     throw new BusinessException("Auth.InvalidRefreshToken");
 
                 name = superAdmin.Name;
@@ -98,7 +98,7 @@ namespace Sehatak.Infrastructure.Services.tokenService
 
                 using var tenantDb = tenantFactory.CreateForCenter(existing.CenterId.Value);
                 var user = await tenantDb.Users.FindAsync(existing.UserId);
-                if (user == null)
+                if (user == null || !user.isActive)
                     throw new BusinessException("Auth.InvalidRefreshToken");
 
                 name = $"{user.firstName} {user.lastName}";
@@ -106,9 +106,17 @@ namespace Sehatak.Infrastructure.Services.tokenService
                 role = user.role.ToString();
             }
 
-            existing.IsRevoked = true;
-
             var newRefreshTokenValue = GenerateSecureToken();
+
+            await using var tx = await sharedDbContext.Database.BeginTransactionAsync();
+
+            // نحجز التوكن بالـ SQL: إذا طلبين وصلوا مع بعض، واحد بس بينجح
+            var claimed = await sharedDbContext.RefreshTokens
+                .Where(t => t.Id == existing.Id && !t.IsRevoked)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsRevoked, true));
+            if (claimed == 0)
+                throw new BusinessException("Auth.InvalidRefreshToken");
+
             sharedDbContext.RefreshTokens.Add(new RefreshToken
             {
                 Token = newRefreshTokenValue,
@@ -117,13 +125,13 @@ namespace Sehatak.Infrastructure.Services.tokenService
                 CenterId = existing.CenterId,
                 ExpiresAt = DateTime.UtcNow.AddDays(7)
             });
-
             await sharedDbContext.SaveChangesAsync();
+            await tx.CommitAsync();
 
             var newAccessToken = jwtGenerator.GenerateToken(existing.UserId, name, email, role, existing.CenterId);
 
             return new TokenResponseDto
-            { 
+            {
                 AccessToken = newAccessToken,
                 RefreshToken = newRefreshTokenValue
             };
