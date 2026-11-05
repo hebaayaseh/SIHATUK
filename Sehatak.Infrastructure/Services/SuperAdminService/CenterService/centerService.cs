@@ -264,18 +264,20 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
         public async Task<bool> ActiveCenter(int centerId)
         {
             var center = await sharedDbContext.MedicalCenters.FirstOrDefaultAsync(c => c.Id == centerId
-            && c.CenterStatus == CenterStatus.Suspended);
+                && c.CenterStatus == CenterStatus.Suspended);
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
             var subscription = await sharedDbContext.CenterSubscriptions
-                .FirstOrDefaultAsync(s => s.Center.Id == centerId
-                && s.Status == SubscriptionStatus.Cancelled);
+                .Where(s => s.CenterId == centerId && s.Status == SubscriptionStatus.Cancelled)
+                .OrderByDescending(s => s.EndDate)
+                .FirstOrDefaultAsync();
 
             if (subscription == null)
                 throw new BusinessException("Subscription.PlanNotFound");
 
-            if (subscription.EndDate < DateOnly.FromDateTime(DateTime.UtcNow))
+
+            if (subscription.EndDate <= ClinicClock.Today)
                 throw new BusinessException("Center.SubscriptionExpired");
 
             center.CenterStatus = CenterStatus.Active;

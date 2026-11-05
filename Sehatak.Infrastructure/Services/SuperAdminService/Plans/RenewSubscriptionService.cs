@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.EntityFrameworkCore;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.RenewSubscription;
 using Sehatak.Application.Interfaces.RenewSubscription;
@@ -6,7 +8,6 @@ using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using Sehatak.Application.Common;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
 {
@@ -57,6 +58,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
                 throw new BusinessException("Center.NotFound");
 
             var currentSubscription = await sharedDbContext.CenterSubscriptions
+                .OrderByDescending(c => c.EndDate)
                 .FirstOrDefaultAsync(c => c.CenterId == centerId
                                        && c.Status == SubscriptionStatus.Active);
 
@@ -70,7 +72,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
 
 
             var newPlan = await sharedDbContext.SubscriptionPlans.FindAsync(request.newPlanId);
-            if (newPlan == null)
+            if(newPlan == null || !newPlan.IsActive)
                 throw new BusinessException("Subscription.PlanNotFound");
 
             
@@ -110,7 +112,9 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
 
             var expiredSubscription = await sharedDbContext.CenterSubscriptions
                 .FirstOrDefaultAsync(c => c.CenterId == centerId
-                                       && c.Status == SubscriptionStatus.Expired);
+                                       && (c.Status == SubscriptionStatus.Expired
+                                       || c.Status == SubscriptionStatus.Cancelled));
+
             if (expiredSubscription == null)
                 throw new BusinessException("Subscription.PlanNotFound");
 
@@ -118,13 +122,19 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
             if (newPlan == null || !newPlan.IsActive)
                 throw new BusinessException("Subscription.PlanNotFound");
 
+            if (await sharedDbContext.CenterSubscriptions.AnyAsync(c => c.CenterId == centerId &&
+                 (c.Status == SubscriptionStatus.Active || c.Status == SubscriptionStatus.Pending)))
+
+                throw new BusinessException("Subscription.Renewed");
+
+            var start = ClinicClock.Today;
             var newSubscription = new CenterSubscription
             {
                 CenterId = centerId,
                 PlanId = request.newPlanId,
                 Status = SubscriptionStatus.Pending,  
-                StartDate = ClinicClock.Today,
-                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(newPlan.DurationDays)),
+                StartDate = start,
+                EndDate = start.AddDays(newPlan.DurationDays),
                 AmountPaid = newPlan.Price
             };
 
@@ -143,6 +153,67 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
                 Message = "Subscription.RenewedPendingPayment"
             };
 
+        }
+        public async Task<MySubscriptionResponseDto> GetMySubscriptionAsync(int centerId)
+        {
+            var center = await sharedDbContext.MedicalCenters.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == centerId);
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            var today = ClinicClock.Today;
+
+            var subs = await sharedDbContext.CenterSubscriptions.AsNoTracking()
+                .Include(s => s.Plan)
+                .Where(s => s.CenterId == centerId)
+                .ToListAsync();
+
+            MySubscriptionItemDto? ToItem(CenterSubscription? s) => s == null ? null : new MySubscriptionItemDto
+            {
+                SubscriptionId = s.Id,
+                PlanId = s.PlanId,
+                PlanName = s.Plan.Name,
+                Status = s.Status,
+                StartDate = s.StartDate,
+                EndDate = s.EndDate,
+                DaysLeft = s.EndDate.DayNumber - today.DayNumber,
+                Amount = s.AmountPaid
+            };
+
+            var actives = subs.Where(s => s.Status == SubscriptionStatus.Active).ToList();
+            var current = actives.OrderBy(s => s.EndDate).FirstOrDefault();            
+            var paidUntil = actives.Count == 0 ? (DateOnly?)null : actives.Max(s => s.EndDate);
+
+            var pending = subs.Where(s => s.Status == SubscriptionStatus.Pending)
+                .OrderByDescending(s => s.Id).FirstOrDefault();
+
+            var lastEnded = subs.Where(s => s.Status == SubscriptionStatus.Expired || s.Status == SubscriptionStatus.Cancelled)
+                .OrderByDescending(s => s.EndDate).ThenByDescending(s => s.Id).FirstOrDefault();
+
+            var pendingHasPayment = pending != null && await sharedDbContext.subscriptionPayments
+                .AnyAsync(p => p.SubscriptionId == pending.Id);
+
+            string nextAction;
+            if (pending != null)
+                nextAction = pendingHasPayment ? "WaitingConfirmation" : "UploadPayment";
+            else if (paidUntil != null)
+                nextAction = paidUntil.Value.DayNumber - today.DayNumber <= 7 ? "RenewActive" : "None";
+            else if (lastEnded != null)
+                nextAction = "RenewExpired";
+            else
+                nextAction = "ContactSupport";
+
+            return new MySubscriptionResponseDto
+            {
+                CenterId = centerId,
+                CenterStatus = center.CenterStatus.ToString(),
+                Current = ToItem(current),
+                Pending = ToItem(pending),
+                LastEnded = current == null ? ToItem(lastEnded) : null,
+                PaidUntil = paidUntil,
+                PendingHasPayment = pendingHasPayment,
+                NextAction = nextAction
+            };
         }
 
     }

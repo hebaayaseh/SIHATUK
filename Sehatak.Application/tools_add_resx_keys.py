@@ -130,6 +130,8 @@ ENTRIES = {
     "Department.NotFound": ("Department not found.", "القسم غير موجود."),
     "Department.Exist": ("A department with this name already exists.", "يوجد قسم بهذا الاسم مسبقًا."),
     "User.NotFound": ("User not found.", "المستخدم غير موجود."),
+    "Plan.FeatureAlreadyAssigned":("This feature is already assigned to the plan.","هذه الميزة مضافة مسبقاً للخطة."),
+    "Feature.VotFound" : ("Featern not found." , "هذه الميزة غير موجودة."),
 }
 
 TEMPLATE = '  <data name="{key}" xml:space="preserve">\n    <value>{value}</value>\n  </data>\n'

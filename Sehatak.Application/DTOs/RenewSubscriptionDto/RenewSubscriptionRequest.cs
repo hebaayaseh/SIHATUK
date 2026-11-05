@@ -6,6 +6,5 @@ namespace Sehatak.Application.DTOs.RenewSubscription
     {
         public int newPlanId { get; set; }
         
-
     }
 }

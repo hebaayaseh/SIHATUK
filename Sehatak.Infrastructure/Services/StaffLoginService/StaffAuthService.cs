@@ -81,7 +81,8 @@ namespace Sehatak.Infrastructure.Services.StaffLogin
             return new StaffLoginResponseDto
             {
                 AccessToken = tokens.AccessToken,
-                RefreshToken = tokens.RefreshToken
+                RefreshToken = tokens.RefreshToken,
+                CenterStatus = center.CenterStatus.ToString()
             };
 
         }

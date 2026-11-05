@@ -481,7 +481,9 @@ namespace Sehatak.Infrastructure.Data.Migrations.SharedMigrations
 
                     b.HasIndex("RequestId");
 
-                    b.HasIndex("SubscriptionId");
+                    b.HasIndex("SubscriptionId")
+                        .IsUnique()
+                        .HasFilter("[SubscriptionId] IS NOT NULL");
 
                     b.ToTable("subscription_payments", (string)null);
                 });

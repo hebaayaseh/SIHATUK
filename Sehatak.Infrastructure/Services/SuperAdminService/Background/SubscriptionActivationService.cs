@@ -55,7 +55,10 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
                 expired.Status = SubscriptionStatus.Expired;
 
                 var center = await sharedDb.MedicalCenters.FindAsync(expired.CenterId);
-                if (center != null)
+                var hasAnotherActive = await sharedDb.CenterSubscriptions.AnyAsync(s =>
+                    s.CenterId == expired.CenterId && s.Id != expired.Id
+                    && s.Status == SubscriptionStatus.Active && s.EndDate > today);
+                if (center != null && !hasAnotherActive)
                 {
                     center.CenterStatus = CenterStatus.Suspended;
 

@@ -267,6 +267,8 @@ namespace Sehatak.Infrastructure.Data
                 entity.ToTable("subscription_payments");
                 entity.HasKey(entity => entity.Id);
 
+                entity.HasIndex(e => e.SubscriptionId).IsUnique().HasFilter("[SubscriptionId] IS NOT NULL");
+
                 entity.Property(e => e.Amount).HasPrecision(10, 2);
                 entity.Property(e => e.PaymentMethod).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.ReferenceNumber).HasMaxLength(100);

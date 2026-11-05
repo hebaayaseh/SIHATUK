@@ -74,11 +74,11 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
 
             var feature = await sharedDbContext.PlatformFeatures.FindAsync(request.featureId);
             if (feature == null)
-                throw new BusinessException("General.NotFound");
+                throw new BusinessException("Feature.NotFound");
 
             var alreadyLinked = await sharedDbContext.PlanFeatures.FirstOrDefaultAsync(p => p.PlanId == planId && p.FeatureId == request.featureId);
             if (alreadyLinked != null)
-                throw new BusinessException("General.NotFound");
+                throw new BusinessException("Plan.FeatureAlreadyAssigned");
 
             var planFeature = new PlanFeature
             {

@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.RecordPaymentRequestDto;
@@ -16,12 +18,14 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
         private readonly SharedDbContext sharedDbContext;
         private readonly IHostEnvironment _env;
         private readonly IEmailService _emailService;
-
-        public SubscriptionPaymentService(SharedDbContext sharedDb, IHostEnvironment env, IEmailService emailService)
+        private readonly ILogger<SubscriptionPaymentService>? _logger;
+        public SubscriptionPaymentService(SharedDbContext sharedDb, IHostEnvironment env,
+            IEmailService emailService, ILogger<SubscriptionPaymentService>? logger = null)
         {
             sharedDbContext = sharedDb;
             _env = env;
             _emailService = emailService;
+            _logger = logger;
         }
         public async Task<bool> ConfirmPaymentAsync(int paymentId, int superAdminId)
         {
@@ -47,7 +51,14 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
-            payment.RecordedBySuperAdminId = superAdminId;
+            await using var tx = await sharedDbContext.Database.BeginTransactionAsync();
+
+
+            var claimed = await sharedDbContext.subscriptionPayments
+                .Where(p => p.Id == paymentId && p.RecordedBySuperAdminId == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.RecordedBySuperAdminId, superAdminId));
+            if (claimed == 0)
+                throw new BusinessException("Payment.AlreadyConfirmed");
 
             subscription.Status = SubscriptionStatus.Active;
 
@@ -75,18 +86,22 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
                 center.CenterStatus = CenterStatus.Active;
 
             await sharedDbContext.SaveChangesAsync();
+            await tx.CommitAsync();
+
 
             if (!string.IsNullOrEmpty(center.AdminEmail))
             {
-                await _emailService.SendPaymentConfirmedAsync(
-                    center.AdminEmail,
-                    center.Name,
-                    payment.Amount
-                );
+                try
+                {
+                    await _emailService.SendPaymentConfirmedAsync(center.AdminEmail, center.Name, payment.Amount);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Payment {PaymentId} confirmed but the confirmation email failed", paymentId);
+                }
             }
 
             return true;
-
         }
 
         public async Task<Application.Common.PagedResult<PaymentResponseDto>> GetCenterPaymentsAsync(int centerId,PagedRequest request)
@@ -200,7 +215,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
             {
                 CenterId = centerId,
                 SubscriptionId = request.SubscriptionId,
-                Amount = supscriptionCenter.Plan.Price,
+                Amount = supscriptionCenter.AmountPaid,
                 PaymentMethod = request.PaymentMethod,
                 ReferenceNumber = request.ReferenceNumber,
                 ReceiptImageUrl = receiptImageUrl,
@@ -210,9 +225,15 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentS
 
             };
 
-
             await sharedDbContext.subscriptionPayments.AddAsync(payment);
-            await sharedDbContext.SaveChangesAsync();
+            try
+            {
+                await sharedDbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
+            {
+                throw new BusinessException("Payment.Exists");
+            }
 
             return new PaymentResponseDto
             {
