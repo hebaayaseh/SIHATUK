@@ -53,6 +53,7 @@ ENTRIES = {
     "Appointment.AlreadyFinished": ("The appointment has already finished.", "تم إنهاء الموعد مسبقًا."),
     "Appointment.AlreadyStarted": ("The appointment has already started.", "بدأ الموعد مسبقًا."),
     "Appointment.NoFound": ("Appointment not found.", "الموعد غير موجود."),
+    "Appoitment.NotToday": ("Appoinrtment is not scheduled for today.", "الموعد ليس محددًا لليوم."),")
     "Appointment.NotCheckedInYet": ("The patient has not checked in yet.", "لم يتم تسجيل دخول المريض بعد."),
     "Appointment.NotStartedYet": ("The appointment has not started yet.", "لم يبدأ الموعد بعد."),
     "Attendance.AlreadyExsist": ("Attendance has already been recorded for this day.", "تم تسجيل الحضور لهذا اليوم مسبقًا."),
@@ -74,6 +75,7 @@ ENTRIES = {
     "Doctor.DayAlreadyBlocked": ("This day is already blocked for the doctor.", "تم حجب هذا اليوم للطبيب مسبقًا."),
     "Doctor.DayBlocked": ("The doctor is not available on this day.", "الطبيب غير متاح في هذا اليوم."),
     "Doctor.NoFound": ("Doctor not found.", "الطبيب غير موجود."),
+    "Doctor.Busy": ("The doctor is busy at the selected time.", "الطبيب مشغول في الوقت المحدد."),
     "DoctorRating.AlreadyRated": ("This appointment has already been rated.", "تم تقييم هذا الموعد مسبقًا."),
     "DoctorRating.AppointmentNotCompleted": ("The appointment must be completed before rating.", "يجب إتمام الموعد قبل التقييم."),
     "DoctorShift.NotFound": ("Doctor shift not found.", "وردية الطبيب غير موجودة."),

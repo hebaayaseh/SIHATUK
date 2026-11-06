@@ -1,14 +1,8 @@
-﻿
-
-using DocumentFormat.OpenXml.Wordprocessing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.AuditLog;
 using Sehatak.Application.Interfaces.ICheckTime;
-using Sehatak.Domain.Entities.General;
-using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
@@ -30,65 +24,65 @@ namespace Sehatak.Infrastructure.Services.CheckTimeService
         public async Task<string> FinishAppointmentTime(int centerId, int userId, int appointmentId)
         {
             var center = await sharedDbContext.MedicalCenters
-                .FirstOrDefaultAsync(c => c.Id == centerId
-                         && c.CenterStatus == CenterStatus.Active);
-
+                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
             var doctor = await db.Doctors
-                .Include(u=>u.user)
-                .FirstOrDefaultAsync(u => u.userId == userId
-                                     && u.user.isActive);
-
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(u => u.userId == userId && u.user.isActive);
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
             var appointment = await db.Appointments
+                .AsNoTracking()
                 .FirstOrDefaultAsync(a => a.Id == appointmentId
-                         && a.doctorId == doctor.Id
-                         && (a.appointmentStatus == AppointmentStatus.InProgress));
-
+                                       && a.doctorId == doctor.Id
+                                       && a.appointmentStatus == AppointmentStatus.InProgress);
             if (appointment == null)
                 throw new BusinessException("Appointment.NotFound");
-
             if (appointment.actualStartTime == null)
                 throw new BusinessException("Appointment.NotStartedYet");
-
             if (appointment.actualEndTime != null)
                 throw new BusinessException("Appointment.AlreadyFinished");
 
-            var oldValue = new
-            {
-                appointment.actualStartTime,
-                appointment.actualEndTime,
-                appointment.appointmentStatus,
-                appointment.doctorId,
-                appointment.patientId
-            };
+            var now = DateTime.UtcNow;
 
-            appointment.actualEndTime = DateTime.UtcNow;
-            appointment.appointmentStatus = AppointmentStatus.Completed;
+            // الأول بيحجز الموعد: لو اتنين ضغطوا بنفس اللحظة واحد بس بينجح
+            var rows = await db.Appointments
+                .Where(a => a.Id == appointmentId
+                         && a.doctorId == doctor.Id
+                         && a.appointmentStatus == AppointmentStatus.InProgress
+                         && a.actualEndTime == null)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(a => a.actualEndTime, now)
+                    .SetProperty(a => a.appointmentStatus, AppointmentStatus.Completed)
+                    .SetProperty(a => a.updateAt, now));
+            if (rows == 0)
+                throw new BusinessException("Appointment.NotFound");
 
             var auditEntry = auditLog.Build(
-             action: "FinishAppointment",
-             entityType: "Appointment",
-             entityId: appointmentId,
-             oldValue: oldValue,
-             newValue: new
-             {
-                 appointment.actualEndTime,
-                 appointment.appointmentStatus
-             });
+                action: "FinishAppointment",
+                entityType: "Appointment",
+                entityId: appointmentId,
+                oldValue: new
+                {
+                    appointment.actualStartTime,
+                    appointment.actualEndTime,
+                    appointment.appointmentStatus,
+                    appointment.doctorId,
+                    appointment.patientId
+                },
+                newValue: new { actualEndTime = now, appointmentStatus = AppointmentStatus.Completed });
             if (auditEntry != null)
+            {
                 db.AuditLogs.Add(auditEntry);
+                await db.SaveChangesAsync();
+            }
 
-            await db.SaveChangesAsync();
-
-            return appointment.appointmentStatus.ToString();
-
+            return AppointmentStatus.Completed.ToString();
         }
 
         public async Task<string> NextPatient(int centerId, int userId, int appointmentId)
@@ -122,23 +116,38 @@ namespace Sehatak.Infrastructure.Services.CheckTimeService
             if (appointment.appointmentDate != ClinicClock.Today)
                 throw new BusinessException("Appointment.NotToday");
 
-            appointment.actualStartTime = DateTime.UtcNow;
-            appointment.appointmentStatus = AppointmentStatus.InProgress;
+            var busy = await db.Appointments.AnyAsync(a => a.doctorId == appointment.doctorId
+                                                && a.appointmentStatus == AppointmentStatus.InProgress);
+            if (busy) throw new BusinessException("Doctor.Busy");
+
+            var now = DateTime.UtcNow;
+            var rows = await db.Appointments
+                .Where(a => a.Id == appointmentId
+                         && a.appointmentStatus == AppointmentStatus.Confirmed
+                         && a.actualStartTime == null)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(a => a.appointmentStatus, AppointmentStatus.InProgress)
+                    .SetProperty(a => a.actualStartTime, now)
+                    .SetProperty(a => a.updateAt, now));
+            if (rows == 0)
+                throw new BusinessException("Appointment.AlreadyStarted");
 
             var auditEntry = auditLog.Build(
-            action: "NextPatient",
-            entityType: "Appointment",
-            entityId: appointmentId,
-            newValue: new
-            {
-                appointment.actualStartTime,
-                appointment.appointmentStatus,
-            });
-            if (auditEntry != null)
-                db.AuditLogs.Add(auditEntry);
-            await db.SaveChangesAsync();
+                "NextPatient",
+                "Appointment",
+                appointmentId,
+                null,
+                new { actualStartTime = now,
+                    appointmentStatus = AppointmentStatus.InProgress 
+                });
 
-            return appointment.appointmentStatus.ToString();
+            if (auditEntry != null)
+            {
+                db.AuditLogs.Add(auditEntry);
+                await db.SaveChangesAsync();
+            }
+
+            return AppointmentStatus.InProgress.ToString();
 
         }
         public async Task<string> ReceptionistCheckInAppointmentAsync(int centerId, int userId, int appointmentId)
@@ -169,7 +178,18 @@ namespace Sehatak.Infrastructure.Services.CheckTimeService
             if (appointment.CheckInTime != null)
                 throw new BusinessException("Appointment.AlreadyCheckedIn");
 
-            appointment.CheckInTime = DateTime.UtcNow;
+            if (appointment.appointmentDate != ClinicClock.Today)
+                throw new BusinessException("Appointment.NotToday");
+
+            var now = DateTime.UtcNow;
+            var rows = await db.Appointments
+                .Where(a => a.Id == appointmentId
+                         && a.appointmentStatus == AppointmentStatus.Confirmed
+                         && a.CheckInTime == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(a => a.CheckInTime, now));
+
+            if (rows == 0)
+                throw new BusinessException("Appointment.AlreadyCheckedIn");
 
             var auditEntry = auditLog.Build(
             action: "ReceptionistCheckInAppointment",
