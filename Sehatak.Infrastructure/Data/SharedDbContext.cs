@@ -269,6 +269,10 @@ namespace Sehatak.Infrastructure.Data
 
                 entity.HasIndex(e => e.SubscriptionId).IsUnique().HasFilter("[SubscriptionId] IS NOT NULL");
 
+                entity.HasIndex(e => e.RequestId)
+                      .IsUnique()
+                      .HasFilter("[RequestId] IS NOT NULL");
+
                 entity.Property(e => e.Amount).HasPrecision(10, 2);
                 entity.Property(e => e.PaymentMethod).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.ReferenceNumber).HasMaxLength(100);

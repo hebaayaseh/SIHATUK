@@ -479,7 +479,9 @@ namespace Sehatak.Infrastructure.Data.Migrations.SharedMigrations
 
                     b.HasIndex("RecordedBySuperAdminId");
 
-                    b.HasIndex("RequestId");
+                    b.HasIndex("RequestId")
+                        .IsUnique()
+                        .HasFilter("[RequestId] IS NOT NULL");
 
                     b.HasIndex("SubscriptionId")
                         .IsUnique()
