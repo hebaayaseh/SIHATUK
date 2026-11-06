@@ -20,6 +20,7 @@ namespace Sehatak.API.Controllers.PatientController.Patient
             
         }
         [EnableRateLimiting("LoginPolicy")]
+        [AllowAnonymous]
         [HttpPost("patient-register-patient/{centerId}")]
         public async Task<IActionResult> RegisterPatient (int centerId,[FromForm] RegisterRequestDto registerRequestDto)
         {
@@ -28,6 +29,7 @@ namespace Sehatak.API.Controllers.PatientController.Patient
         }
         [EnableRateLimiting("LoginPolicy")]
         [HttpPost("patient-verify-code/{centerId}")]
+        [AllowAnonymous]
         public async Task<IActionResult> VerifyCode(int centerId,[FromBody] VerifyOtpRequestDto request)
         {
             var result = await authService.VerifyOtpAsync(centerId,request);

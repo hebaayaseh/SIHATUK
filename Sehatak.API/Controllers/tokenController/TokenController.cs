@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Sehatak.Application.DTOs.Auth;
 using Sehatak.Application.Interfaces.IAuth;
 
@@ -16,6 +17,7 @@ namespace Sehatak.API.Controllers.tokenController
         }
 
         [HttpPost("refresh")]
+        [AllowAnonymous]
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequestDto request)
         {
             var result = await _tokenService.RefreshAsync(request.RefreshToken);
@@ -23,6 +25,7 @@ namespace Sehatak.API.Controllers.tokenController
         }
 
         [HttpPost("logout")]
+        [AllowAnonymous]
         public async Task<IActionResult> Logout([FromBody] LogoutRequestDto request)
         {
             await _tokenService.LogoutAsync(request.RefreshToken);

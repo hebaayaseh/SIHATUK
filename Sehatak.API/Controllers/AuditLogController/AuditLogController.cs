@@ -16,7 +16,7 @@ namespace Sehatak.API.Controllers.AuditLogController
             this.auditLog = auditLog;
         }
 
-        [Authorize(Roles = "AdminOnly")]
+        [Authorize(Policy = "AdminOnly")]
         [HttpGet("admin-get-audit-logs/{centerId}")]
         public async Task<IActionResult> GetAuditLogs(int centerId, [FromQuery] AuditLogRequestDto request, [FromQuery] PagedRequest paged)
         {

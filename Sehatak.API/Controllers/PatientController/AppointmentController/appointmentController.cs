@@ -16,7 +16,7 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         {
             this.slotService = slotService;
         }
-
+        [AllowAnonymous]
         [HttpGet("patient-get-available-doctor-slot/{centerId}/{doctorId}")]
         public async Task<IActionResult> AvailableDoctorSlot(int centerId, int doctorId, [FromQuery] DateOnly date)
         {
@@ -80,14 +80,14 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
             var result = await slotService.GetPatientWaitListsAsync(centerId, doctorId, userId, date, subPatientId);
             return Ok(result);
         }
-
+        [AllowAnonymous]
         [HttpGet("patient-get-doctor/{centerId}/{doctorId}")]
         public async Task<IActionResult> GetDoctor(int centerId, int doctorId)
         {
             var result = await slotService.GetDoctorAsync(centerId, doctorId);
             return Ok(result);
         }
-
+        [AllowAnonymous]
         [HttpGet("patient-get-doctors/{centerId}")]
         public async Task<IActionResult> GetDoctors(int centerId, [FromQuery] PagedRequest request)
         {

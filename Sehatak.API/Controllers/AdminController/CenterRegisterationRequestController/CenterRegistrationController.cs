@@ -18,15 +18,16 @@ namespace Sehatak.API.Controllers.CenterRegistration
             _registrationService = registrationService;
         }
 
-
         [HttpPost("center-registration")]
+        [AllowAnonymous]
         public async Task<IActionResult> CenterRequest([FromForm] CenterRegistrationRequestDto request)
         {
             var result = await _registrationService.CenterRequestAsync(request);
             return Ok(result);
         }
-
+        
         [HttpPost("{requestId}/record-payment")]
+        [AllowAnonymous]
         public async Task<IActionResult> RecordRegistrationPayment(int requestId, [FromForm] recordPaymentRequestDto request)
         {
             var result = await _registrationService.RecordRegistrationPaymentAsync(requestId, request);

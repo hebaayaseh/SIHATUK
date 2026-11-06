@@ -66,6 +66,7 @@ namespace Sehatak.API.Controllers.PatientController.EditProfile
         }
 
         [HttpPost("forget-password/{centerId}")]
+        [AllowAnonymous]
         public async Task<IActionResult> ForgetPassword(int centerId, [FromBody] ForgetPasswordRequest request)
         {
             var result = await profilePatient.ForgetPasswordAsync(centerId,request);
@@ -73,6 +74,7 @@ namespace Sehatak.API.Controllers.PatientController.EditProfile
         }
 
         [HttpPost("confirm-forget-password/{centerId}")]
+        [AllowAnonymous]
         public async Task<IActionResult> ConfirmForgetPassword(int centerId, [FromBody] ConfirmForgetPasswordRequest request)
         {
             var result = await profilePatient.ConfirmForgetPassword(centerId, request);

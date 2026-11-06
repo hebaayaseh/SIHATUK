@@ -19,8 +19,6 @@ namespace Sehatak.API.Controllers.FeedbackController
             this.feedback = feedback;
         }
 
-
-
         [Authorize]
         [HttpPost("submit-feedback/{centerId}")]
         public async Task<IActionResult> SubmitFeedback(int centerId, [FromBody] SubmitFeedbackRequestDto request)
@@ -43,17 +41,14 @@ namespace Sehatak.API.Controllers.FeedbackController
             return Ok(result);
         }
 
-
-
-        [AllowAnonymous]
         [EnableRateLimiting("LoginPolicy")]
         [HttpPost("submit-guest-feedback")]
+        [AllowAnonymous]
         public async Task<IActionResult> SubmitGuestFeedback([FromBody] SubmitGuestFeedbackRequestDto request)
         {
             var result = await feedback.SubmitGuestAsync(request);
             return Ok(result);
         }
-
 
         [Authorize(Policy = "SuperAdminOnly")]
         [HttpGet("superAdmin-get-feedbacks")]

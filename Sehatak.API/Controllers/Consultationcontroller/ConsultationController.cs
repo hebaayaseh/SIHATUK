@@ -19,7 +19,7 @@ namespace Sehatak.API.Controllers.Consultationcontroller
             this.consultation = consultation;
         }
 
-
+        [AllowAnonymous]
         [HttpGet("patient-get-doctors/{centerId}")]
         public async Task<IActionResult> GetDoctors(int centerId, [FromQuery] PagedRequest request)
         {

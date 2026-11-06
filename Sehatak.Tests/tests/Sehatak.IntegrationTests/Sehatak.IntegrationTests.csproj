@@ -19,5 +19,6 @@
     <ProjectReference Include="..\..\Sehatak.Application\Sehatak.Application.csproj" />
     <ProjectReference Include="..\..\Sehatak.Domain\Sehatak.Domain.csproj" />
     <ProjectReference Include="..\..\Sehatak.Infrastructure\Sehatak.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Sehatak.API\Sehatak.API.csproj" />
   </ItemGroup>
 </Project>
