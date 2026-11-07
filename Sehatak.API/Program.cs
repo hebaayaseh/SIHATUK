@@ -205,7 +205,7 @@ namespace Sehatak.API
 
 
             // 6. SIGNALR
-            builder.Services.AddSignalR();
+            builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, Sehatak.API.Hubs.CenterUserIdProvider>();
 
             // 7. CORS
             var allowedOrigins = builder.Configuration
