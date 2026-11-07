@@ -53,7 +53,7 @@ ENTRIES = {
     "Appointment.AlreadyFinished": ("The appointment has already finished.", "تم إنهاء الموعد مسبقًا."),
     "Appointment.AlreadyStarted": ("The appointment has already started.", "بدأ الموعد مسبقًا."),
     "Appointment.NoFound": ("Appointment not found.", "الموعد غير موجود."),
-    "Appoitment.NotToday": ("Appoinrtment is not scheduled for today.", "الموعد ليس محددًا لليوم."),")
+    "Appoitment.NotToday": ("Appoinrtment is not scheduled for today.", "الموعد ليس محددًا لليوم."),
     "Appointment.NotCheckedInYet": ("The patient has not checked in yet.", "لم يتم تسجيل دخول المريض بعد."),
     "Appointment.NotStartedYet": ("The appointment has not started yet.", "لم يبدأ الموعد بعد."),
     "Attendance.AlreadyExsist": ("Attendance has already been recorded for this day.", "تم تسجيل الحضور لهذا اليوم مسبقًا."),

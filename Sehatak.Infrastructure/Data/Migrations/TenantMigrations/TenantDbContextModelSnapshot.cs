@@ -242,10 +242,10 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Property<decimal>("ConsultationCost")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<bool>("DelayProcessed")
+                    b.Property<bool>("IsFollowUp")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsFollowUp")
+                    b.Property<bool>("IsTimeCompensation")
                         .HasColumnType("bit");
 
                     b.Property<decimal>("ItemsTotal")
@@ -253,6 +253,9 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 
                     b.Property<int?>("ReceptionistId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("ReminderSent")
+                        .HasColumnType("bit");
 
                     b.Property<int>("RescheduleCount")
                         .HasColumnType("int");

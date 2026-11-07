@@ -700,6 +700,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             appintment.appointmentDate = request.date;
             appintment.timeSlot = request.timeSlot;
             appintment.RescheduleCount++;
+            appintment.ReminderSent = false;
             appintment.updateAt = DateTime.UtcNow;
 
             await db.Notifications.AddAsync(new Notification
@@ -1478,6 +1479,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             appintment.appointmentDate = request.date;
             appintment.timeSlot = request.timeSlot;
             appintment.RescheduleCount++;
+            appintment.ReminderSent = false;
             appintment.updateAt = DateTime.UtcNow;
 
             await db.Notifications.AddAsync(new Notification

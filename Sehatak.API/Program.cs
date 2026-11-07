@@ -363,6 +363,7 @@ namespace Sehatak.API
             builder.Services.AddHostedService<SubscriptionActivationService>();
             builder.Services.AddHostedService<DelayMonitorJobs>();
             builder.Services.AddHostedService<MedicationReminderJob>();
+            builder.Services.AddHostedService<AppointmentReminderJob>();
             builder.Services.AddScoped<IAdminBulkEmailService, AdminBulkEmailService>();
             builder.Services.AddScoped<IStaffLogin, StaffAuthService>();
             builder.Services.AddScoped<IFinancialReport, FinancialReportService>();

@@ -40,8 +40,8 @@ namespace Sehatak.Domain.Entities.TenantEntities
         public decimal ItemsTotal { get; set; } = 0;
         public DateTime? CheckInTime {  get; set; }
         public DateTime? CheckOutTime { get; set; }
-        public bool DelayProcessed { get; set; } = false;
-
+        public bool IsTimeCompensation { get; set; } = false;
+        public bool ReminderSent { get; set; } = false;
 
         //  Navigation Properties :
         public Patient Patient { get; set; } = null!;
