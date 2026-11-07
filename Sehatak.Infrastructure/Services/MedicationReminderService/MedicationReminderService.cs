@@ -62,7 +62,7 @@ namespace Sehatak.Infrastructure.Services.MedicationReminderService
                 ReminderTime = request.ReminderTime,
                 Days = request.IsDaily ? ReminderDays.All : request.SelectedDays,
                 StartDate = startDate,
-                EndDate = startDate.AddDays(request.DurationInDays),
+                EndDate = startDate.AddDays(request.DurationInDays - 1),
                 IsActive = true
             };
 

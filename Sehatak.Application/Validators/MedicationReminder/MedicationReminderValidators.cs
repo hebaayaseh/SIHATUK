@@ -14,7 +14,7 @@ namespace Sehatak.Application.Validators.MedicationReminder
             RuleFor(x => x.DurationInDays).LessThanOrEqualTo(90);
             RuleFor(x => x.ReminderTime).RealTime();
             RuleFor(x => x.SelectedDays).ValidEnum();
-            RuleFor(x => x.IsDaily).Null();
+            RuleFor(x => x.DurationInDays).InclusiveBetween(1, 90);
         }
 
     }

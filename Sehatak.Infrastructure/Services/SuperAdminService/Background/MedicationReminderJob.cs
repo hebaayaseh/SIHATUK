@@ -25,7 +25,10 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                await CheckMedicationReminders();
+                try { await CheckMedicationReminders(); }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                { _logger.LogError(ex, "Medication reminder pass failed"); }
+
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
@@ -44,7 +47,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
             var now = ClinicClock.Now;
             var nowTime = TimeOnly.FromDateTime(now);
             var todayFlag = (ReminderDays)(1 << (int)today.DayOfWeek);
-
+            var from = nowTime.AddMinutes(-15);
             foreach (var center in activeCenters)
             {
                 try
@@ -58,8 +61,8 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
                             && today >= r.StartDate
                             && today <= r.EndDate
                             && (r.Days & todayFlag) == todayFlag
-                            && r.ReminderTime.Hour == nowTime.Hour
-                            && r.ReminderTime.Minute == nowTime.Minute
+                            && r.ReminderTime <= nowTime
+                            && r.ReminderTime >= from
                             && r.LastNotifiedDate != today)
                         .ToListAsync();
 
@@ -88,6 +91,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
                     continue;
                 }
             }
+
         }
     }
 }

@@ -28,7 +28,7 @@ namespace Sehatak.API.Controllers.MedicationReminderController
 
         [Authorize(Policy = "PatientOnly")]
         [HttpGet("get-medications-reminders/{centerId}")]
-        public async Task<IActionResult> GetMedicationReminderAsync(int centerId ,PagedRequest request, [FromQuery] int? subPatientId)
+        public async Task<IActionResult> GetMedicationReminderAsync(int centerId , [FromQuery] PagedRequest request, [FromQuery] int? subPatientId)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
             var result = await medication.GetMedicationRemindersAsync(centerId, userId,request, subPatientId);
@@ -36,7 +36,7 @@ namespace Sehatak.API.Controllers.MedicationReminderController
         }
 
         [Authorize(Policy = "PatientOnly")]
-        [HttpGet("delete-medication-reminder/{centerId}")]
+        [HttpDelete("delete-medication-reminder/{centerId}")]
         public async Task<IActionResult> DeleteMedicationReminderAsync(int centerId, [FromQuery] int reminderId ,[FromQuery] int? subPatientId)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
