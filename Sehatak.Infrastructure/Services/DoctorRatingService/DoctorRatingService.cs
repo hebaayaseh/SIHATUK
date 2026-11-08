@@ -78,9 +78,16 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             };
 
             await db.DoctorRatings.AddAsync(rating);
-            await db.SaveChangesAsync();
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 })
+            {
+                throw new BusinessException("DoctorRating.AlreadyRated");
+            }
 
-            
+
             return new DoctorRatingResponse
             {
                 Id = rating.Id,
@@ -127,14 +134,17 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
                 AvrageRating = ratings.Any() ? ratings.Average(r => r.Rating) : 0,
                 PatientRatings = ratings.Select(p => new PatientSummaryRating
                 {
+                    ratingId = p.Id,
                     patientId = p.PatientId,
                     patientName = p.Patient.userId != null
                     ? $"{p.Patient.user.firstName} {p.Patient.user.lastName}"
                     : $"{p.Patient.FirstName} {p.Patient.LastName}",
                     AppointmentId = p.AppointmentId,
                     Rating = p.Rating,
-                    Review = p.Review
-                }).ToList() 
+                    Review = p.Review,
+                    CreatedAt = p.CreatedAt,
+                    UpdateAt = p.UpdateAt
+                }).ToList()
             };
 
         }

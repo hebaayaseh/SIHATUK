@@ -39,7 +39,10 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
 
             if (user == null)
                 throw new BusinessException("User.NotFound");
-
+            var patientId = await db.Patients
+                .Where(p => p.userId == userId)
+                .Select(p => p.patientId)
+                .FirstOrDefaultAsync();
 
             if (request.firstNmae != null)
                 user.firstName = request.firstNmae;
@@ -88,9 +91,10 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
             }
 
             await db.SaveChangesAsync();
+
             return new EditPatientInformationResponse
             {
-                PatientId = user.patient.patientId,
+                PatientId = patientId,
                 FullName = $"{user.firstName} {user.lastName}",
                 ProfileImageUrl = user.ProfileImageUrl,
                 Address = user.address,

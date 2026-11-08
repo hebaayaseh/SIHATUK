@@ -15,5 +15,6 @@ namespace Sehatak.Application.DTOs.DashBoardDto
         public bool IsFollowUp { get; set; }
         public decimal? BillAmount { get; set; }
         public string? PaymentStatus { get; set; }
+        public string AppointmentStatus { get; set; }
     }
 }

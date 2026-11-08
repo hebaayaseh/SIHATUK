@@ -15,5 +15,6 @@ namespace Sehatak.Application.DTOs.DashBoardDto
         public DateTime? ActualStart { get; set; }
         public DateTime? ActualEnd { get; set; }
         public bool IsFollowUp { get; set; }
+        public string AppointmentStatus { get; set; }
     }
 }

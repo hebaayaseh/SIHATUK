@@ -106,7 +106,8 @@ namespace Sehatak.Infrastructure.Services.DashBoardService
                     CheckOutTime = a.CheckOutTime,
                     IsFollowUp = a.IsFollowUp,
                     ActualStart = a.actualStartTime,
-                    ActualEnd = a.actualEndTime
+                    ActualEnd = a.actualEndTime , 
+                    AppointmentStatus = a.appointmentStatus.ToString()
                 });
 
             return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
@@ -131,9 +132,7 @@ namespace Sehatak.Infrastructure.Services.DashBoardService
                 throw new BusinessException("User.NotFound");
 
             var query = db.Appointments
-                .Where(a => a.appointmentDate == date
-                       && (a.appointmentStatus == AppointmentStatus.Confirmed)
-                       || a.appointmentStatus == AppointmentStatus.Completed)
+                .Where(a => a.appointmentDate == date)
                 .OrderBy(a => a.timeSlot)
                 .Select(a => new ReceptionistAppointmentResponseDto
                 {
@@ -149,7 +148,8 @@ namespace Sehatak.Infrastructure.Services.DashBoardService
                     CheckOutTime = a.CheckOutTime,
                     IsFollowUp = a.IsFollowUp,
                     BillAmount = a.BillAmount,
-                    PaymentStatus = a.Payment != null ? a.Payment.Status.ToString() : null
+                    PaymentStatus = a.Payment != null ? a.Payment.Status.ToString() : null,
+                    AppointmentStatus = a.appointmentStatus.ToString()
                 });
 
             return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
