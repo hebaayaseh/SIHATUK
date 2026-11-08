@@ -37,7 +37,7 @@ namespace Sehatak.Infrastructure.Services.ViewProfileService
                 .FirstOrDefaultAsync(d => d.Id == userId
                                      && d.isActive);
 
-            if (user == null)
+            if (user.doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
             return new ViewDoctorProfileResponseDto
@@ -72,7 +72,7 @@ namespace Sehatak.Infrastructure.Services.ViewProfileService
                 .FirstOrDefaultAsync(p=>p.Id == userId
                                      && p.isActive);
 
-            if (user == null)
+            if (user.patient == null)
                 throw new BusinessException("User.NotFound");
 
             return new ViewPatientProfileResponseDto

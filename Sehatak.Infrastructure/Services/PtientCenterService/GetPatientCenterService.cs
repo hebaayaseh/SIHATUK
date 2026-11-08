@@ -31,6 +31,7 @@ namespace Sehatak.Infrastructure.Services.PtientCenterService
 
 
             var patient = await db.Patients
+                .Include(p => p.user)
                 .FirstOrDefaultAsync(p => p.patientId == request.patientId);
 
             if (patient == null)
@@ -43,7 +44,7 @@ namespace Sehatak.Infrastructure.Services.PtientCenterService
                                && p.appointmentStatus == request.status)
                         .Select(p => new PatientSummaryDto
                         {
-                            timeSlot = (TimeOnly)p.timeSlot,
+                            timeSlot = p.timeSlot,
                             date = p.appointmentDate,
                             status = p.appointmentStatus,
                             DoctorName = $"{p.Doctor.user.firstName} {p.Doctor.user.lastName}",

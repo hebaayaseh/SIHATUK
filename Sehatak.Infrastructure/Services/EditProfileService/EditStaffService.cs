@@ -70,13 +70,7 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
 
                 center.LogoUrl = $"/uploads/receipts/{fileName}";
             }
-            else if (request.LogoUrl==null)
-            {
-                if (!string.IsNullOrEmpty(center.LogoUrl))
-                    DeleteImageFile(center.LogoUrl);
-
-                center.LogoUrl = null;
-            }
+            
 
             await sharedDbContext.SaveChangesAsync();
 
@@ -278,6 +272,9 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
             if (validCode == null || string.IsNullOrEmpty(validCode.PendingValue))
                 throw new BusinessException("Verfiy.Code");
 
+            if (await db.Users.AnyAsync(u => u.email == validCode.PendingValue && u.Id != userId))
+                throw new BusinessException("Auth.EmailExists");  
+
             user.email = validCode.PendingValue;
             validCode.IsUsed = true;
 
@@ -315,8 +312,8 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
             {
                 UserId = user.Id,
                 Code = code,
-                Purpose = "change-password",  
-                PendingValue = request.PasswordHash,
+                Purpose = "change-password",
+                PendingValue = BCrypt.Net.BCrypt.HashPassword(request.PasswordHash),
                 ExpiresAt = DateTime.UtcNow.AddMinutes(10)
             });
 
@@ -355,7 +352,7 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
             if (validCode == null || string.IsNullOrEmpty(validCode.PendingValue))
                 throw new BusinessException("Verfiy.Code");
 
-            user.passwordHash = BCrypt.Net.BCrypt.HashPassword(validCode.PendingValue);   
+            user.passwordHash = validCode.PendingValue;
             validCode.IsUsed = true;
 
             await db.SaveChangesAsync();

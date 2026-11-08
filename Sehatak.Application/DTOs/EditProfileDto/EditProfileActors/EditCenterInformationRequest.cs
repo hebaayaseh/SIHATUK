@@ -4,11 +4,11 @@ namespace Sehatak.Application.DTOs.EditProfile.EditProfileActors
 {
     public class EditCenterInformationRequest
     {
-        public bool? RequiresPrepayment { get; set; } = false;
+        public bool? RequiresPrepayment { get; set; } 
 
-        public decimal? PrepaymentAmount { get; set; } = 0;
+        public decimal? PrepaymentAmount { get; set; } 
 
-        public int? RefundPolicyHours { get; set; } = 24;
+        public int? RefundPolicyHours { get; set; }
 
         public decimal? PartialRefundPercent { get; set; }
 

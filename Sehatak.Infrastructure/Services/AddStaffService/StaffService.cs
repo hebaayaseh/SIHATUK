@@ -151,6 +151,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
 
             if (user == null)
                 throw new BusinessException("User.NotFound");
+
             if (user.role == userRole.Patient)
                 throw new BusinessException("Auth.Forbidden");
 

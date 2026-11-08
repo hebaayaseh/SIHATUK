@@ -35,7 +35,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
 
             var user = await db.Users
                 .FirstOrDefaultAsync(p => p.Id == userId
-                                     && p.isActive);
+                                      && p.isActive);
 
             if (user == null)
                 throw new BusinessException("User.NotFound");
@@ -90,6 +90,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
             await db.SaveChangesAsync();
             return new EditPatientInformationResponse
             {
+                PatientId = user.patient.patientId,
                 FullName = $"{user.firstName} {user.lastName}",
                 ProfileImageUrl = user.ProfileImageUrl,
                 Address = user.address,
@@ -214,6 +215,9 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
 
             if (validCode == null || string.IsNullOrEmpty(validCode.PendingValue))
                 throw new BusinessException("Verfiy.Code");
+
+            if (await db.Users.AnyAsync(u => u.email == validCode.PendingValue && u.Id != userId))
+                throw new BusinessException("Email.AlreadyExists");   
 
             user.email = validCode.PendingValue;
             validCode.IsUsed = true;

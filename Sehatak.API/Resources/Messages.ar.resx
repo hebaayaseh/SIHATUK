@@ -679,4 +679,80 @@
   <data name="Schedule.SlotDurationMissing" xml:space="preserve">
     <value>جدول دوام هذا الطبيب ناقص مدة الموعد. يرجى التواصل مع إدارة العيادة.</value>
   </data>
+	<!-- الصق قبل </root> بنهاية Messages.ar.resx -->
+	<data name="Auth.AccountDeactivated" xml:space="preserve">
+    <value>تم تعطيل هذا الحساب.</value>
+  </data>
+	<data name="Auth.TooManyAttempts" xml:space="preserve">
+    <value>محاولات فاشلة كثيرة. الرجاء المحاولة لاحقاً.</value>
+  </data>
+	<data name="CenterRegistration.TenantDatabaseCreationFailed" xml:space="preserve">
+    <value>تعذر إنشاء قاعدة بيانات المركز. الرجاء المحاولة مرة أخرى أو التواصل مع الدعم.</value>
+  </data>
+	<data name="Consultation.AlreadyScheduled" xml:space="preserve">
+    <value>تمت جدولة هذه الاستشارة مسبقاً.</value>
+  </data>
+	<data name="Consultation.NotScheduledYet" xml:space="preserve">
+    <value>لم تتم جدولة هذه الاستشارة بعد.</value>
+  </data>
+	<data name="Expense.NotFound" xml:space="preserve">
+    <value>المصروف غير موجود.</value>
+  </data>
+	<data name="Feedback.NotFound" xml:space="preserve">
+    <value>التقييم غير موجود.</value>
+  </data>
+	<data name="FollowUp.NotFound" xml:space="preserve">
+    <value>المتابعة غير موجودة.</value>
+  </data>
+	<data name="LabRequest.NoAvailableItems" xml:space="preserve">
+    <value>طلب المختبر لا يحتوي على فحوصات متاحة.</value>
+  </data>
+	<data name="LabRequest.NotProcessing" xml:space="preserve">
+    <value>طلب المختبر ليس قيد المعالجة.</value>
+  </data>
+	<data name="LabRequestItem.NotAvailable" xml:space="preserve">
+    <value>هذا الفحص غير متاح.</value>
+  </data>
+	<data name="MedicationReminder.NotFound" xml:space="preserve">
+    <value>تذكير الدواء غير موجود.</value>
+  </data>
+	<data name="Validation.InvalidAmount" xml:space="preserve">
+    <value>المبلغ غير صالح.</value>
+  </data>
+	<data name="Validation.InvalidCategory" xml:space="preserve">
+    <value>الفئة غير صالحة.</value>
+  </data>
+	<data name="Validation.InvalidSection" xml:space="preserve">
+    <value>القسم غير صالح.</value>
+  </data>
+	<data name="Validation.NameTooLong" xml:space="preserve">
+    <value>الاسم طويل جداً.</value>
+  </data>
+	<data name="Appointment.NotToday" xml:space="preserve">
+    <value>الموعد ليس محددًا لليوم.</value>
+  </data>
+	<data name="Department.HasDoctors" xml:space="preserve">
+    <value>لا يمكن حذف قسم يحتوي على أطباء.</value>
+  </data>
+	<data name="Doctor.Busy" xml:space="preserve">
+    <value>الطبيب مشغول في الوقت المحدد.</value>
+  </data>
+	<data name="Feature.NotFound" xml:space="preserve">
+    <value>هذه الميزة غير موجودة.</value>
+  </data>
+	<data name="LabRequest.NoItems" xml:space="preserve">
+    <value>لا يوجد عناصر في الطلب.</value>
+  </data>
+	<data name="MedicalRecord.AlreadyExists" xml:space="preserve">
+    <value>يوجد سجل طبي مسبق لهذا الموعد.</value>
+  </data>
+	<data name="Plan.FeatureAlreadyAssigned" xml:space="preserve">
+    <value>هذه الميزة مضافة مسبقاً للخطة.</value>
+  </data>
+	<data name="Schedule.NoChanges" xml:space="preserve">
+    <value>لم يتم إجراء أي تغييرات على الجدول.</value>
+  </data>
+	<data name="Waitlist.SlotsAvailable" xml:space="preserve">
+    <value>هناك مواعيد متاحة لهذا الطبيب.</value>
+  </data>
 </root>

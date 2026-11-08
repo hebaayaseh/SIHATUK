@@ -679,4 +679,80 @@
   <data name="Schedule.SlotDurationMissing" xml:space="preserve">
     <value>This doctor's schedule is missing a slot duration. Please contact the clinic administrator</value>
   </data>
+	<!-- الصق قبل </root> بنهاية Messages.en.resx -->
+	<data name="Auth.AccountDeactivated" xml:space="preserve">
+    <value>This account has been deactivated.</value>
+  </data>
+	<data name="Auth.TooManyAttempts" xml:space="preserve">
+    <value>Too many failed attempts. Please try again later.</value>
+  </data>
+	<data name="CenterRegistration.TenantDatabaseCreationFailed" xml:space="preserve">
+    <value>We could not set up the center database. Please try again or contact support.</value>
+  </data>
+	<data name="Consultation.AlreadyScheduled" xml:space="preserve">
+    <value>This consultation is already scheduled.</value>
+  </data>
+	<data name="Consultation.NotScheduledYet" xml:space="preserve">
+    <value>This consultation has not been scheduled yet.</value>
+  </data>
+	<data name="Expense.NotFound" xml:space="preserve">
+    <value>Expense not found.</value>
+  </data>
+	<data name="Feedback.NotFound" xml:space="preserve">
+    <value>Feedback not found.</value>
+  </data>
+	<data name="FollowUp.NotFound" xml:space="preserve">
+    <value>Follow-up not found.</value>
+  </data>
+	<data name="LabRequest.NoAvailableItems" xml:space="preserve">
+    <value>This lab request has no available tests.</value>
+  </data>
+	<data name="LabRequest.NotProcessing" xml:space="preserve">
+    <value>This lab request is not in progress.</value>
+  </data>
+	<data name="LabRequestItem.NotAvailable" xml:space="preserve">
+    <value>This lab test is not available.</value>
+  </data>
+	<data name="MedicationReminder.NotFound" xml:space="preserve">
+    <value>Medication reminder not found.</value>
+  </data>
+	<data name="Validation.InvalidAmount" xml:space="preserve">
+    <value>The amount is not valid.</value>
+  </data>
+	<data name="Validation.InvalidCategory" xml:space="preserve">
+    <value>The category is not valid.</value>
+  </data>
+	<data name="Validation.InvalidSection" xml:space="preserve">
+    <value>The section is not valid.</value>
+  </data>
+	<data name="Validation.NameTooLong" xml:space="preserve">
+    <value>The name is too long.</value>
+  </data>
+	<data name="Appointment.NotToday" xml:space="preserve">
+    <value>The appointment is not scheduled for today.</value>
+  </data>
+	<data name="Department.HasDoctors" xml:space="preserve">
+    <value>Cannot delete a department that has doctors.</value>
+  </data>
+	<data name="Doctor.Busy" xml:space="preserve">
+    <value>The doctor is busy at the selected time.</value>
+  </data>
+	<data name="Feature.NotFound" xml:space="preserve">
+    <value>Feature not found.</value>
+  </data>
+	<data name="LabRequest.NoItems" xml:space="preserve">
+    <value>There are no items in the lab request.</value>
+  </data>
+	<data name="MedicalRecord.AlreadyExists" xml:space="preserve">
+    <value>A medical record already exists for this appointment.</value>
+  </data>
+	<data name="Plan.FeatureAlreadyAssigned" xml:space="preserve">
+    <value>This feature is already assigned to the plan.</value>
+  </data>
+	<data name="Schedule.NoChanges" xml:space="preserve">
+    <value>No changes were made to the schedule.</value>
+  </data>
+	<data name="Waitlist.SlotsAvailable" xml:space="preserve">
+    <value>There are available slots for this doctor.</value>
+  </data>
 </root>

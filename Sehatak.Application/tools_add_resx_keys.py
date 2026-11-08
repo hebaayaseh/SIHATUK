@@ -133,7 +133,22 @@ ENTRIES = {
     "Department.Exist": ("A department with this name already exists.", "يوجد قسم بهذا الاسم مسبقًا."),
     "User.NotFound": ("User not found.", "المستخدم غير موجود."),
     "Plan.FeatureAlreadyAssigned":("This feature is already assigned to the plan.","هذه الميزة مضافة مسبقاً للخطة."),
-    "Feature.VotFound" : ("Featern not found." , "هذه الميزة غير موجودة."),
+    "Feature.NotFound": ("Feature not found.", "هذه الميزة غير موجودة."),
+    "Auth.AccountDeactivated": ("This account has been deactivated.", "تم تعطيل هذا الحساب."),
+    "Auth.TooManyAttempts": ("Too many failed attempts. Please try again later.", "محاولات فاشلة كثيرة. الرجاء المحاولة لاحقاً."),
+    "CenterRegistration.TenantDatabaseCreationFailed": ("We could not set up the center database. Please try again or contact support.", "تعذر إنشاء قاعدة بيانات المركز. الرجاء المحاولة مرة أخرى أو التواصل مع الدعم."),
+    "Consultation.AlreadyScheduled": ("This consultation is already scheduled.", "تمت جدولة هذه الاستشارة مسبقاً."),
+    "Consultation.NotScheduledYet": ("This consultation has not been scheduled yet.", "لم تتم جدولة هذه الاستشارة بعد."),
+    "Expense.NotFound": ("Expense not found.", "المصروف غير موجود."),
+    "FollowUp.NotFound": ("Follow-up not found.", "المتابعة غير موجودة."),
+    "LabRequest.NoAvailableItems": ("This lab request has no available tests.", "طلب المختبر لا يحتوي على فحوصات متاحة."),
+    "LabRequest.NotProcessing": ("This lab request is not in progress.", "طلب المختبر ليس قيد المعالجة."),
+    "LabRequestItem.NotAvailable": ("This lab test is not available.", "هذا الفحص غير متاح."),
+    "MedicationReminder.NotFound": ("Medication reminder not found.", "تذكير الدواء غير موجود."),
+    "Validation.InvalidAmount": ("The amount is not valid.", "المبلغ غير صالح."),
+    "Validation.InvalidCategory": ("The category is not valid.", "الفئة غير صالحة."),
+    "Validation.InvalidSection": ("The section is not valid.", "القسم غير صالح."),
+    "Validation.NameTooLong": ("The name is too long.", "الاسم طويل جداً."),
 }
 
 TEMPLATE = '  <data name="{key}" xml:space="preserve">\n    <value>{value}</value>\n  </data>\n'
