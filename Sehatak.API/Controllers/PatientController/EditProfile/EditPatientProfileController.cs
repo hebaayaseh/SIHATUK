@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sehatak.Application.DTOs.EditProfile.EditEmailOrPasswored;
 using Sehatak.Application.DTOs.EditProfile.EditProfileActors;
 using Sehatak.Application.DTOs.EditProfileDto.EditEmailOrPasswored;
@@ -64,7 +65,7 @@ namespace Sehatak.API.Controllers.PatientController.EditProfile
             var result = await profilePatient.ViewPatientInformation(centerId, userId);
             return Ok(result);
         }
-
+        [EnableRateLimiting("LoginPolicy")]
         [HttpPost("forget-password/{centerId}")]
         [AllowAnonymous]
         public async Task<IActionResult> ForgetPassword(int centerId, [FromBody] ForgetPasswordRequest request)
@@ -72,7 +73,7 @@ namespace Sehatak.API.Controllers.PatientController.EditProfile
             var result = await profilePatient.ForgetPasswordAsync(centerId,request);
             return Ok(result);
         }
-
+        [EnableRateLimiting("LoginPolicy")]
         [HttpPost("confirm-forget-password/{centerId}")]
         [AllowAnonymous]
         public async Task<IActionResult> ConfirmForgetPassword(int centerId, [FromBody] ConfirmForgetPasswordRequest request)

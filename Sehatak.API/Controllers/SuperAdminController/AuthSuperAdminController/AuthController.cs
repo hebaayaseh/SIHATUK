@@ -15,6 +15,7 @@ namespace Sehatak.API.Controllers.SuperAdminController.AuthSuperAdmin
         {
             this.superAdminAuthService = superAdminAuthService;
         }
+        [EnableRateLimiting("LoginPolicy")]
         [AllowAnonymous]
         [HttpPost("superAdmin-register")]
         public async Task<IActionResult> RegisterSuperAdmin([FromForm]RegisterSuperAdminRequestDto superAdminDto)

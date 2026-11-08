@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.CreateCenterRequestDto;
 using Sehatak.Application.DTOs.RecordPaymentRequestDto;
@@ -17,7 +18,7 @@ namespace Sehatak.API.Controllers.CenterRegistration
         {
             _registrationService = registrationService;
         }
-
+        [EnableRateLimiting("LoginPolicy")]
         [HttpPost("center-registration")]
         [AllowAnonymous]
         public async Task<IActionResult> CenterRequest([FromForm] CenterRegistrationRequestDto request)
@@ -25,7 +26,7 @@ namespace Sehatak.API.Controllers.CenterRegistration
             var result = await _registrationService.CenterRequestAsync(request);
             return Ok(result);
         }
-        
+        [EnableRateLimiting("LoginPolicy")]
         [HttpPost("{requestId}/record-payment")]
         [AllowAnonymous]
         public async Task<IActionResult> RecordRegistrationPayment(int requestId, [FromForm] recordPaymentRequestDto request)

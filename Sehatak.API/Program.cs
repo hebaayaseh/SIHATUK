@@ -205,8 +205,8 @@ namespace Sehatak.API
 
 
             // 6. SIGNALR
+            builder.Services.AddSignalR();
             builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, Sehatak.API.Hubs.CenterUserIdProvider>();
-
             // 7. CORS
             var allowedOrigins = builder.Configuration
                 .GetSection("Cors:AllowedOrigins")
@@ -425,8 +425,9 @@ namespace Sehatak.API
 
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
             app.UseRequestLocalization();
+            app.UseMiddleware<ExceptionMiddleware>();
+            app.UseStaticFiles();
             app.UseRouting();
             app.UseCors("SehatakPolicy");
             app.UseRateLimiter();

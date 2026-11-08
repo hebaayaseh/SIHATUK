@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sehatak.Application.DTOs.Auth;
 using Sehatak.Application.Interfaces.IAuth;
 
@@ -15,7 +16,7 @@ namespace Sehatak.API.Controllers.tokenController
         {
             _tokenService = tokenService;
         }
-
+        [EnableRateLimiting("GeneralPolicy")]
         [HttpPost("refresh")]
         [AllowAnonymous]
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequestDto request)
@@ -23,7 +24,7 @@ namespace Sehatak.API.Controllers.tokenController
             var result = await _tokenService.RefreshAsync(request.RefreshToken);
             return Ok(result);
         }
-
+        [EnableRateLimiting("GeneralPolicy")]
         [HttpPost("logout")]
         [AllowAnonymous]
         public async Task<IActionResult> Logout([FromBody] LogoutRequestDto request)
