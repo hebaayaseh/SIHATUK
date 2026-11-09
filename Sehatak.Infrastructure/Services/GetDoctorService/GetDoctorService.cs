@@ -36,8 +36,14 @@ namespace Sehatak.Infrastructure.Services.GetStaff
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
+
             var targetYear = year ?? ClinicClock.Today.Year;
             var targetMonth = month ?? ClinicClock.Today.Month;
+
+            if (targetYear < 2000 || targetYear > 2100)
+                throw new BusinessException("Validation.InvalidYear");
+            if (targetMonth < 1 || targetMonth > 12)
+                throw new BusinessException("Validation.InvalidMonth");
 
             var startOfMonth = new DateOnly(targetYear, targetMonth, 1);
             var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
@@ -46,9 +52,11 @@ namespace Sehatak.Infrastructure.Services.GetStaff
             var blockedDates = await db.DoctorBlockedDays
                 .Where(d => d.doctorId == doctor.Id
                        && d.isBlocked
+                       && d.timeSlot == null
                        && d.date >= startOfMonth
                        && d.date <= endOfMonth)
                 .Select(d => d.date)
+                .Distinct()
                 .ToListAsync();
 
             return new DoctorSummaryDto
@@ -102,8 +110,10 @@ namespace Sehatak.Infrastructure.Services.GetStaff
                         DoctorName = a.user.firstName+" "+a.user.lastName,
                         isActive = a.user.isActive,
                         AvrageRating = a.doctorRatings.Any() ? a.doctorRatings.Average(r => r.Rating) : 0,
-                        Reviews = a.doctorRatings.Select(r => r.Review).ToList()
-
+                        Reviews = a.doctorRatings
+                                .Where(r => r.Review != null && r.Review != "")
+                                .Select(r => r.Review)
+                                .ToList()
                     }).ToList()
                 });
 

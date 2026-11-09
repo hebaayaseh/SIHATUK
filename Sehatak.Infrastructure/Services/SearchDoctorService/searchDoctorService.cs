@@ -49,7 +49,9 @@ namespace Sehatak.Infrastructure.Services.SearchDoctorService
             }
 
             var projected = query
-                .OrderBy(a => a.user.firstName)          
+                .OrderBy(a => a.user.firstName)
+                .ThenBy(a => a.user.lastName)
+                .ThenBy(a => a.Id)
                 .Select(a => new DoctorSummaryDto
                 {
                     DoctorId = a.Id,
@@ -67,6 +69,7 @@ namespace Sehatak.Infrastructure.Services.SearchDoctorService
                             EndTime = d.EndTime,
                             SlotDurationMinutes = d.SlotDurationMinutes,
                             IsActive = d.IsActive,
+                            DayOfWeek = d.DayOfWeek,
                         }).ToList(),
                 });
 
