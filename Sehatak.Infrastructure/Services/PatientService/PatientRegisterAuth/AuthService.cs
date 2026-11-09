@@ -53,24 +53,10 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
         var patient = await db.Users
             .FirstOrDefaultAsync(p => p.isActive && p.email == request.email);
 
-        if (patient == null)
+        if (patient == null || patient.role != userRole.Patient || !BCrypt.Net.BCrypt.Verify(request.password, patient.passwordHash))
         {
             await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: false, LoginUserType.Patient);
-            throw new BusinessException("Auth.Unauthorized");
-        }
-
-        if (patient.role != userRole.Patient)
-        {
-            await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: false, LoginUserType.Patient);
-            throw new BusinessException("Auth.Forbidden");
-        }
-
-        var passwordValid = BCrypt.Net.BCrypt.Verify(request.password, patient.passwordHash);
-
-        if (!passwordValid)
-        {
-            await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: false, LoginUserType.Patient);
-            throw new BusinessException("Validation.PasswordMismatch");
+            throw new BusinessException("Auth.LoginFailed");
         }
 
         await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: true, LoginUserType.Patient);
@@ -105,6 +91,9 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
         if (existing != null && existing.isActive)
             throw new BusinessException("Auth.EmailExists");
 
+        if (existing != null && existing.role != userRole.Patient)
+            throw new BusinessException("Auth.EmailExists");
+
         if (existing != null && !existing.isActive)
         {
             var wasEverVerified = await db.EmailVerificationCodes
@@ -113,7 +102,10 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
             if (wasEverVerified)
                 throw new BusinessException("Auth.AccountDeactivated");
         }
+        var existingId = existing?.Id ?? 0;
 
+        if (await db.Users.AnyAsync(u => u.phoneNumber == request.phoneNumber && u.Id != existingId))
+            throw new BusinessException("Auth.PhoneExists");
         User user;
 
         if (existing != null && !existing.isActive)
@@ -217,17 +209,27 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
 
     public async Task<VerifyOtpResponseDto?> VerifyOtpAsync(int CenterId,VerifyOtpRequestDto request)
     {
+        var center = await sharedDbContext.MedicalCenters
+           .FirstOrDefaultAsync(c => c.Id == CenterId && c.CenterStatus == CenterStatus.Active);
+        if (center == null)
+            throw new BusinessException("Center.NotFound");
+
         using var db = tenantFactory.CreateForCenter(CenterId);
 
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == request.UserId);
-        if (user == null) return null;
+        var user = await db.Users
+            .FirstOrDefaultAsync(u => u.Id == request.UserId
+                                 && u.role == userRole.Patient);
+
+        if (user == null) 
+            return null;
 
         var validCode = await db.EmailVerificationCodes
-            .Where(c => c.UserId == user.Id
-                     && c.Code == request.code
-                     && !c.IsUsed
-                     && c.ExpiresAt > DateTime.UtcNow)
-            .FirstOrDefaultAsync();
+             .Where(c => c.UserId == user.Id
+                    && c.Purpose == "register"
+                    && c.Code == request.code
+                    && !c.IsUsed
+                    && c.ExpiresAt > DateTime.UtcNow)
+             .FirstOrDefaultAsync();
 
         if (validCode == null) return null;
 

@@ -149,6 +149,7 @@ ENTRIES = {
     "Validation.InvalidCategory": ("The category is not valid.", "الفئة غير صالحة."),
     "Validation.InvalidSection": ("The section is not valid.", "القسم غير صالح."),
     "Validation.NameTooLong": ("The name is too long.", "الاسم طويل جداً."),
+    "Auth.PhoneExists" : ("This phone number is already registered.", "رقم الهاتف مسجل مسبقاً."),
 }
 
 TEMPLATE = '  <data name="{key}" xml:space="preserve">\n    <value>{value}</value>\n  </data>\n'

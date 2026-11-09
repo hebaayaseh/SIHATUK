@@ -755,4 +755,7 @@
 	<data name="Waitlist.SlotsAvailable" xml:space="preserve">
     <value>There are available slots for this doctor.</value>
   </data>
+	<data name = "Auth.PhoneExists" xml:space="preserve">
+    <value>This phone number is already registered.</value>
+  </data>
 </root>

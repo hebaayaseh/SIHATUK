@@ -71,6 +71,11 @@ public abstract class AuthTestBase(SqlServerFixture fx) : AppointmentTestBase(fx
         c.CenterStatus = status;
         await shared.SaveChangesAsync();
     }
+    protected async Task<User> UserAsync(int userId)
+    {
+        await using var db = Db();
+        return await db.Users.AsNoTracking().SingleAsync(u => u.Id == userId);
+    }
 
     protected async Task SeedAttemptsAsync(string email, int count, bool success = false, double minutesAgo = 1,
         LoginUserType type = LoginUserType.Staff, int? centerId = null)

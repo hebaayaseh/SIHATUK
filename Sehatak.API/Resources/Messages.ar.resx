@@ -755,4 +755,7 @@
 	<data name="Waitlist.SlotsAvailable" xml:space="preserve">
     <value>هناك مواعيد متاحة لهذا الطبيب.</value>
   </data>
+	<data name ="Auth.PhoneExists" xml:space="preserve">
+    <value>رقم الهاتف موجود مسبقاً.</value>
+  </data>
 </root>
