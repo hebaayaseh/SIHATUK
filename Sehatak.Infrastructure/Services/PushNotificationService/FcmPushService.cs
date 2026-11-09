@@ -23,17 +23,28 @@ namespace Sehatak.Infrastructure.Services.PushNotificationService
             {
                 Token = token,
                 Notification = new FcmNotification { Title = title, Body = body },
-                Data = (IReadOnlyDictionary<string, string>)data
+                Data = data == null ? null : new Dictionary<string, string>(data),
             };
 
             try
             {
-                await FirebaseMessaging.DefaultInstance.SendAsync(message);
+                var messaging = FirebaseMessaging.DefaultInstance;
+                if (messaging == null)
+                {
+                    logger.LogWarning("Firebase is not configured; push skipped");
+                    return false;
+                }
+                await messaging.SendAsync(message);
                 return true;
             }
             catch (FirebaseMessagingException ex)
             {
                 logger.LogWarning(ex, "FCM send failed for token {Token}: {Code}", token, ex.MessagingErrorCode);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Push failed unexpectedly");
                 return false;
             }
         }

@@ -104,8 +104,14 @@ namespace Sehatak.Infrastructure.Services.NotificationService
             if (user == null)
                 throw new BusinessException("User.NotFound");
 
+
+            await db.Users
+                .Where(u => u.FcmToken == token && u.Id != userId)
+                .ExecuteUpdateAsync(s => s.SetProperty(u => u.FcmToken, (string?)null));
+
             user.FcmToken = token;
             await db.SaveChangesAsync();
+
         }
     }
 }
