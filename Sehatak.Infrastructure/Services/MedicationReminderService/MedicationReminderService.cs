@@ -63,7 +63,8 @@ namespace Sehatak.Infrastructure.Services.MedicationReminderService
                 Days = request.IsDaily ? ReminderDays.All : request.SelectedDays,
                 StartDate = startDate,
                 EndDate = startDate.AddDays(request.DurationInDays - 1),
-                IsActive = true
+                IsActive = true,
+                Notes = request.Notes,
             };
 
             await db.MedicationReminders.AddAsync(reminder);
@@ -82,7 +83,8 @@ namespace Sehatak.Infrastructure.Services.MedicationReminderService
                 PatientId = actingPatient.patientId,
                 PatientName = actingPatient.userId != null
                     ? $"{actingPatient.user.firstName} {actingPatient.user.lastName}"
-                    : $"{actingPatient.FirstName} {actingPatient.LastName}"
+                    : $"{actingPatient.FirstName} {actingPatient.LastName}",
+                Notes = reminder.Notes
             };
         }
 
@@ -137,7 +139,8 @@ namespace Sehatak.Infrastructure.Services.MedicationReminderService
                     PatientId = actingPatient.patientId,
                     PatientName = actingPatient.userId != null
                     ? $"{actingPatient.user.firstName} {actingPatient.user.lastName}"
-                    : $"{actingPatient.FirstName} {actingPatient.LastName}"
+                    : $"{actingPatient.FirstName} {actingPatient.LastName}",
+                    Notes = r.Notes
                 });
 
             return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
@@ -187,6 +190,87 @@ namespace Sehatak.Infrastructure.Services.MedicationReminderService
             await db.SaveChangesAsync();
 
             return "تم حذف التذكير بنجاح.";
+        }
+
+        public async Task<MedicationReminderResponseDto> UpdateMedicationReminderAsync(int centerId, int userId, int reminderId, UpdateMedicationReminderRequestDto request, int? subPatientId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(p => p.userId == userId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
+            var reminder = await db.MedicationReminders
+                .FirstOrDefaultAsync(r => r.Id == reminderId
+                                     && r.PatientId == actingPatient.patientId);
+
+            if (reminder == null)
+                throw new BusinessException("MedicationReminder.NotFound");
+
+            if (request.MedicationName != null)
+                reminder.MedicationName = request.MedicationName;
+
+            if (request.ReminderTime.HasValue)
+                reminder.ReminderTime = request.ReminderTime.Value;
+
+            if (request.IsDaily.HasValue)
+                reminder.Days = request.IsDaily.Value ? ReminderDays.All : reminder.Days;
+
+            if (request.SelectedDays.HasValue)
+                reminder.Days = request.SelectedDays.Value;
+
+            if (request.Notes != null)
+                reminder.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
+
+
+            if (request.DurationInDays.HasValue)
+            {
+                var newEndDate = reminder.StartDate.AddDays(request.DurationInDays.Value - 1);
+                reminder.EndDate = newEndDate;
+            }
+
+            await db.SaveChangesAsync();
+            return new MedicationReminderResponseDto
+            {
+                Id = reminder.Id,
+                MedicationName = reminder.MedicationName,
+                ReminderTime = reminder.ReminderTime,
+                Days = reminder.Days,
+                StartDate = reminder.StartDate,
+                EndDate = reminder.EndDate,
+                IsActive = reminder.IsActive,
+                CreatedAt = reminder.CreatedAt,
+                PatientId = actingPatient.patientId,
+                PatientName = actingPatient.userId != null
+                    ? $"{actingPatient.user.firstName} {actingPatient.user.lastName}"
+                    : $"{actingPatient.FirstName} {actingPatient.LastName}",
+                Notes = reminder.Notes
+            };
         }
     }
 }

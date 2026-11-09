@@ -12,6 +12,7 @@ public class MedicationReminder
     public bool IsActive { get; set; } = true;
     public DateOnly? LastNotifiedDate { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? Notes { get; set; } 
 
     // Navigation Proparity : 
     public Patient Patient { get; set; } = null!;

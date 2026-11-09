@@ -725,6 +725,8 @@ namespace Sehatak.Infrastructure.Data
 
                 e.HasIndex(x => x.PatientId);
                 e.HasIndex(e => new { e.IsActive, e.ReminderTime });
+
+                e.Property(e => e.Notes).HasMaxLength(500);
             });
 
             // Expense 

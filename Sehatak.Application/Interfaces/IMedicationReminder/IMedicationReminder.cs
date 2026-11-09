@@ -9,5 +9,6 @@ namespace Sehatak.Application.Interfaces.IMedicationReminder
         Task<MedicationReminderResponseDto> AddMedicationReminderAsync(int centerId, int userId, MedicationReminderRequestDto request,int? subPatientId);
         Task<PagedResult<MedicationReminderResponseDto>> GetMedicationRemindersAsync(int centerId, int userId, PagedRequest request, int? subPatientId);
         Task<string> DeleteMedicationReminderAsync(int centerId, int userId, int reminderId, int? subPatientId);
+        Task<MedicationReminderResponseDto> UpdateMedicationReminderAsync(int centerId, int userId, int reminderId, UpdateMedicationReminderRequestDto request, int? subPatientId);
     }
 }

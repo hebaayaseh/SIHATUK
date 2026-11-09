@@ -19,7 +19,7 @@ namespace Sehatak.API.Controllers.MedicationReminderController
 
         [Authorize(Policy = "PatientOnly")]
         [HttpPost("patient-add-medication-reminder/{centerId}")]
-        public async Task<IActionResult> AddMedicationReminderAsync(int centerId , MedicationReminderRequestDto request , [FromQuery] int? subPatientId)
+        public async Task<IActionResult> AddMedicationReminderAsync(int centerId, MedicationReminderRequestDto request, [FromQuery] int? subPatientId)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
             var result = await medication.AddMedicationReminderAsync(centerId, userId, request, subPatientId);
@@ -28,21 +28,29 @@ namespace Sehatak.API.Controllers.MedicationReminderController
 
         [Authorize(Policy = "PatientOnly")]
         [HttpGet("get-medications-reminders/{centerId}")]
-        public async Task<IActionResult> GetMedicationReminderAsync(int centerId , [FromQuery] PagedRequest request, [FromQuery] int? subPatientId)
+        public async Task<IActionResult> GetMedicationReminderAsync(int centerId, [FromQuery] PagedRequest request, [FromQuery] int? subPatientId)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
-            var result = await medication.GetMedicationRemindersAsync(centerId, userId,request, subPatientId);
+            var result = await medication.GetMedicationRemindersAsync(centerId, userId, request, subPatientId);
             return Ok(result);
         }
 
         [Authorize(Policy = "PatientOnly")]
         [HttpDelete("delete-medication-reminder/{centerId}")]
-        public async Task<IActionResult> DeleteMedicationReminderAsync(int centerId, [FromQuery] int reminderId ,[FromQuery] int? subPatientId)
+        public async Task<IActionResult> DeleteMedicationReminderAsync(int centerId, [FromQuery] int reminderId, [FromQuery] int? subPatientId)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
             var result = await medication.DeleteMedicationReminderAsync(centerId, userId, reminderId, subPatientId);
             return Ok(result);
         }
+        [Authorize(Policy = "PatientOnly")]
+        [HttpPut("update-medication-reminder/{centerId}")]
+        public async Task<IActionResult> UpdateMedicationReminderAsync(int centerId, [FromQuery] int reminderId, UpdateMedicationReminderRequestDto request, [FromQuery] int? subPatientId)
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var result = await medication.UpdateMedicationReminderAsync(centerId, userId, reminderId, request, subPatientId);
+            return Ok(result);
 
+        }
     }
 }

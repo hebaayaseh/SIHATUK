@@ -9,5 +9,6 @@ namespace Sehatak.Application.DTOs.MedicationReminderDto
         public bool IsDaily { get; set; }
         public ReminderDays SelectedDays { get; set; }   
         public int DurationInDays { get; set; }
+        public string? Notes { get; set; }
     }
 }

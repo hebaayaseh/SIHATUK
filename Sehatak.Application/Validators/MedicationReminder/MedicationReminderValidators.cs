@@ -15,9 +15,19 @@ namespace Sehatak.Application.Validators.MedicationReminder
             RuleFor(x => x.ReminderTime).RealTime();
             RuleFor(x => x.SelectedDays).ValidEnum();
             RuleFor(x => x.DurationInDays).InclusiveBetween(1, 90);
+            RuleFor(x => x.Notes).OptionalText(500);
         }
 
     }
-    
+    public class UpdateMedicationReminderRequestDtoValidator : AbstractValidator<UpdateMedicationReminderRequestDto>
+    {
+        public UpdateMedicationReminderRequestDtoValidator()
+        {
+            RuleFor(x => x.MedicationName).MaximumLength(200);
+            RuleFor(x => x.DurationInDays).LessThanOrEqualTo(90);
+            RuleFor(x => x.DurationInDays).InclusiveBetween(1, 90);
+            RuleFor(x=>x.Notes).OptionalText(500);
+        }
+    }
 
 }
