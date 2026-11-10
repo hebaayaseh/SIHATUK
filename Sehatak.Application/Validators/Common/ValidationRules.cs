@@ -21,6 +21,7 @@ namespace Sehatak.Application.Validators.Common
         public const int MaxReasonLength = 500;
         public const int MinPasswordLength = 8;
         public const int MaxPasswordLength = 128;
+        public const int MaxDescriptionLength = 300;
 
         public const long MaxImageBytes = 5 * 1024 * 1024;     // 5 MB
         public const long MaxDocumentBytes = 5 * 1024 * 1024;  // 5 MB

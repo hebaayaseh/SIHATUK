@@ -11,7 +11,7 @@ namespace Sehatak.Application.Validators.Feature
         public CreateFeatureRequestDtoValidator()
         {
             RuleFor(x => x.Name).RequiredText(100);
-            RuleFor(x => x.Description).OptionalText(ValidationRules.MaxNoteLength);
+            RuleFor(x => x.Description).OptionalText(ValidationRules.MaxDescriptionLength);
         }
     }
 

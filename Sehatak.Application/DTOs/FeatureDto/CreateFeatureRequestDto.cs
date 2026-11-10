@@ -9,7 +9,7 @@ namespace Sehatak.Application.DTOs.FeatureDto
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        [MaxLength(500)]
+        [MaxLength(300)]
         public string? Description { get; set; }
     }
 }

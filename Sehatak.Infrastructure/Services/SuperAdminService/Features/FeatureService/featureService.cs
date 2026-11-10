@@ -37,33 +37,44 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Features.FeatureServ
         {
             var center = await sharedDbContext.MedicalCenters.FindAsync(centerId);
             if (center == null)
-            {
                 throw new BusinessException("Center.NotFound");
-            }
 
             var featureExists = await sharedDbContext.PlatformFeatures
                 .AnyAsync(f => f.Id == request.featureId);
             if (!featureExists)
-                throw new BusinessException("General.NotFound");
+                throw new BusinessException("Feature.NotFound");
 
-            var alreadyAdded = await sharedDbContext.CenterFeatures
-                .AnyAsync(cf => cf.CenterId == centerId && cf.FeatureId == request.featureId);
+            
+            var link = await sharedDbContext.CenterFeatures
+                .FirstOrDefaultAsync(cf => cf.CenterId == centerId && cf.FeatureId == request.featureId);
 
-            if (alreadyAdded)
-                throw new BusinessException("General.NotFound");
+            if (link != null)
+            {
+                if (link.IsEnabled)
+                    throw new BusinessException("Feature.AlreadyAdded");
 
-            var feature = new CenterFeature
+                link.IsEnabled = true;               
+                await sharedDbContext.SaveChangesAsync();
+                return true;
+            }
+
+            await sharedDbContext.CenterFeatures.AddAsync(new CenterFeature
             {
                 CenterId = centerId,
                 FeatureId = request.featureId,
                 IsEnabled = true
-            };
+            });
 
-            await sharedDbContext.CenterFeatures.AddAsync(feature);
-            await sharedDbContext.SaveChangesAsync();
+            try
+            {
+                await sharedDbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                throw new BusinessException("Feature.AlreadyAdded");
+            }
 
             return true;
-
         }
 
         public async Task<bool> ActiveFeaturAsync(int centerId, ActiveFetureRequest request)
@@ -78,7 +89,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Features.FeatureServ
                 (f => f.Id == request.FetureId);
 
             if (feature == null)
-                throw new BusinessException("General.NotFound");
+                throw new BusinessException("Feature.NotFound");
 
             var existingCenterFeature = await sharedDbContext.CenterFeatures
                 .FirstOrDefaultAsync(cf => cf.CenterId == centerId
@@ -86,7 +97,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Features.FeatureServ
 
             if (existingCenterFeature == null)
             {
-                throw new BusinessException("General.NotFound");
+                throw new BusinessException("Feature.NotFound");
             }
 
             existingCenterFeature.IsEnabled = true;
@@ -123,7 +134,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Features.FeatureServ
                 .FirstOrDefaultAsync(f => f.Id == request.featureId);
             if (feature == null)
             {
-                throw new BusinessException("General.NotFound");
+                throw new BusinessException("Feature.NotFound");
             }
 
             var centerFeature = await sharedDbContext.CenterFeatures
@@ -131,7 +142,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Features.FeatureServ
             && cf.FeatureId == request.featureId);
             if (centerFeature == null)
             {
-                throw new BusinessException("General.NotFound");
+                throw new BusinessException("Feature.NotFound");
             }
 
             centerFeature.IsEnabled = false;

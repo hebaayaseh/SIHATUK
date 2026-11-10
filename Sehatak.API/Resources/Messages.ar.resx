@@ -758,4 +758,7 @@
 	<data name ="Auth.PhoneExists" xml:space="preserve">
     <value>رقم الهاتف موجود مسبقاً.</value>
   </data>
+	<data name="Feature.AlreadyAdded" xml:space="preserve">
+  <value>هذه الميزة مضافة للمركز مسبقاً.</value>
+</data>
 </root>

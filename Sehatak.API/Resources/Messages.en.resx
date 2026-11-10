@@ -758,4 +758,7 @@
 	<data name = "Auth.PhoneExists" xml:space="preserve">
     <value>This phone number is already registered.</value>
   </data>
+<data name="Feature.AlreadyAdded" xml:space="preserve">
+  <value>This feature is already added to the center.</value>
+</data>
 </root>
