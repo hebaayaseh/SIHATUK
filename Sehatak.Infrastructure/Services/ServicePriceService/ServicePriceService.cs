@@ -26,8 +26,11 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
         private static string CacheKey(int centerId, ServiceType type, int pageNumber, int pageSize) =>
         $"serviceprices:{centerId}:{type}:{pageNumber}:{pageSize}";
 
-        private void InvalidateServicePriceCache(int centerId) =>
-        cacheKeysByCenter.TryRemove(centerId, out _);
+        private void InvalidateServicePriceCache(int centerId)
+        {
+            if (cacheKeysByCenter.TryRemove(centerId, out var bag))
+                foreach (var key in bag) cache.Remove(key);
+        }
 
         private static readonly ConcurrentDictionary<int, ConcurrentBag<string>> cacheKeysByCenter = new();
 
@@ -88,7 +91,7 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
             var item = request.Items
                 .Select(s => new ServicePrice
                 {
-                    ServiceName = s.ServiceName,
+                    ServiceName = s.ServiceName.Trim(),
                     Price = s.Price,
                     Type=request.Type,
                     CreatedAt= DateTime.UtcNow,
@@ -161,7 +164,7 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
 
         public async Task<string> RemoveServicePrice(int userId, int centerId, int servicePriceId)
         {
-            var center = sharedDbContext.MedicalCenters
+            var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
 
             if (center == null)
@@ -219,7 +222,14 @@ namespace Sehatak.Infrastructure.Services.ServicePriceService
             }
 
             if (!string.IsNullOrWhiteSpace(request.ServiceName))
+            {
+                var newName = request.ServiceName.Trim().ToLower();
+                if (await db.ServicePrices.AnyAsync(s => s.IsActive && s.Type == updateService.Type
+                        && s.Id != updateService.Id && s.ServiceName.Trim().ToLower() == newName))
+                    throw new BusinessException("Validation.DuplicateServiceNames");
+
                 updateService.ServiceName = request.ServiceName.Trim();
+            }
 
             updateService.UpdatedAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
