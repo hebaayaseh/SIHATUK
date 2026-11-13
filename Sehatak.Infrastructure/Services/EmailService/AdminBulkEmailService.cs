@@ -21,8 +21,9 @@ namespace Sehatak.Infrastructure.Services
         public async Task<int> SendAsync(SendEmailDto request)
         {
             List<string> emails;
+            var target = request.Target?.Trim().ToLowerInvariant();
 
-            switch (request.Target)
+            switch (target)
             {
                 case "specific":
                     if (request.CenterId == null)
@@ -48,7 +49,10 @@ namespace Sehatak.Infrastructure.Services
 
                 case "expired":
                     emails = await sharedDbContext.CenterSubscriptions
-                        .Where(s => s.Status == SubscriptionStatus.Expired && s.Center.AdminEmail != null)
+                        .Where(s => s.Status == SubscriptionStatus.Expired
+                                 && s.Center.AdminEmail != null
+                                 && !sharedDbContext.CenterSubscriptions.Any(a => a.CenterId == s.CenterId
+                                                                               && a.Status == SubscriptionStatus.Active))
                         .Select(s => s.Center.AdminEmail!)
                         .Distinct()
                         .ToListAsync();
@@ -57,6 +61,7 @@ namespace Sehatak.Infrastructure.Services
                 default:
                     throw new BusinessException("Validation.InvalidTarget");
             }
+            emails = emails.Where(e => !string.IsNullOrWhiteSpace(e)).Select(e => e.Trim()).Distinct().ToList();
 
             if (emails.Count == 0)
                 return 0;

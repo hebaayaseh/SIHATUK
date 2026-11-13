@@ -1,9 +1,11 @@
 ﻿
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Sehatak.Application.Interfaces.IEmail;
 using System.Net;
 using System.Net.Mail;
+
 
 namespace Sehatak.Infrastructure.Services
 {
@@ -63,6 +65,8 @@ namespace Sehatak.Infrastructure.Services
 
         public async Task SendTempPasswordAsync(string toEmail, string name, string tempPassword, string centerName)
         {
+            name = WebUtility.HtmlEncode(name);
+            centerName = WebUtility.HtmlEncode(centerName);
             var body = $@"
                 <div dir='rtl' style='font-family:Arial;padding:20px'>
                     <h2>مرحباً {name}</h2>
@@ -77,6 +81,7 @@ namespace Sehatak.Infrastructure.Services
 
         public async Task SendSubscriptionRenewalReminderAsync(string toEmail, string centerName, DateOnly endDate)
         {
+            centerName = WebUtility.HtmlEncode(centerName);
             var body = $@"
                 <div dir='rtl' style='font-family:Arial;padding:20px'>
                     <h2>تنبيه تجديد اشتراك</h2>
@@ -90,6 +95,7 @@ namespace Sehatak.Infrastructure.Services
 
         public async Task SendPaymentConfirmedAsync(string toEmail, string centerName, decimal amount)
         {
+            centerName = WebUtility.HtmlEncode(centerName);
             var body = $@"
                 <div dir='rtl' style='font-family:Arial;padding:20px'>
                     <h2>تأكيد استلام الدفع</h2>
