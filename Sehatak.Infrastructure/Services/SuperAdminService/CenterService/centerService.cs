@@ -29,8 +29,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
         public async Task<CenterResponseDto> CreateCenterAsync(createCenterRequestDto request)
         {
             var plan = await sharedDbContext.SubscriptionPlans.FindAsync(request.PlanId);
-            if (plan == null) throw new BusinessException("Subscription.PlanNotFound");
-
+            if (plan == null || !plan.IsActive) throw new BusinessException("Subscription.PlanNotFound");
 
             var center = new MedicalCenter
             {
@@ -59,16 +58,19 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
             }
             if (request.Logo != null)
             {
+                var extension = Path.GetExtension(request.Logo.FileName).ToLower();
+                if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(extension))
+                    throw new BusinessException("Validation.InvalidFileType");
+                if (request.Logo.Length > 5 * 1024 * 1024)
+                    throw new BusinessException("Validation.FileTooLarge");
 
-                var fileName = Guid.NewGuid() + Path.GetExtension(request.Logo.FileName);
-
-                var path = Path.Combine("wwwroot/uploads/receipts", fileName);
-
+                var fileName = Guid.NewGuid() + extension;
+                var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await request.Logo.CopyToAsync(stream);
                 }
-                center.LogoUrl = $"/uploads/receipts/{fileName}";
+                center.LogoUrl = $"/uploads/profileImage/{fileName}";
             }
             // name of domain
             var centerUrl = $"{GenerateSlug(request.Name)}.sehatak.com";
@@ -106,7 +108,17 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
                 });
             }
 
-            await tenantDbContextFactory.CreateTenantDatabaseAsync(center.Id);
+            var newCenterId = center.Id;
+            try
+            {
+                await tenantDbContextFactory.CreateTenantDatabaseAsync(newCenterId);
+            }
+            catch
+            {
+                sharedDbContext.ChangeTracker.Clear();
+                await sharedDbContext.MedicalCenters.Where(c => c.Id == newCenterId).ExecuteDeleteAsync();
+                throw;
+            }
 
             center.CenterStatus = CenterStatus.Active;
             await sharedDbContext.SaveChangesAsync();
@@ -129,10 +141,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
         }
         public string GenerateSlug(string name)
         {
-            return name
-                  .Trim()
-                  .ToLower()
-                  .Replace(" ", "-");
+            return System.Text.RegularExpressions.Regex.Replace(name.Trim().ToLower(), @"\s+", "-");
         }
 
         public async Task<CreateAdminResponseDto> CreateAdminAsync(int centerId, CreateAdminRequestDto request)
@@ -148,6 +157,10 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
             var emailExists = await db.Users.AnyAsync(u => u.email == request.Email);
             if (emailExists)
                 throw new BusinessException("Auth.EmailExists");
+
+            var phoneExists = await db.Users.AnyAsync(u => u.phoneNumber == request.PhoneNumber);
+            if (phoneExists)
+                throw new BusinessException("Auth.PhoneExists");
 
             var tempPassword = GenerateTempPassword();
 
@@ -167,9 +180,17 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
             await db.Users.AddAsync(admin);
             await db.SaveChangesAsync();
 
-            await _emailService.SendTempPasswordAsync(
-                request.Email, name: $"{request.FirstName} {request.LastName}", tempPassword, center.Name
-                );
+            try
+            {
+                await _emailService.SendTempPasswordAsync(
+                    request.Email, name: $"{request.FirstName} {request.LastName}", tempPassword, center.Name);
+            }
+            catch
+            {
+                db.Users.Remove(admin);
+                await db.SaveChangesAsync();
+                throw;
+            }
 
             return new CreateAdminResponseDto
             {
@@ -194,13 +215,13 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
 
             var subscription = await sharedDbContext.CenterSubscriptions
                 .Include(c => c.Plan)
-                .FirstOrDefaultAsync(c => c.CenterId == centerId && c.Status == SubscriptionStatus.Active);
+                .Where(c => c.CenterId == centerId)
+                .OrderByDescending(c => c.Status == SubscriptionStatus.Active)
+                .ThenByDescending(c => c.EndDate)
+                .FirstOrDefaultAsync();
 
-            if (subscription == null)
-                throw new BusinessException("Center.SubscriptionExpired");
-
-            var features = await sharedDbContext.PlanFeatures
-                .Where(p => p.PlanId == subscription.PlanId)
+            var features = await sharedDbContext.CenterFeatures
+                .Where(f => f.CenterId == centerId && f.IsEnabled)
                 .Select(f => f.Feature.NameOfFeature)
                 .ToListAsync();
 
@@ -214,7 +235,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
                 LogoUrl = center.LogoUrl,
                 AddedBySuperAdminId = center.AddedBySuperAdminId,
                 AdminWhatsappNumber = center.AdminWhatsappNumber,
-                PlanName = subscription.Plan.Name,
+                PlanName = subscription?.Plan.Name,
                 FeatureNames = features
             };
 
@@ -232,7 +253,8 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
                     Address = c.Address,
                     LogoUrl = c.LogoUrl,
                     AddedBySuperAdminId = c.AddedBySuperAdminId,
-                    AdminWhatsappNumber = c.AdminWhatsappNumber
+                    AdminWhatsappNumber = c.AdminWhatsappNumber,
+                    Status = c.CenterStatus,
 
                 });
 

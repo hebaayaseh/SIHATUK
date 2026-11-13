@@ -1,4 +1,6 @@
 ﻿
+using Sehatak.Domain.Enums.SharedEnums;
+
 namespace Sehatak.Application.DTOs.CentersDto
 {
     public class ListOfCentersResponseDto
@@ -17,6 +19,7 @@ namespace Sehatak.Application.DTOs.CentersDto
         public int? AddedBySuperAdminId { get; set; }
         
         public string? AdminWhatsappNumber { get; set; }
+        public CenterStatus Status { get; set; }
 
     }
 }

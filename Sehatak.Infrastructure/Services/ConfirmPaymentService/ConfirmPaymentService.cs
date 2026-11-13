@@ -86,8 +86,16 @@ namespace Sehatak.Infrastructure.Services.ConfirmPaymentService
             if (auditEntry != null)
                 db.AuditLogs.Add(auditEntry);
 
-            await db.SaveChangesAsync();
+            await using var Trancation = await db.Database.BeginTransactionAsync();
 
+            var claimed = await db.Payments
+                .Where(p => p.Id == payment.Id && p.Status == PaymentStatus.Pending)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.Status, PaymentStatus.Paid));
+            if (claimed == 0)
+                throw new BusinessException("Payment.NotFound");
+
+            await db.SaveChangesAsync();
+            await Trancation.CommitAsync();
             return new PaymentResponseDto
             {
                 PaymentId = payment.Id,
