@@ -3,6 +3,7 @@
     public enum LoginUserType
     {
         Patient,
-        Staff
+        Staff,
+        SuperAdmin
     }
-}
+}

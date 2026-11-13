@@ -5,6 +5,7 @@ using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.IProfileInterface;
 using Sehatak.Domain.Entities.SharedEntities;
+using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
 using System.Security.Cryptography;
 
@@ -87,6 +88,8 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
             if (exists)
                 throw new BusinessException("Auth.EmailExists");
 
+            await InvalidateOldCodesAsync(superAdmin.Id, "change-email");
+
             var code = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
 
             sharedDbContext.emailVerificationCodes.Add(new emailVerificationCode
@@ -124,6 +127,12 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
             if (validCode == null || string.IsNullOrEmpty(validCode.PendingValue))
                 throw new BusinessException("Verfiy.Code");
 
+            // the address may have been taken by someone else since the request
+            var taken = await sharedDbContext.SuperAdmins
+                .AnyAsync(x => x.Email == validCode.PendingValue && x.Id != superAdminId);
+            if (taken)
+                throw new BusinessException("Auth.EmailExists");
+
             superAdmin.Email = validCode.PendingValue;
             validCode.IsUsed = true;
 
@@ -146,7 +155,9 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
                 throw new BusinessException("Validation.SamePassword");
 
 
-            var code = new Random().Next(100000, 999999).ToString();
+            await InvalidateOldCodesAsync(superAdminId, "change-password");
+
+            var code = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
 
             sharedDbContext.emailVerificationCodes.Add(new emailVerificationCode
             {
@@ -187,9 +198,26 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
             superAdmin.PasswordHash = validCode.PendingValue;
             validCode.IsUsed = true;
 
+            // sign out every other session of this super admin
+            var sessions = await sharedDbContext.RefreshTokens
+                .Where(t => t.UserId == superAdminId
+                         && t.OwnerType == TokenOwnerType.SuperAdmin
+                         && !t.IsRevoked)
+                .ToListAsync();
+            foreach (var t in sessions) t.IsRevoked = true;
+
             await sharedDbContext.SaveChangesAsync();
             return new PasswordResponse { message = "Password Update Succses" };
 
+        }
+
+        // a new request cancels the codes of the previous ones
+        private async Task InvalidateOldCodesAsync(int superAdminId, string purpose)
+        {
+            var old = await sharedDbContext.emailVerificationCodes
+                .Where(c => c.SuperAdminId == superAdminId && c.Purpose == purpose && !c.IsUsed)
+                .ToListAsync();
+            foreach (var c in old) c.IsUsed = true;
         }
 
         public async Task<ProfileResponse> ViewProfile(int superAdminId)
