@@ -41,6 +41,10 @@ namespace Sehatak.API.Controllers.SuperAdminController.Migrate
         [HttpPost("superAdmin-migrate-tenant/{centerId}")]
         public async Task<IActionResult> MigrateSingleTenant(int centerId)
         {
+            var exists = await _migrationRunner.GetAllCenterIdsAsync();
+            if (!exists.Contains(centerId))
+                return NotFound();
+
             var result = await dbContextFactory.MigrateSingleTenantAsync(centerId);
             return Ok(result);
         }

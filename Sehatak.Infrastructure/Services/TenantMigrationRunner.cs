@@ -15,10 +15,11 @@ namespace Sehatak.Infrastructure.Services;
 
         public async Task<List<int>> GetAllCenterIdsAsync()
         {
-            return await _sharedDb.MedicalCenters
-                .Select(c => c.Id)
-                .ToListAsync();
-        }
+          return await _sharedDb.MedicalCenters
+              .OrderBy(c => c.Id)
+              .Select(c => c.Id)
+              .ToListAsync();
+    }
 
         public async Task<List<TenantMigrationResult>> MigrateAllTenantsAsync()
         {
