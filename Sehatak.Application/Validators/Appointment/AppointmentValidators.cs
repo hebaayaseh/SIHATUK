@@ -24,6 +24,7 @@ namespace Sehatak.Application.Validators.Appointment
             RuleFor(x => x.timeSlot).RealTime();
             RuleFor(x => x.date).RealDate();
             RuleFor(x => x.SubPatientId).ValidOptionalId();
+            RuleFor(x=> x.Resone).OptionalText(ValidationRules.MaxReasonLength);
         }
     }
 
@@ -46,6 +47,7 @@ namespace Sehatak.Application.Validators.Appointment
         {
             RuleFor(x => x.timeSlot).RealTime();
             RuleFor(x => x.date).NotInThePast();
+            RuleFor(x=> x.Reason).OptionalText(ValidationRules.MaxReasonLength);
         }
     }
 
@@ -72,6 +74,7 @@ namespace Sehatak.Application.Validators.Appointment
             RuleFor(x => x.timeSlot).RealTime();
             RuleFor(x => x.date).RealDate();
             RuleFor(x => x.SubPatientId).ValidOptionalId();
+            RuleFor(x => x.Resone).OptionalText(ValidationRules.MaxReasonLength);
         }
     }
 

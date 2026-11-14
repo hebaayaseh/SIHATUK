@@ -16,7 +16,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
         private readonly IAuditLog auditLog;
-        public StaffAttendanceService(SharedDbContext sharedDbContext , TenantDbContextFactory contextFactory, IAuditLog auditLog)
+        public StaffAttendanceService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory, IAuditLog auditLog)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
@@ -31,9 +31,13 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
+
             using var db = contextFactory.CreateForCenter(centerId);
 
-            if (request.AttendanceDate != ClinicClock.Today)
+
+            var today = ClinicClock.Today;
+            var isYesterday = request.AttendanceDate == today.AddDays(-1);
+            if (request.AttendanceDate != today && !isYesterday)
                 throw new BusinessException("Date.Invalid");
 
             var user = await db.Users
@@ -49,14 +53,17 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
                                      && s.ShiftDate == request.AttendanceDate);
 
             if (staffShift == null)
-                throw new BusinessException("User.NotFound");
+                throw new BusinessException(isYesterday ? "Date.Invalid" : "User.NotFound");
 
             var shiftTime = await db.shiftSchedules
                 .FirstOrDefaultAsync(s => s.ShiftName == staffShift.ShiftName);
             if (shiftTime == null)
                 throw new BusinessException("Shift.NotFound");
 
-            
+
+            if (isYesterday && !ShiftWindow.CrossesMidnight(shiftTime.StartTime, shiftTime.EndTime))
+                throw new BusinessException("Date.Invalid");
+
             var already = await db.StaffAttendances
                 .FirstOrDefaultAsync(a => a.UserId == request.userId
                                      && a.StaffShiftId == staffShift.Id);
@@ -84,10 +91,10 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
             }
 
             var auditEntry = auditLog.Build(
-                action : "StaffAttendance",
-                entityType : nameof(StaffAttendance),
-                entityId : attendance.Id,
-                newValue : new Dictionary<string, object>
+                action: "StaffAttendance",
+                entityType: nameof(StaffAttendance),
+                entityId: attendance.Id,
+                newValue: new Dictionary<string, object>
                 {
                     { "UserId", attendance.UserId },
                     { "StaffShiftId", attendance.StaffShiftId },
@@ -108,17 +115,21 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
         public async Task<string> CheckInTimeAsync(int centerId, int userId, StaffAttendanceCheckInRequestDto request)
         {
             var center = await sharedDbContext
-                .MedicalCenters.FirstOrDefaultAsync(c=>c.Id == centerId
+                .MedicalCenters.FirstOrDefaultAsync(c => c.Id == centerId
                                                     && c.CenterStatus == CenterStatus.Active);
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
-            if (request.AttendanceDate != ClinicClock.Today)
+
+
+            var today = ClinicClock.Today;
+            var isYesterday = request.AttendanceDate == today.AddDays(-1);
+            if (request.AttendanceDate != today && !isYesterday)
                 throw new BusinessException("Date.Invalid");
 
             var nowUtc = DateTime.UtcNow;
-            var localTime = TimeOnly.FromDateTime(ClinicClock.FromUtc(nowUtc));
+            var localNow = ClinicClock.FromUtc(nowUtc);
 
             var user = await db.Users
                 .FirstOrDefaultAsync(u => u.Id == userId
@@ -133,14 +144,21 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
                                      && s.ShiftDate == request.AttendanceDate);
 
             if (staffShift == null)
-                throw new BusinessException("User.NotFound");
+                throw new BusinessException(isYesterday ? "Date.Invalid" : "User.NotFound");
 
             var shiftTime = await db.shiftSchedules
                 .FirstOrDefaultAsync(s => s.ShiftName == staffShift.ShiftName);
             if (shiftTime == null)
                 throw new BusinessException("Shift.NotFound");
 
-            
+
+            var w = ShiftWindow.For(request.AttendanceDate, shiftTime.StartTime, shiftTime.EndTime);
+
+
+            if (isYesterday && (!ShiftWindow.CrossesMidnight(shiftTime.StartTime, shiftTime.EndTime)
+                                || localNow >= w.End))
+                throw new BusinessException("Date.Invalid");
+
             var already = await db.StaffAttendances
                 .FirstOrDefaultAsync(a => a.UserId == userId
                                      && a.StaffShiftId == staffShift.Id);
@@ -153,7 +171,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
                 StaffShiftId = staffShift.Id,
                 AttendanceDate = request.AttendanceDate,
                 CheckInTime = nowUtc,
-                attendanceStatus = localTime > shiftTime.StartTime
+                attendanceStatus = localNow > w.Start
                     ? AttendanceStatus.Late
                     : AttendanceStatus.Present
             };
@@ -212,7 +230,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
             var today = DateOnly.FromDateTime(localNow);
             var yesterday = today.AddDays(-1);
 
-            // 1) وردية ليلية بدأت أمس وما انسجّل خروجها
+
             var overnight = await (
                 from a in db.StaffAttendances
                 join s in db.StaffShifts on a.StaffShiftId equals s.Id
@@ -236,7 +254,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
             }
             else
             {
-                // 2) وردية اليوم
+
                 var staffShift = await db.StaffShifts
                     .FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive && s.ShiftDate == today);
                 if (staffShift == null)
@@ -249,7 +267,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
                 var existing = await db.StaffAttendances
                     .FirstOrDefaultAsync(a => a.UserId == userId && a.StaffShiftId == staffShift.Id);
 
-                // غياب/إجازة (CheckInTime فاضي) أو ما دخل أصلاً
+
                 if (existing == null || existing.CheckInTime == null)
                     throw new BusinessException("Attendance.NotFound");
 
@@ -260,14 +278,15 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
             }
 
             var isOvernight = shiftTime.EndTime < shiftTime.StartTime;
-            // وردية ليلية وما زلنا قبل منتصف الليل = أكيد خروج مبكر
+
             var leftEarly = (closingNextMorning || !isOvernight)
                 ? localTime < shiftTime.EndTime
                 : true;
 
             attendance.CheckOutTime = nowUtc;
             if (attendance.attendanceStatus == AttendanceStatus.Present && leftEarly)
-                attendance.attendanceStatus = AttendanceStatus.EarlyOut;   // Late تبقى Late
+                attendance.attendanceStatus = AttendanceStatus.EarlyOut;   
+
 
             var auditEntry = auditLog.Build(
                 action: "StaffAttendance",
@@ -323,7 +342,7 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
                 throw new BusinessException("Shift.NotFound");
 
             var already = await db.StaffAttendances
-                .AnyAsync(a => a.UserId == userId 
+                .AnyAsync(a => a.UserId == userId
                           && a.AttendanceDate == request.AttendanceDate);
 
             if (already)
@@ -372,5 +391,5 @@ namespace Sehatak.Infrastructure.Services.StaffAttendanceService
         private static bool IsDuplicateKey(DbUpdateException ex) =>
         ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 };
     }
-    
+
 }

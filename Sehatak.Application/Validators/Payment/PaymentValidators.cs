@@ -72,10 +72,11 @@ namespace Sehatak.Application.Validators.Payment
             RuleFor(x => x.centerId).ValidOptionalId();
             RuleFor(x => x.SubscriptionId).ValidOptionalId();
 
+
             RuleFor(x => x.PaymentMethod)
                 .NotEmpty().WithMessage(ValidationKeys.Required)
                 .MaximumLength(50).WithMessage(ValidationKeys.TooLong)
-                .Must(m => AllowedMethods.Contains(m.Replace(" ", "").ToLowerInvariant()))
+                .Must(m => Enum.GetNames<PaymentMethod>().Contains(m?.Trim(), StringComparer.OrdinalIgnoreCase))
                 .WithMessage(ValidationKeys.InvalidValue);
 
             RuleFor(x => x.ReferenceNumber).OptionalText(100);

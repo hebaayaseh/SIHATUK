@@ -1,4 +1,5 @@
 using FluentValidation;
+using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.ShiftDto;
 using Sehatak.Application.DTOs.StaffAttendance;
 using Sehatak.Application.Validators.Common;
@@ -10,9 +11,8 @@ namespace Sehatak.Application.Validators.Shift
         public ShiftScheduleRequestValidator()
         {
             RuleFor(x => x.ShiftName).ValidEnum();
-            RuleFor(x => x.StartTime).RealTime();
+            RuleFor(x => x.StartTime);
             RuleFor(x => x.EndTime)
-                .RealTime()
                 .NotEqual(x => x.StartTime).WithMessage(ValidationKeys.EndBeforeStart);
             // EndTime < StartTime is allowed on purpose: a night shift wraps past midnight.
         }
@@ -68,6 +68,16 @@ namespace Sehatak.Application.Validators.Shift
                 .RealDate()
                 .LessThanOrEqualTo(_ => ValidationRules.Today).WithMessage(ValidationKeys.DateInFuture);
 
+            RuleFor(x => x.CheckTime)
+                .RealDateTime()
+                .LessThanOrEqualTo(_ => DateTime.UtcNow.AddMinutes(5))
+                .WithMessage(ValidationKeys.DateInFuture);
+
+            RuleFor(x => x)
+                .Must(x => Math.Abs(DateOnly.FromDateTime(ClinicClock.FromUtc(x.CheckTime)).DayNumber - x.AttendanceDate.DayNumber) <= 1)
+                .WithMessage(ValidationKeys.InvalidDate)
+                .OverridePropertyName(nameof(StaffAttendanceCheckInRequestDto.CheckTime))
+                .When(x => x.AttendanceDate != default && x.CheckTime != default);
         }
     }
 

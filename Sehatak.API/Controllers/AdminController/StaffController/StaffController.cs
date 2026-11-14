@@ -26,7 +26,7 @@ namespace Sehatak.API.Controllers.AdminController.AddStaffController
         }
         [Authorize(Policy = "AdminOrAbove")]
         [HttpPut("admin-remove-staff-from-center/{centerId}")]
-        public async Task<IActionResult> RmeoveStaff(int centerId, [FromBody] RemoveStaffRequestDto request)
+        public async Task<IActionResult> RemoveStaff(int centerId, [FromBody] RemoveStaffRequestDto request)
         {
             var result = await signup.RemoveStaffAsync(centerId, request);
             return Ok(result);

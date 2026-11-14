@@ -27,6 +27,7 @@ namespace Sehatak.Application.Validators.MedicalRecord
             RuleFor(x => x.Prescription).OptionalText(500);
             RuleFor(x => x.Diagnosis).OptionalText(1000);
             RuleFor(x => x.ConsultationCost).OptionalMoney();
+            RuleFor(x => x.Notes).OptionalText(500);
 
             // The service throws MedicalRecord.MustLinkToAppointmentOrConsultation /
             // MedicalRecord.CannotLinkToBoth; catch it before touching the DB.

@@ -26,5 +26,7 @@
 
         public static DateTime ToUtc(DateTime clinicLocal) =>
             TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(clinicLocal, DateTimeKind.Unspecified), Zone);
+
+
     }
 }

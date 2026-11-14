@@ -17,8 +17,7 @@ public abstract class SuperAdminTestBase(SqlServerFixture fx)
 {
     protected const string Pwd = "Str0ng!Pass";
     protected const string SetupKey = "test-setup-key";
-    private static int _seq;
-
+    private static int _seq = Random.Shared.Next(1_000_000, 8_000_000);
     protected SqlServerFixture Fx { get; } = fx;
     protected SharedDbContext Shared() => Fx.Harness.NewSharedDb();
 

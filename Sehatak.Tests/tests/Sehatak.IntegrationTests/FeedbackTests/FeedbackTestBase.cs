@@ -18,8 +18,7 @@ namespace Sehatak.IntegrationTests.FeedbackTests;
 /// </summary>
 public abstract class FeedbackTestBase(SqlServerFixture fx) : AppointmentTestBase(fx)
 {
-    private static int _seq;
-
+    private static int _seq = Random.Shared.Next(1_000_000, 8_000_000);
     protected IEmailService Email { get; } = Substitute.For<IEmailService>();
 
     protected FeedbackSvc NewFeedback() =>

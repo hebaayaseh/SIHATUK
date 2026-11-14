@@ -36,14 +36,14 @@ namespace Sehatak.Application.Validators.Common
 
         // Accepts local PS/IL mobile formats and generic E.164:
         //   0599123456 / 00970599123456 / +970599123456 / +972... / +14155552671
-        private static readonly Regex PhoneRegex = new(
-            @"^(\+|00)?[0-9]\d{6,14}$", RegexOptions.Compiled);
+        private static readonly Regex PhoneRegex = new(@"^(\+|00)?[0-9][0-9]{6,14}\z", RegexOptions.Compiled);
+
 
         // At least one lowercase, one uppercase and one digit.
         private static readonly Regex StrongPasswordRegex = new(
             @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$", RegexOptions.Compiled);
 
-        private static readonly Regex OtpRegex = new(@"^\d{6}$", RegexOptions.Compiled);
+        private static readonly Regex OtpRegex = new(@"^[0-9]{6}\z", RegexOptions.Compiled);
 
         // ---- identity -------------------------------------------------------
 
