@@ -138,6 +138,9 @@
   <data name="Auth.PasswordChanged" xml:space="preserve">
     <value>Password changed successfully.</value>
   </data>
+	<data name="Auth.TooManyAttempts" xml:space="preserve">
+    <value>Too many login attempts. Please try again later.</value>
+  </data>
   <data name="Validation.Required" xml:space="preserve">
     <value>This field is required.</value>
   </data>

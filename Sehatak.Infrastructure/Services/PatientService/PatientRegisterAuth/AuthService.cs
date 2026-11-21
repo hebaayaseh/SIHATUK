@@ -4,17 +4,18 @@ using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.PatienRegisterDto;
 using Sehatak.Application.DTOs.PatientLoginDto;
+using Sehatak.Application.Interfaces.AuditLog;
 using Sehatak.Application.Interfaces.AuthPatient;
 using Sehatak.Application.Interfaces.IAuth;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Domain.Entities.General;
+using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using Sehatak.Infrastructure.Security;
 using System.Security.Cryptography;
-using Sehatak.Domain.Entities.SharedEntities;
-using Sehatak.Application.Interfaces.AuditLog;
 
 
 namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
@@ -88,93 +89,64 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
 
         var existing = await db.Users.FirstOrDefaultAsync(u => u.email == request.email);
 
-        if (existing != null && existing.isActive)
-            throw new BusinessException("Auth.EmailExists");
-
-        if (existing != null && existing.role != userRole.Patient)
-            throw new BusinessException("Auth.EmailExists");
-
-        if (existing != null && !existing.isActive)
+        if (existing != null)
         {
-            var wasEverVerified = await db.EmailVerificationCodes
-                .AnyAsync(c => c.UserId == existing.Id && c.IsUsed);
+            var pending = existing.role == userRole.Patient
+                          && !existing.isActive
+                          && !await db.EmailVerificationCodes.AnyAsync(c => c.UserId == existing.Id && c.IsUsed);
 
-            if (wasEverVerified)
-                throw new BusinessException("Auth.AccountDeactivated");
+            if (!pending)
+                return FakeRegisterResponse(request.email);
+
+            if (await OtpGuard.HasLiveCodeAsync(db, existing.Id, "register")
+                || await OtpGuard.TooManyRequestsAsync(db, existing.Id, "register"))
+                throw new BusinessException("Auth.TooManyAttempts");
+
+            await IssueRegisterCodeAsync(db, existing);
+            return new RegisterResponseDto { UserId = existing.Id, Email = existing.email! };
         }
-        var existingId = existing?.Id ?? 0;
 
-        if (await db.Users.AnyAsync(u => u.phoneNumber == request.phoneNumber && u.Id != existingId))
+        if (await db.Users.AnyAsync(u => u.phoneNumber == request.phoneNumber))
             throw new BusinessException("Auth.PhoneExists");
-        User user;
 
-        if (existing != null && !existing.isActive)
+        var user = new User
         {
-            existing.firstName = request.firstName;
-            existing.lastName = request.lastName;
-            existing.passwordHash = BCrypt.Net.BCrypt.HashPassword(request.password);
-            existing.phoneNumber = request.phoneNumber;
-            existing.address = request.address;
-            existing.city = request.city;
+            firstName = request.firstName,
+            lastName = request.lastName,
+            email = request.email,
+            passwordHash = BCrypt.Net.BCrypt.HashPassword(request.password),
+            phoneNumber = request.phoneNumber,
+            address = request.address,
+            city = request.city,
+            role = userRole.Patient,
+            isActive = false,
+            createdAt = DateTime.UtcNow
+        };
 
-            if (request.ProfileImage != null)
-            {
-                existing.ProfileImageUrl = await SaveProfileImageAsync(request.ProfileImage);
-            }
+        if (request.ProfileImage != null)
+            user.ProfileImageUrl = await SaveProfileImageAsync(request.ProfileImage);
 
-            user = existing;
-            await db.SaveChangesAsync();
-        }
-        else
-        {
-            user = new User
-            {
-                firstName = request.firstName,
-                lastName = request.lastName,
-                email = request.email,
-                passwordHash = BCrypt.Net.BCrypt.HashPassword(request.password),
-                phoneNumber = request.phoneNumber,
-                address = request.address,
-                city = request.city,
-                role = userRole.Patient,
-                isActive = false,
-                createdAt = DateTime.UtcNow
-            };
-
-            if (request.ProfileImage != null)
-            {
-                user.ProfileImageUrl = await SaveProfileImageAsync(request.ProfileImage);
-            }
-
-            await db.Users.AddAsync(user);
-            await db.SaveChangesAsync();
-        }
-
-        var existingPatient = await db.Patients.FirstOrDefaultAsync(p => p.userId == user.Id);
-
-        if (existingPatient != null)
-        {
-            existingPatient.DateOfBith = request.DateOfBith;
-            existingPatient.BloodType = request.bloodType;
-            existingPatient.Gender = request.gender;
-            existingPatient.WhatsappNumber = request.phoneNumber;
-        }
-        else
-        {
-            var patient = new Patient
-            {
-                userId = user.Id,
-                DateOfBith = request.DateOfBith,
-                BloodType = request.bloodType,
-                Gender = request.gender,
-                WhatsappNumber = request.phoneNumber,
-                NotifiableUserId = user.Id
-            };
-            await db.Patients.AddAsync(patient);
-        }
-
+        await db.Users.AddAsync(user);
         await db.SaveChangesAsync();
 
+        await db.Patients.AddAsync(new Patient
+        {
+            userId = user.Id,
+            DateOfBith = request.DateOfBith,
+            BloodType = request.bloodType,
+            Gender = request.gender,
+            WhatsappNumber = request.phoneNumber,
+            NotifiableUserId = user.Id
+        });
+        await db.SaveChangesAsync();
+
+        await IssueRegisterCodeAsync(db, user);
+
+        return new RegisterResponseDto { UserId = user.Id, Email = user.email! };
+    }
+
+    private async Task IssueRegisterCodeAsync(TenantDbContext db, User user)
+    {
         var code = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
         db.EmailVerificationCodes.Add(new EmailVerificationCode
         {
@@ -184,15 +156,14 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
             ExpiresAt = DateTime.UtcNow.AddMinutes(10)
         });
         await db.SaveChangesAsync();
-
         await emailSender.SendOtpAsync(user.email!, code, "register");
-
-        return new RegisterResponseDto
-        {
-            UserId = user.Id,
-            Email = user.email!
-        };
     }
+
+    private static RegisterResponseDto FakeRegisterResponse(string email) => new()
+    {
+        UserId = RandomNumberGenerator.GetInt32(1_000_000_000, int.MaxValue),
+        Email = email
+    };
 
     private static async Task<string> SaveProfileImageAsync(IFormFile file)
     {
@@ -223,18 +194,10 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
         if (user == null) 
             return null;
 
-        var validCode = await db.EmailVerificationCodes
-             .Where(c => c.UserId == user.Id
-                    && c.Purpose == "register"
-                    && c.Code == request.code
-                    && !c.IsUsed
-                    && c.ExpiresAt > DateTime.UtcNow)
-             .FirstOrDefaultAsync();
-
-        if (validCode == null) return null;
+        var validCode = await OtpGuard.ConsumeAsync(db, user.Id, "register", request.code);
+        if (validCode is null) return null;
 
         user.isActive = true;
-        validCode.IsUsed = true;
         await db.SaveChangesAsync();
 
 
@@ -275,6 +238,9 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
 
         user.isActive = false;
         await db.SaveChangesAsync();
+        await sharedDbContext.RefreshTokens
+    .Where(t => t.UserId == userId && t.CenterId == centerId && !t.IsRevoked)
+    .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsRevoked, true));
         return "تم تعطيل الحساب بنجاح.";
     }
 
@@ -295,13 +261,13 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
         if (patient == null)
         {
             await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: false, LoginUserType.Patient);
-            throw new BusinessException("Auth.Unauthorized");
+            throw new BusinessException("Auth.LoginFailed");
         }
 
         if (patient.role != userRole.Patient)
         {
             await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: false, LoginUserType.Patient);
-            throw new BusinessException("Auth.Forbidden");
+            throw new BusinessException("Auth.LoginFailed");
         }
 
         var passwordValid = BCrypt.Net.BCrypt.Verify(request.password, patient.passwordHash);
@@ -309,7 +275,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientRegisterAuth;
         if (!passwordValid)
         {
             await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: false, LoginUserType.Patient);
-            throw new BusinessException("Validation.PasswordMismatch");
+            throw new BusinessException("Auth.LoginFailed");
         }
 
         await auditLog.RecordLoginAttemptAsync(centerId, request.email, ipAddress, success: true, LoginUserType.Patient);

@@ -8,6 +8,8 @@ using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
 {
@@ -78,7 +80,9 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
         {
             var expectedKey = configuration["SuperAdminSetup:SetupKey"];
 
-            if (string.IsNullOrEmpty(expectedKey) || expectedKey != request.SuperAdminKey)
+            var given = Encoding.UTF8.GetBytes(request.SuperAdminKey ?? "");
+            var expected = Encoding.UTF8.GetBytes(expectedKey ?? "");
+            if (string.IsNullOrEmpty(expectedKey) || !CryptographicOperations.FixedTimeEquals(given, expected))
                 throw new UnauthorizedAccessException();
 
             var emailExists = await sharedDbContext.SuperAdmins.AnyAsync(e => e.Email == request.email);

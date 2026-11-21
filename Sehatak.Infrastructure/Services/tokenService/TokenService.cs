@@ -85,7 +85,11 @@ namespace Sehatak.Infrastructure.Services.tokenService
             {
                 var superAdmin = await sharedDbContext.SuperAdmins.FindAsync(existing.UserId);
                 if (superAdmin == null || !superAdmin.IsActive)
+                {
+                    existing.IsRevoked = true;
+                    await sharedDbContext.SaveChangesAsync();
                     throw new BusinessException("Auth.InvalidRefreshToken");
+                }
 
                 name = superAdmin.Name;
                 email = superAdmin.Email;
@@ -99,8 +103,11 @@ namespace Sehatak.Infrastructure.Services.tokenService
                 using var tenantDb = tenantFactory.CreateForCenter(existing.CenterId.Value);
                 var user = await tenantDb.Users.FindAsync(existing.UserId);
                 if (user == null || !user.isActive)
+                {
+                    existing.IsRevoked = true;
+                    await sharedDbContext.SaveChangesAsync();
                     throw new BusinessException("Auth.InvalidRefreshToken");
-
+                }
                 name = $"{user.firstName} {user.lastName}";
                 email = user.email!;
                 role = user.role.ToString();
@@ -110,7 +117,7 @@ namespace Sehatak.Infrastructure.Services.tokenService
 
             await using var tx = await sharedDbContext.Database.BeginTransactionAsync();
 
-            // نحجز التوكن بالـ SQL: إذا طلبين وصلوا مع بعض، واحد بس بينجح
+
             var claimed = await sharedDbContext.RefreshTokens
                 .Where(t => t.Id == existing.Id && !t.IsRevoked)
                 .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsRevoked, true));

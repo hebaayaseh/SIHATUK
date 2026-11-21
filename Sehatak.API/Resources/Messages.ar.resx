@@ -138,7 +138,10 @@
   <data name="Auth.PasswordChanged" xml:space="preserve">
     <value>تم تغيير كلمة المرور بنجاح.</value>
   </data>
-  <data name="Validation.Required" xml:space="preserve">
+	<data name= "Auth.TooManyAttempts" xml:space="preserve">
+		<value>عدد محاولات تسجيل الدخول كثيرة جدًا. الرجاء المحاولة لاحقًا.</value>
+	</data>
+	<data name="Validation.Required" xml:space="preserve">
     <value>هذا الحقل مطلوب.</value>
   </data>
   <data name="Validation.InvalidEmail" xml:space="preserve">
@@ -679,7 +682,6 @@
   <data name="Schedule.SlotDurationMissing" xml:space="preserve">
     <value>جدول دوام هذا الطبيب ناقص مدة الموعد. يرجى التواصل مع إدارة العيادة.</value>
   </data>
-	<!-- الصق قبل </root> بنهاية Messages.ar.resx -->
 	<data name="Auth.AccountDeactivated" xml:space="preserve">
     <value>تم تعطيل هذا الحساب.</value>
   </data>

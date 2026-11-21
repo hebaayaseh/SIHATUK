@@ -8,6 +8,7 @@ using Sehatak.Application.Interfaces.IProfileInterface;
 using Sehatak.Domain.Entities.General;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
+using Sehatak.Infrastructure.Security;
 using System.Security.Cryptography;
 namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
 {
@@ -310,34 +311,30 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
             return new PasswordResponse { message = "Password Update Succses" };
         }
 
+        private const string ResetSent = "تم ارسال الكود الي ايميلك الخاص .";
+
         public async Task<string> ForgetPasswordAsync(int centerId, ForgetPasswordRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
-               .FirstOrDefaultAsync(c => c.Id == centerId
-                                    && c.CenterStatus == CenterStatus.Active);
-
+                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
             if (center == null)
                 throw new BusinessException("Center.NotFound");
-
-            using var db = contextFactory.CreateForCenter(centerId);
-
-            var user = await db.Users
-                .FirstOrDefaultAsync(p => p.email == request.Email 
-                                     && p.isActive);
-
-            if (user == null)
-                throw new BusinessException("User.NotFound");
 
             if (request.newPassword != request.confirmPassword)
                 throw new BusinessException("Validation.PasswordMismatch");
 
-            var isSamePassword = BCrypt.Net.BCrypt.Verify(request.newPassword, user.passwordHash);
+            using var db = contextFactory.CreateForCenter(centerId);
 
-            if (isSamePassword)
-                throw new BusinessException("Validation.SamePassword");
+            var user = await db.Users.FirstOrDefaultAsync(p => p.email == request.Email && p.isActive);
+
+            // نفس الجواب بكل الحالات: إيميل مش موجود، أو نفس كلمة السر الحالية، أو طلبات كثيرة.
+            if (user == null) return ResetSent;
+            if (BCrypt.Net.BCrypt.Verify(request.newPassword, user.passwordHash)) return ResetSent;
+            if (await OtpGuard.TooManyRequestsAsync(db, user.Id, "change-password")) return ResetSent;
+
+            await OtpGuard.InvalidateOldAsync(db, user.Id, "change-password");
 
             var code = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
-
             db.EmailVerificationCodes.Add(new EmailVerificationCode
             {
                 UserId = user.Id,
@@ -348,44 +345,34 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
             });
             await db.SaveChangesAsync();
             await emailService.SendOtpAsync(user.email, code, "change-password");
-            return "تم ارسال الكود الي ايميلك الخاص .";
-
+            return ResetSent;
         }
+
         public async Task<PasswordResponse> ConfirmForgetPassword(int centerId, ConfirmForgetPasswordRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
-                .FirstOrDefaultAsync(c => c.Id == centerId
-                                     && c.CenterStatus == CenterStatus.Active);
-
+                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
             if (center == null)
                 throw new BusinessException("Center.NotFound");
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            var user = await db.Users
-                .FirstOrDefaultAsync(u => u.email == request.Email
-                                     && u.isActive);
-
+            var user = await db.Users.FirstOrDefaultAsync(u => u.email == request.Email && u.isActive);
             if (user == null)
-                throw new BusinessException("User.NotFound");
+                throw new BusinessException("Verify.Code");         
 
-            var validCode = await db.EmailVerificationCodes
-                .Where(c => c.UserId == user.Id
-                       && c.Purpose == "change-password"
-                       && !c.IsUsed
-                       && c.Code == request.Code
-                       && c.ExpiresAt > DateTime.UtcNow)
-                .OrderByDescending(c => c.CreatedAt)
-                .FirstOrDefaultAsync();
-
-            if (validCode == null || string.IsNullOrEmpty(validCode.PendingValue))
+            var code = await OtpGuard.ConsumeAsync(db, user.Id, "change-password", request.Code);
+            if (code is null || string.IsNullOrEmpty(code.PendingValue))
                 throw new BusinessException("Verify.Code");
 
-            user.passwordHash = validCode.PendingValue;
-            validCode.IsUsed = true;
-            
-
+            user.passwordHash = code.PendingValue;
             await db.SaveChangesAsync();
+
+
+            await sharedDbContext.RefreshTokens
+                .Where(t => t.UserId == user.Id && t.CenterId == centerId && !t.IsRevoked)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsRevoked, true));
+
             return new PasswordResponse { message = "Password Update Success" };
         }
     }

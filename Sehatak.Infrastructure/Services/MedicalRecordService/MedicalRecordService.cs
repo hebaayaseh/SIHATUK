@@ -586,6 +586,7 @@ namespace Sehatak.Infrastructure.Services.MedicalRecordService
             if (record == null)
                 throw new BusinessException("MedicalRecord.NotFound");
 
+
             return new MedicalRecordDetailResponseDto
             {
                 Id = record.Id,
