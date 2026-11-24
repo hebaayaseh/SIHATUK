@@ -149,6 +149,12 @@
 </data>
   <data name="Validation.InvalidEmail" xml:space="preserve">
     <value>الرجاء إدخال إيميل صحيح.</value>
+      </data>
+    <data name="Waitlist.NotWaiting" xml:space="preserve">
+        <value>هذا المريض لم يعد في قائمة الانتظار.</value>
+          </data>
+<data name="Waitlist.InvalidSlot" xml:space="preserve">
+    <value>هذا الوقت غير متاح لمريض قائمة الانتظار.</value>
   </data>
   <data name="Validation.PasswordTooShort" xml:space="preserve">
     <value>كلمة المرور يجب أن تكون 8 أحرف على الأقل.</value>

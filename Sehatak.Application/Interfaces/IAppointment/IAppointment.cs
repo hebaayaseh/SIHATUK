@@ -19,5 +19,8 @@ namespace Sehatak.Application.Interfaces.ApointmentInterface
         Task<BookAppointmentRespesponse> ReceptionistBookAppointmentAsync(int centerId,int userId, int doctorId, ReceptionistBookRequestDto request);
         Task<string> ReceptionistCancelAppointmentAsync(int centerId, int doctorId, int userId, ReceptionistCancelAppointmentRequest request);
         Task<BookAppointmentRespesponse> ReceptionistRescheduleAppointmentAsync(int centerId, int doctorId, int userId, ReceptionistRescheduleAppointmentRequest request);
+        Task<ReceptionistEnterFromWaitlistResponse> ReceptionistEnterFromWaitlistAsync(int centerId, int doctorId, int userId, ReceptionistEnterFromWaitlistRequest request);
+        Task<string> ReceptionistRemoveFromWaitlistAsync(int centerId, int doctorId, int userId, int waitListId);
+
     }
 }

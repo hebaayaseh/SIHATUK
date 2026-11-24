@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sehatak.API.Security;
 using Sehatak.Application.Common;
+using Sehatak.Application.DTOs.CentersDto;
 using Sehatak.Application.DTOs.CreateCenterRequestDto;
 using Sehatak.Application.Interfaces.MedicalCenter;
 
@@ -63,5 +65,16 @@ namespace Sehatak.API.Controllers.SuperAdminController.Centers
             var result = await centerService.ActiveCenter(centerId);
             return Ok(result);
         }
+
+        [AllowAnonymous]
+        [CenterAgnostic]
+        [HttpGet("patient-search-centers")]
+        public async Task<IActionResult> SearchCenters([FromQuery] SearchCentersRequest request)
+    => Ok(await centerService.SearchActiveCentersAsync(request));
+
+        [Authorize(Policy = "AdminOnly")]
+        [HttpGet("admin-get-my-center/{centerId}")]
+        public async Task<IActionResult> GetMyCenter(int centerId)
+            => Ok(await centerService.GetMyCenterAsync(centerId));
     }
 }

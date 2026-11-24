@@ -122,5 +122,20 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
             var result = await slotService.ReceptionistRescheduleAppointmentAsync(centerId, doctorId, userId, request);
             return Ok(result);
         }
+        [Authorize(Policy = "ReceptionistOnly")]
+        [HttpPost("receptionist-enter-from-waitlist/{centerId}/{doctorId}")]
+        public async Task<IActionResult> ReceptionistEnterFromWaitlist(int centerId, int doctorId, [FromBody] ReceptionistEnterFromWaitlistRequest request)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await slotService.ReceptionistEnterFromWaitlistAsync(centerId, doctorId, userId, request));
+        }
+
+        [Authorize(Policy = "ReceptionistOnly")]
+        [HttpDelete("receptionist-remove-from-waitlist/{centerId}/{doctorId}/{waitListId}")]
+        public async Task<IActionResult> ReceptionistRemoveFromWaitlist(int centerId, int doctorId, int waitListId)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await slotService.ReceptionistRemoveFromWaitlistAsync(centerId, doctorId, userId, waitListId));
+        }
     }
 }

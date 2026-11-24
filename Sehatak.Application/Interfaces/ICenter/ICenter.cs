@@ -12,5 +12,7 @@ namespace Sehatak.Application.Interfaces.MedicalCenter
         Task<PagedResult<ListOfCentersResponseDto>> GetListOfCenters(PagedRequest request);
         Task<bool> SuspendedCenter(int centerId);
         Task<bool> ActiveCenter(int centerId);
+        Task<PagedResult<PublicCenterDto>> SearchActiveCentersAsync(SearchCentersRequest request);
+        Task<MyCenterResponseDto> GetMyCenterAsync(int centerId);
     }
 }

@@ -14,7 +14,7 @@ using System.Security.Cryptography;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
 {
-    public class centerService : ICenter
+    public partial class centerService : ICenter
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory tenantDbContextFactory;

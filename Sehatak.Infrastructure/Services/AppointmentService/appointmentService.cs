@@ -14,7 +14,7 @@ using Sehatak.Infrastructure.Data;
 
 namespace Sehatak.Infrastructure.Services.AppointmentService
 {
-    public class appointmentService : IAppointment
+    public partial class appointmentService : IAppointment
     {
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
@@ -834,7 +834,8 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .Include(p => p.Patient)
                 .Where(d => d.DoctorId == doctor.Id
                        && d.PreferredDate == date)
-                .OrderByDescending(d => d.CreatedAt)
+                .OrderBy(w => w.Status == WaitlistStatus.Waiting ? 0 : 1)
+                .ThenBy(w => w.CreatedAt)
                 .Select(w => new GetPatientWaitList
                 {
                     WaitLisId = w.Id,

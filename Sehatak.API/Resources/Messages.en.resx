@@ -688,6 +688,12 @@
 	<!-- الصق قبل </root> بنهاية Messages.en.resx -->
 	<data name="Auth.AccountDeactivated" xml:space="preserve">
     <value>This account has been deactivated.</value>
+	  </data>
+    <data name="Waitlist.NotWaiting" xml:space="preserve">
+        <value>This patient is no longer on the waiting list</value>
+          </data>
+<data name="Waitlist.InvalidSlot" xml:space="preserve">
+    <value>This time is not available for the waiting-list patient</value>
   </data>
 	<data name="CenterRegistration.TenantDatabaseCreationFailed" xml:space="preserve">
     <value>We could not set up the center database. Please try again or contact support.</value>
