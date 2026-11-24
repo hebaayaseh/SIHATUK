@@ -100,9 +100,8 @@ namespace Sehatak.Application.Validators.Lab
 
             RuleForEach(x => x.AddLabItems).SetValidator(new LabRequestItemsSummaryDtoValidator());
 
-            RuleFor(x => x.RemoveLabItems)
-                .Must(r => r is null || r.Distinct().Count() == r.Count)
-                .WithMessage(ValidationKeys.DuplicateItems);
+            RuleForEach(x => x.RemoveLabItems)
+                .GreaterThan(0).WithMessage(ValidationKeys.InvalidId);
 
             RuleFor(x => x)
                 .Must(x => x.Note is not null ||

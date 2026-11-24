@@ -111,9 +111,9 @@ public class LabValidatorTests
 
         v.ShouldBeValid(ok);
         v.ShouldFail(new ReceptionistUpdateLabRequestDto { LabRequestId = 1, PatientId = 2 }, "request", ValidationKeys.AtLeastOneField);
-        v.ShouldFail(ok.With("LabRequestId", 0), "LabRequestId", ValidationKeys.InvalidId);
-        v.ShouldFail(ok.With("RemoveLabItems", new List<int> { -1 }), "RemoveLabItems[0]", ValidationKeys.InvalidId);
-        v.ShouldFail(ok.With("AddLabItems", Items(2, 2)), "AddLabItems", ValidationKeys.DuplicateItems);
+        v.ShouldFail(new ReceptionistUpdateLabRequestDto { LabRequestId = 0, PatientId = 2, Note = "n" }, "LabRequestId", ValidationKeys.InvalidId);
+        v.ShouldFail(new ReceptionistUpdateLabRequestDto { LabRequestId = 1, PatientId = 2, RemoveLabItems = new() { -1 } }, "RemoveLabItems[0]", ValidationKeys.InvalidId);
+        v.ShouldFail(new ReceptionistUpdateLabRequestDto { LabRequestId = 1, PatientId = 2, AddLabItems = Items(2, 2) }, "AddLabItems", ValidationKeys.DuplicateItems);
     }
 
     /// <summary>The doctor's update refuses the same id twice in RemoveLabItems; the receptionist's copy of the rule is missing.</summary>

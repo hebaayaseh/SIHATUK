@@ -12,8 +12,7 @@ namespace Sehatak.Application.Validators.Misc
         public FinancialReportRequestDtoValidator()
         {
             RuleFor(x => x.Year)
-                .InclusiveBetween(2000, DateTime.UtcNow.Year + 1).WithMessage(ValidationKeys.InvalidValue);
-
+                .InclusiveBetween(2000, DateTime.UtcNow.Year + 1).WithMessage(ValidationKeys.InvalidValue);  // utc-ok
             RuleFor(x => x.Month)
                 .InclusiveBetween(1, 12).WithMessage(ValidationKeys.InvalidValue);
         }

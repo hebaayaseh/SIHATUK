@@ -323,23 +323,28 @@ public class PatientProfileServiceTests(SqlServerFixture fx) : PatientsTestBase(
     }
 
     [Fact]
-    public async Task Forgot_password_checks_the_two_passwords_and_the_account()
+    public async Task Forgot_password_checks_the_two_passwords_and_the_center_and_gives_the_same_answer_for_everything_else()
     {
         await SetPasswordAsync(Pat.UserId, OldPassword);
         var email = (await UserAsync(Pat.UserId)).email;
         var gone = await UserAsync((await C.AddPatientAsync(active: false)).UserId);
 
+        // the only errors the caller can get
         await ShouldFailWith("Validation.PasswordMismatch", () => NewPatientProfile().ForgetPasswordAsync(C.Id,
             new ForgetPasswordRequest { Email = email, newPassword = NewPassword, confirmPassword = "Other@12345" }));
-        await ShouldFailWith("Validation.SamePassword", () => NewPatientProfile().ForgetPasswordAsync(C.Id,
-            new ForgetPasswordRequest { Email = email, newPassword = OldPassword, confirmPassword = OldPassword }));
-        await ShouldFailWith("User.NotFound", () => NewPatientProfile().ForgetPasswordAsync(C.Id,
-            new ForgetPasswordRequest { Email = "nobody@test.local", newPassword = NewPassword, confirmPassword = NewPassword }));
-        await ShouldFailWith("User.NotFound", () => NewPatientProfile().ForgetPasswordAsync(C.Id,
-            new ForgetPasswordRequest { Email = gone.email, newPassword = NewPassword, confirmPassword = NewPassword }));
         await ShouldFailWith("Center.NotFound", () => NewPatientProfile().ForgetPasswordAsync(999_999,
             new ForgetPasswordRequest { Email = email, newPassword = NewPassword, confirmPassword = NewPassword }));
 
+        // everything else: same answer, no code, no mail (the caller cannot learn whether the account exists)
+        var same = await NewPatientProfile().ForgetPasswordAsync(C.Id,
+            new ForgetPasswordRequest { Email = email, newPassword = OldPassword, confirmPassword = OldPassword });
+        var nobody = await NewPatientProfile().ForgetPasswordAsync(C.Id,
+            new ForgetPasswordRequest { Email = "nobody@test.local", newPassword = NewPassword, confirmPassword = NewPassword });
+        var inactive = await NewPatientProfile().ForgetPasswordAsync(C.Id,
+            new ForgetPasswordRequest { Email = gone.email, newPassword = NewPassword, confirmPassword = NewPassword });
+
+        nobody.ShouldBe(same);
+        inactive.ShouldBe(same);
         (await CodeCountAsync(Pat.UserId)).ShouldBe(0);
     }
 

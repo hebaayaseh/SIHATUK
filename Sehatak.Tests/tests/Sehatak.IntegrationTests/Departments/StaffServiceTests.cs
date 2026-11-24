@@ -134,11 +134,24 @@ public class StaffServiceTests(SqlServerFixture fx) : DepartmentsTestBase(fx)
     }
 
     [Fact]
-    public async Task Admin_can_deactivate_himself()
+    public async Task The_last_active_admin_cannot_be_deactivated()
     {
-        (await NewStaff().RemoveStaffAsync(C.Id, new RemoveStaffRequestDto { userId = C.AdminUserId })).ShouldBeTrue();
+        await ShouldFailWith("Staff.LastAdmin", () => NewStaff().RemoveStaffAsync(C.Id, new RemoveStaffRequestDto { userId = C.AdminUserId }));
+
         await using var db = Db();
-        (await db.Users.AsNoTracking().SingleAsync(u => u.Id == C.AdminUserId)).isActive.ShouldBeFalse();
+        (await db.Users.AsNoTracking().SingleAsync(u => u.Id == C.AdminUserId)).isActive.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task An_admin_can_deactivate_himself_while_another_active_admin_remains_and_then_the_other_is_protected()
+    {
+        var req = StaffReq(userRole.Admin);
+        await NewStaff().AddStafAsync(C.AdminUserId, C.Id, req);
+        var second = (await UserByEmailAsync(req.email))!.Id;
+
+        (await NewStaff().RemoveStaffAsync(C.Id, new RemoveStaffRequestDto { userId = C.AdminUserId })).ShouldBeTrue();
+
+        await ShouldFailWith("Staff.LastAdmin", () => NewStaff().RemoveStaffAsync(C.Id, new RemoveStaffRequestDto { userId = second }));
     }
 
     // ---------- Refresh tokens ----------

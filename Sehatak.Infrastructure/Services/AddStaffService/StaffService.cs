@@ -191,6 +191,10 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             if (user.role == userRole.Patient)
                 throw new BusinessException("Auth.Forbidden");
 
+            if (user.role == userRole.Admin && user.isActive &&
+                 !await db.Users.AnyAsync(u => u.role == userRole.Admin && u.isActive && u.Id != user.Id))
+                throw new BusinessException("Staff.LastAdmin");   
+
             var oldIsActive = user.isActive;
             user.isActive = false;
             

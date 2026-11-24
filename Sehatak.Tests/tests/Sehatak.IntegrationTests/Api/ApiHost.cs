@@ -24,11 +24,12 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     private readonly SqlServerFixture _fx;
     private readonly int _loginPermitLimit;
     public const string AllowedOrigin = "https://allowed.test";
-
-    public ApiFactory(SqlServerFixture fx, int loginPermitLimit = 100_000)
+    private readonly bool _verifyActiveAccount;
+    public ApiFactory(SqlServerFixture fx, int loginPermitLimit = 100_000, bool verifyActiveAccount = false)
     {
         _fx = fx;
         _loginPermitLimit = loginPermitLimit;
+        _verifyActiveAccount = verifyActiveAccount;
     }
 
     private static readonly Lazy<string> FirebaseKeyFile = new(() =>
@@ -67,6 +68,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("RateLimiting:GeneralWindowSeconds", "60");
         builder.UseSetting("Cors:AllowedOrigins:0", AllowedOrigin);
         builder.UseSetting("SuperAdminSetup:SetupKey", "");
+        builder.UseSetting("Security:VerifyActiveAccount", _verifyActiveAccount ? "true" : "false");
 
         builder.ConfigureTestServices(services =>
         {

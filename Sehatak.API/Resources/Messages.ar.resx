@@ -143,7 +143,10 @@
 	</data>
 	<data name="Validation.Required" xml:space="preserve">
     <value>هذا الحقل مطلوب.</value>
-  </data>
+	</data>
+	<data name="Staff.LastAdmin" xml:space="preserve">
+  <value>لا يمكن تعطيل آخر مدير فعّال في المركز.</value>
+</data>
   <data name="Validation.InvalidEmail" xml:space="preserve">
     <value>الرجاء إدخال إيميل صحيح.</value>
   </data>
@@ -684,9 +687,6 @@
   </data>
 	<data name="Auth.AccountDeactivated" xml:space="preserve">
     <value>تم تعطيل هذا الحساب.</value>
-  </data>
-	<data name="Auth.TooManyAttempts" xml:space="preserve">
-    <value>محاولات فاشلة كثيرة. الرجاء المحاولة لاحقاً.</value>
   </data>
 	<data name="CenterRegistration.TenantDatabaseCreationFailed" xml:space="preserve">
     <value>تعذر إنشاء قاعدة بيانات المركز. الرجاء المحاولة مرة أخرى أو التواصل مع الدعم.</value>

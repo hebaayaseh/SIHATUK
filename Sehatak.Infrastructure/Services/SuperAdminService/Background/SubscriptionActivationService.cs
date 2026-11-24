@@ -24,16 +24,13 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                try
-                {
-                    await CheckAndActivateSubscriptions();
-                    await SendRenewalReminders();  
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error in SubscriptionActivationService");
-                }
-                await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
+                try { await CheckAndActivateSubscriptions(); }
+                catch (Exception ex) { _logger.LogError(ex, "Subscription expiry pass failed"); }
+
+                try { await SendRenewalReminders(); }
+                catch (Exception ex) { _logger.LogError(ex, "Renewal reminder pass failed"); }
+
+                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
             }
         }
 
@@ -50,6 +47,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
                 .Where(s => s.Status == SubscriptionStatus.Active && s.EndDate <= today)
                 .ToListAsync();
 
+            var toNotify = new List<(string Email, string Subject, string Message)>();
             foreach (var expired in expiredSubscriptions)
             {
                 expired.Status = SubscriptionStatus.Expired;
@@ -64,11 +62,8 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
 
                     if (!string.IsNullOrEmpty(center.AdminEmail))
                     {
-                        await emailService.SendCustomMessageAsync(
-                            center.AdminEmail,
-                            $"تعليق حساب {center.Name}",
-                            $"تم تعليق حساب مركز {center.Name} بسبب انتهاء الاشتراك. يرجى إتمام الدفع لتفعيل الاشتراك الجديد إن وُجد، أو التواصل مع الإدارة."
-                        );
+                        toNotify.Add((center.AdminEmail, $"تعليق حساب {center.Name}"," بسبب انتهاء الاشتراك. يرجى إتمام الدفع لتفعيل الاشتراك الجديد إن وُجد، أو التواصل مع الإدارة."));
+                        
                     }
                 }
 
@@ -77,6 +72,11 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
             }
 
             await sharedDb.SaveChangesAsync();
+            foreach (var (email, subject, message) in toNotify)
+            {
+                try { await emailService.SendCustomMessageAsync(email, subject, message); }
+                catch (Exception ex) { _logger.LogError(ex, "Suspension mail failed for {Email}", email); }
+            }
         }
         
         private async Task SendRenewalReminders()
@@ -90,23 +90,33 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
 
 
             var expiringSubscriptions = await sharedDb.CenterSubscriptions
-                .Include(s => s.Center)
-                .Where(s => s.Status == SubscriptionStatus.Active
-                         && s.EndDate == reminderDate)
-                .ToListAsync();
+    .Include(s => s.Center)
+    .Where(s => s.Status == SubscriptionStatus.Active
+             && s.EndDate > today
+             && s.EndDate <= reminderDate
+             && s.RenewalReminderSentAt == null)
+    .ToListAsync();
 
             foreach (var subscription in expiringSubscriptions)
             {
-                if (subscription.Center?.AdminEmail != null)
+                if (subscription.Center?.AdminEmail == null) continue;
+
+                // نحجز التذكير أولاً: لو نسختين من التطبيق شغّالتين، واحدة بس بتبعت
+                var claimed = await sharedDb.CenterSubscriptions
+                    .Where(s => s.Id == subscription.Id && s.RenewalReminderSentAt == null)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.RenewalReminderSentAt, DateTime.UtcNow));
+                if (claimed == 0) continue;
+
+                try
                 {
                     await emailService.SendSubscriptionRenewalReminderAsync(
-                        subscription.Center.AdminEmail,
-                        subscription.Center.Name,
-                        subscription.EndDate
-                    );
-
-                    _logger.LogInformation(
-                        "Renewal reminder sent to center {CenterId}", subscription.CenterId);
+                        subscription.Center.AdminEmail, subscription.Center.Name, subscription.EndDate);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Renewal reminder failed for center {CenterId}", subscription.CenterId);
+                    await sharedDb.CenterSubscriptions.Where(s => s.Id == subscription.Id)
+                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.RenewalReminderSentAt, (DateTime?)null));   // نعيد المحاولة بالدورة الجاية
                 }
             }
         }

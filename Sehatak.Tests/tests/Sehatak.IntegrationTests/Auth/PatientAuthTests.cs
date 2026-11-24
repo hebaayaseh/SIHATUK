@@ -231,55 +231,62 @@ public class PatientAuthTests(SqlServerFixture fx) : AuthTestBase(fx)
     }
 
     [Fact]
-    public async Task An_email_that_is_already_registered_and_active_is_refused_and_nothing_is_created()
+    public async Task An_email_that_is_already_registered_and_active_is_answered_like_a_new_one_and_nothing_happens()
     {
         var (_, email) = await AddLoginUserAsync(userRole.Patient);
 
-        await ShouldFailWith("Auth.EmailExists", () => NewAuth().RegisterAsync(C.Id, Reg(email)));
+        var r = await NewAuth().RegisterAsync(C.Id, Reg(email));   // no error: the caller cannot learn that the email exists
 
+        r.ShouldNotBeNull();
         await using var db = Db();
         (await db.Users.CountAsync(u => u.email == email)).ShouldBe(1);
         await Mail.DidNotReceiveWithAnyArgs().SendOtpAsync(default!, default!, default!);
     }
 
     [Fact]
-    public async Task Registering_again_before_verifying_updates_the_same_account_and_sends_a_new_code()
+    public async Task Registering_again_while_the_first_code_is_still_live_is_refused_and_changes_nothing()
     {
         var (userId, email) = await AddPendingPatientAsync();
+        var before = await UserAsync(userId);
 
-        var r = await NewAuth().RegisterAsync(C.Id, Reg(email, password: "An0ther!Pass"));
+        await ShouldFailWith("Auth.TooManyAttempts", () => NewAuth().RegisterAsync(C.Id, Reg(email, password: "An0ther!Pass")));
 
-        r.UserId.ShouldBe(userId);
+        var after = await UserAsync(userId);
+        after.passwordHash.ShouldBe(before.passwordHash);
         await using var db = Db();
         (await db.Users.CountAsync(u => u.email == email)).ShouldBe(1);
-        (await db.Patients.CountAsync(p => p.userId == userId)).ShouldBe(1);
-        (await CodesAsync(userId)).Count.ShouldBe(2);
-        await Mail.Received(2).SendOtpAsync(email, Arg.Any<string>(), "register");
+        (await CodesAsync(userId)).Count.ShouldBe(1);
     }
 
     [Fact]
-    public async Task An_account_that_was_verified_and_later_deactivated_cannot_be_registered_again()
+    public async Task An_account_that_was_verified_and_later_deactivated_cannot_be_registered_again_and_nothing_changes()
     {
         var (userId, email) = await AddPendingPatientAsync();
         await AddCodeAsync(userId, used: true);
+        var before = await UserAsync(userId);
+        var codesBefore = (await CodesAsync(userId)).Count;
+        Mail.ClearReceivedCalls();
+        var r = await NewAuth().RegisterAsync(C.Id, Reg(email, password: "An0ther!Pass"));   // fake answer, no error
 
-        await ShouldFailWith("Auth.AccountDeactivated", () => NewAuth().RegisterAsync(C.Id, Reg(email)));
+        r.ShouldNotBeNull();
+        (await UserAsync(userId)).passwordHash.ShouldBe(before.passwordHash);
+        (await CodesAsync(userId)).Count.ShouldBe(codesBefore);
+        await Mail.DidNotReceiveWithAnyArgs().SendOtpAsync(default!, default!, default!);
     }
 
     [Fact]
-    [Trait("Category", "KnownBug")]
     public async Task Registering_with_the_email_of_a_deactivated_staff_account_changes_nothing_on_it()
     {
-        // staff created by the admin never verified a code, so a deactivated staff account looks like "pending registration"
         var staff = await C.AddDoctorAsync(active: false);
         var before = await UserAsync(staff.UserId);
 
-        await Should.ThrowAsync<BusinessException>(() => NewAuth().RegisterAsync(C.Id, Reg(before.email)));
+        await NewAuth().RegisterAsync(C.Id, Reg(before.email));
 
         var after = await UserAsync(staff.UserId);
         after.passwordHash.ShouldBe(before.passwordHash);
         after.firstName.ShouldBe(before.firstName);
         after.role.ShouldBe(userRole.Doctor);
+        await Mail.DidNotReceiveWithAnyArgs().SendOtpAsync(default!, default!, default!);
     }
 
     [Fact]

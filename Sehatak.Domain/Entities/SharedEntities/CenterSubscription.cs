@@ -20,6 +20,7 @@ namespace Sehatak.Domain.Entities.SharedEntities
         public decimal AmountPaid { get; set; }
         // Special for the super admin
         public string? PaymentReference { get; set; }
+        public DateTime? RenewalReminderSentAt { get; set; }
 
         // Navigation Properties 
         public MedicalCenter Center { get; set; } = null!;

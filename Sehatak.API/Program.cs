@@ -3,6 +3,7 @@ using FluentValidation.AspNetCore;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Sehatak.API.Controllers.ConfirmPaymentController;
 using Sehatak.API.Hubs;
@@ -323,7 +324,46 @@ namespace Sehatak.API
                             status = 403,
                             message = "Forbidden. You do not have permission to access this resource."
                         });
-                    }
+                    },
+                    OnTokenValidated = async context =>
+                    {
+                        var services = context.HttpContext.RequestServices;
+                        var cfg = services.GetRequiredService<IConfiguration>();
+                        if (!cfg.GetValue("Security:VerifyActiveAccount", true)) return;   // مطفي بتيستات الـ API الأخرى
+
+                        var principal = context.Principal!;
+                        var centerText = principal.FindFirst("CenterId")?.Value;
+                        if (!int.TryParse(principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var userId))
+                        {
+                            context.Fail("Invalid token.");
+                            return;
+                        }
+
+                        var cache = services.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>();
+                        var key = $"account-active:{centerText ?? "sa"}:{userId}";
+
+                        if (!cache.TryGetValue(key, out bool active))
+                        {
+                            try
+                            {
+                                if (int.TryParse(centerText, out var centerId))
+                                {
+                                    await using var db = services.GetRequiredService<TenantDbContextFactory>().CreateForCenter(centerId);
+                                    active = await db.Users.AsNoTracking().AnyAsync(u => u.Id == userId && u.isActive);
+                                }
+                                else
+                                {
+                                    var shared = services.GetRequiredService<SharedDbContext>();
+                                    active = await shared.SuperAdmins.AsNoTracking().AnyAsync(s => s.Id == userId && s.IsActive);
+                                }
+                            }
+                            catch { active = false; }          // ما قدرنا نتأكد: ما نفتح الباب
+
+                            cache.Set(key, active, TimeSpan.FromSeconds(20));   // 0 = بدون كاش (استعلام لكل طلب)
+                        }
+
+                        if (!active) context.Fail("Account is deactivated.");
+                    },
                 };
             });
 

@@ -140,7 +140,10 @@
   </data>
 	<data name="Auth.TooManyAttempts" xml:space="preserve">
     <value>Too many login attempts. Please try again later.</value>
-  </data>
+		</data>
+	<data name="Staff.LastAdmin" xml:space="preserve">
+  <value>You cannot deactivate the last active admin of the center.</value>
+</data>
   <data name="Validation.Required" xml:space="preserve">
     <value>This field is required.</value>
   </data>
@@ -685,9 +688,6 @@
 	<!-- الصق قبل </root> بنهاية Messages.en.resx -->
 	<data name="Auth.AccountDeactivated" xml:space="preserve">
     <value>This account has been deactivated.</value>
-  </data>
-	<data name="Auth.TooManyAttempts" xml:space="preserve">
-    <value>Too many failed attempts. Please try again later.</value>
   </data>
 	<data name="CenterRegistration.TenantDatabaseCreationFailed" xml:space="preserve">
     <value>We could not set up the center database. Please try again or contact support.</value>

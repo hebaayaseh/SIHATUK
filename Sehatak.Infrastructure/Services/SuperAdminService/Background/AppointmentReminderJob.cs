@@ -120,7 +120,10 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
                             appointment.ReminderSent = true;
                             continue;
                         }
-
+                        var claimed = await db.Appointments
+                            .Where(a => a.Id == appointment.Id && !a.ReminderSent)
+                            .ExecuteUpdateAsync(s => s.SetProperty(a => a.ReminderSent, true));
+                        if (claimed == 0) continue;
                         db.Notifications.Add(new Notification
                         {
                             UserId = appointment.Patient.NotifiableUserId,
@@ -130,7 +133,6 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
                             IsRead = false
                         });
 
-                        appointment.ReminderSent = true;
                     }
 
                     await db.SaveChangesAsync();

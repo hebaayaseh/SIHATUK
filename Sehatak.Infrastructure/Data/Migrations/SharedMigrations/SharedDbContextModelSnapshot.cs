@@ -164,6 +164,9 @@ namespace Sehatak.Infrastructure.Data.Migrations.SharedMigrations
                     b.Property<int>("PlanId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("RenewalReminderSentAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
 

@@ -1,4 +1,4 @@
-using NSubstitute;
+﻿using NSubstitute;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.IntegrationTests.Infrastructure;
 using Shouldly;
@@ -96,10 +96,12 @@ public class SubscriptionJobTests(SqlServerFixture fx) : SubscriptionTestBase(fx
     // ---------- reminder ----------
 
     [Theory]
-    [InlineData(7, true)]
-    [InlineData(6, false)]
     [InlineData(8, false)]
-    public async Task Reminder_goes_out_only_when_exactly_seven_days_are_left(int daysLeft, bool sent)
+    [InlineData(7, true)]
+    [InlineData(6, true)]    // اليوم اللي ضاع ما بيضيّع التذكير
+    [InlineData(1, true)]
+    [InlineData(0, false)]   // اللي انتهى اليوم بتعامله خطوة الانتهاء
+    public async Task Reminder_goes_out_once_the_subscription_is_within_seven_days(int daysLeft, bool sent)
     {
         var plan = await AddPlanAsync();
         var end = Today.AddDays(daysLeft);
