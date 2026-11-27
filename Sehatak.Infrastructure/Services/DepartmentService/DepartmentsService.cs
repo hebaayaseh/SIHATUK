@@ -70,6 +70,7 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.logo.FileName);
 
                 var path = Path.Combine("wwwroot/uploads/receipts", fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
@@ -146,6 +147,7 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.logo.FileName);
 
                 var path = Path.Combine("wwwroot/uploads/department", fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
@@ -293,6 +295,7 @@ namespace Sehatak.Infrastructure.Services.DepartmentService
             {
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.ProfileImage.FileName);
                 var path = Path.Combine("wwwroot/uploads/department", fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await request.ProfileImage.CopyToAsync(stream);

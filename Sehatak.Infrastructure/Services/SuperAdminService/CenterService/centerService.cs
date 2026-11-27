@@ -66,6 +66,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.CenterService
 
                 var fileName = Guid.NewGuid() + extension;
                 var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
                     await request.Logo.CopyToAsync(stream);

@@ -75,6 +75,7 @@ namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
 
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.profileImage.FileName);
                 var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
                 using (var stream = new FileStream(path, FileMode.Create))
                 {

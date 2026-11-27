@@ -62,6 +62,7 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
 
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.LogoUrl.FileName);
                 var path = Path.Combine("wwwroot/uploads/receipts", fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
@@ -151,6 +152,7 @@ namespace Sehatak.Infrastructure.Services.EditProfileService
 
                 var fileName = Guid.NewGuid() + Path.GetExtension(request.profileImage.FileName);
                 var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
                 using (var stream = new FileStream(path, FileMode.Create))
                 {

@@ -118,7 +118,6 @@ public class LabValidatorTests
 
     /// <summary>The doctor's update refuses the same id twice in RemoveLabItems; the receptionist's copy of the rule is missing.</summary>
     [Fact]
-    [Trait("Category", "KnownBug")]
     public void The_receptionist_update_refuses_the_same_removed_item_twice()
     {
         var ok = new ReceptionistUpdateLabRequestDto { LabRequestId = 1, PatientId = 2, RemoveLabItems = new() { 7, 7 } };

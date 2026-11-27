@@ -515,45 +515,35 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 Message = "الغاء موعد."
             });
 
-            var nextWaiting = await db.Waitlists
-                    .Include(p => p.Patient)
-                    .Where(w => w.DoctorId == doctorId
-                           && w.PreferredDate == request.date
-                           && w.Status == WaitlistStatus.Waiting)
-                    .OrderBy(w => w.CreatedAt)
-                    .FirstOrDefaultAsync();
+            using var promotionTx = await db.Database.BeginTransactionAsync();
 
-            if (nextWaiting != null)
-            {
-                await db.Appointments.AddAsync(new Appointment
-                {
-                    patientId = nextWaiting.PatientId,
-                    appointmentDate = request.date,
-                    timeSlot = request.timeSlot,
-                    appointmentStatus = AppointmentStatus.Confirmed,
-                    doctorId = doctorId,
-                    createdAt = DateTime.UtcNow,
-                    updateAt = DateTime.UtcNow
-                });
-                nextWaiting.Status = WaitlistStatus.Entered;
-
-
-                await db.Notifications.AddAsync(new Notification
-                {
-                    UserId = nextWaiting.Patient.NotifiableUserId,
-                    Type = NotificationType.Appointment,
-                    IsRead = false,
-                    CreatedAt = DateTime.UtcNow,
-                    Message = $"توفر لك موعد في تاريخ {request.date} في الوقت {request.timeSlot}"
-                });
-            }
+            var promoted = await PromoteNextWaitingAsync(db, doctorId, request.date, request.timeSlot,
+                receptionistId: null);
 
             var auditEntry = auditLog.Build("CancelAppointment", "Appointment", appointment.Id,
-                newValue: new { request.Resone });
+               newValue: new { request.Resone });
 
             if (auditEntry != null)
                 db.AuditLogs.Add(auditEntry);
-            await db.SaveChangesAsync();
+
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException) when (promoted != null)
+            {
+
+                throw new BusinessException("Appointment.NotFound");
+            }
+
+            if (promoted != null)
+            {
+                await db.Waitlists
+                    .Where(w => w.Id == promoted.Value.WaitListId)
+                    .ExecuteUpdateAsync(s => s.SetProperty(w => w.PromotedAppointmentId, (int?)promoted.Value.Appointment.Id));
+            }
+
+            await promotionTx.CommitAsync();
 
             return "تم الغاء موعدك بنجاح";
         }
@@ -1287,46 +1277,34 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 Message = "الغاء موعد."
             });
 
-            var nextWaiting = await db.Waitlists
-                    .Include(p => p.Patient)
-                    .Where(w => w.DoctorId == doctorId
-                           && w.PreferredDate == request.date
-                           && w.Status == WaitlistStatus.Waiting)
-                    .OrderBy(w => w.CreatedAt)
-                    .FirstOrDefaultAsync();
+            using var promotionTx = await db.Database.BeginTransactionAsync();
 
-            if (nextWaiting != null)
-            {
-                await db.Appointments.AddAsync(new Appointment
-                {
-                    patientId = nextWaiting.PatientId,
-                    appointmentDate = request.date,
-                    timeSlot = request.timeSlot,
-                    appointmentStatus = AppointmentStatus.Confirmed,
-                    doctorId = doctorId,
-                    createdAt = DateTime.UtcNow,
-                    updateAt = DateTime.UtcNow,
-                    ReceptionistId = userId
-                });
-                nextWaiting.Status = WaitlistStatus.Entered;
-
-
-                await db.Notifications.AddAsync(new Notification
-                {
-                    UserId = nextWaiting.Patient.NotifiableUserId,
-                    Type = NotificationType.Appointment,
-                    IsRead = false,
-                    CreatedAt = DateTime.UtcNow,
-                    Message = $"توفر لك موعد في تاريخ {request.date} في الوقت {request.timeSlot}"
-                });
-            }
+            var promoted = await PromoteNextWaitingAsync(db, doctorId, request.date, request.timeSlot,
+                receptionistId: userId);
 
             var auditEntry = auditLog.Build("CancelAppointment", "Appointment", appointment.Id,
-                newValue: new { request.Resone });
+               newValue: new { request.Resone });
 
             if (auditEntry != null)
                 db.AuditLogs.Add(auditEntry);
-            await db.SaveChangesAsync();
+
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException) when (promoted != null)
+            {
+                throw new BusinessException("Appointment.NotFound");
+            }
+
+            if (promoted != null)
+            {
+                await db.Waitlists
+                    .Where(w => w.Id == promoted.Value.WaitListId)
+                    .ExecuteUpdateAsync(s => s.SetProperty(w => w.PromotedAppointmentId, (int?)promoted.Value.Appointment.Id));
+            }
+
+            await promotionTx.CommitAsync();
 
             return "تم الغاء الموعد بنجاح";
         }

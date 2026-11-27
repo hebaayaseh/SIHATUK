@@ -125,7 +125,7 @@ public class AuthorizationSurfaceTests
     "Login","PatientLogin","Register","PatientActiveProfile","SubmitGuestFeedback",
     // الأربعة الي ضفتلهم AllowAnonymous
     "patient-get-doctors","patient-get-doctor","patient-get-available-doctor-slot",
-    "center-registration"
+    "center-registration","patient-search-centers"
 };
         var unexpected = AllActions()
             .Where(a => a.Anonymous)

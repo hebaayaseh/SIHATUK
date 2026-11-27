@@ -68,6 +68,8 @@ public class RoleMatrixTests
         ("CenterController.CreateCenter", "SuperAdmin"),   // POST superAdmin-create-center
         ("CenterController.GetAllCenters", "SuperAdmin"),   // GET superAdmin-get-all-centers
         ("CenterController.GetCenterById", "SuperAdmin|Admin"),   // GET superAdmin-admin-get-center-by-Id/{centerId}
+        ("CenterController.GetMyCenter", "Admin"),   // GET admin-get-my-center/{centerId}
+        ("CenterController.SearchCenters", "ANON"),   // GET patient-search-centers
         ("CenterController.SuspendedCenter", "SuperAdmin"),   // PATCH superAdmin-suspened-center/{centerId}
         ("CenterRegistrationController.ApproveCenterRequest", "SuperAdmin"),   // POST superAdmin-approve-requests/{requestId}
         ("CenterRegistrationController.CenterRequest", "ANON"),   // POST center-registration
@@ -247,6 +249,8 @@ public class RoleMatrixTests
         ("RenewSubscriptionController.GetMySubscription", "Admin|SuperAdmin"),
         ("SubscriptionPaymentController.GetMyCenterPayments", "Admin"),
         ("EditStaffProfileController.EditCenterInformation", "Admin"),// GET staff-view-profile/{centerId}
+        ("Appointmentcontroller.ReceptionistEnterFromWaitlist", "Receptionist"),   // POST receptionist-enter-from-waitlist/{centerId}/{doctorId}
+        ("Appointmentcontroller.ReceptionistRemoveFromWaitlist", "Receptionist"),   // DELETE receptionist-remove-from-waitlist/{centerId}/{doctorId}/{waitListId}
     ];
 
     private static readonly ILookup<string, string> Expected = ExpectedRows.ToLookup(r => r.Name, r => Canon(r.Roles));

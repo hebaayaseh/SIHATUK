@@ -58,6 +58,7 @@ namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
             var fileName = Guid.NewGuid() + Path.GetExtension(request.ImageFile.FileName);
 
             var path = Path.Combine("wwwroot/uploads/profileImage", fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
             using (var stream = new FileStream(path, FileMode.Create))
             {
