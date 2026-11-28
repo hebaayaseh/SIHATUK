@@ -62,6 +62,12 @@ namespace Sehatak.Infrastructure.Services.CheckTimeService
                     .SetProperty(a => a.updateAt, now));
             if (rows == 0)
                 throw new BusinessException("Appointment.NotFound");
+            await db.FollowUps
+                    .Where(f => f.ScheduledAppointmentId == appointmentId
+                            && f.Status == FollowUpStatus.Booked)
+                    .ExecuteUpdateAsync(s => s
+                    .SetProperty(f => f.Status, FollowUpStatus.Completed)
+                    .SetProperty(f => f.UpdatedAt, now));
 
             var auditEntry = auditLog.Build(
                 action: "FinishAppointment",

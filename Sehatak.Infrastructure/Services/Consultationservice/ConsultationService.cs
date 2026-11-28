@@ -89,6 +89,15 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             db.Notifications.Add(new Notification
             {
                 UserId = patient.userId!.Value,
+                Message = "تم إلغاء طلبك للاستشارة.",
+                Type = NotificationType.Cancellation,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            db.Notifications.Add(new Notification
+            {
+                UserId = consultation.Doctor.user.Id,
                 Message = "قام المريض بإلغاء طلب الاستشارة.",
                 Type = NotificationType.Cancellation,
                 IsRead = false,

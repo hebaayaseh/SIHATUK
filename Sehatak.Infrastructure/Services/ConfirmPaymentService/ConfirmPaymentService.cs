@@ -94,6 +94,13 @@ namespace Sehatak.Infrastructure.Services.ConfirmPaymentService
             if (claimed == 0)
                 throw new BusinessException("Payment.NotFound");
 
+            await db.FollowUps
+                    .Where(f => f.ScheduledAppointmentId == appointmentId
+                            && f.Status == FollowUpStatus.Booked)
+                    .ExecuteUpdateAsync(s => s
+                    .SetProperty(f => f.Status, FollowUpStatus.Completed)
+                    .SetProperty(f => f.UpdatedAt, DateTime.UtcNow)); 
+
             await db.SaveChangesAsync();
             await Trancation.CommitAsync();
             return new PaymentResponseDto
