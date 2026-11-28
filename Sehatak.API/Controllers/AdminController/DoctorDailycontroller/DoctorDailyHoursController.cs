@@ -67,7 +67,7 @@ namespace Sehatak.API.Controllers.SuperAdminAndAdmin.AddDoctorDaiktcontroller
         }
 
         [Authorize(Policy = "DoctorOnly")]
-        [HttpGet("doctor-get-appointments-for-day{centerId}")]
+        [HttpGet("doctor-get-appointments-for-day/{centerId}")]
         public async Task<IActionResult> GetDoctorAppointmentsForDay(int centerId, [FromQuery] DateOnly date)
         {
             var userId = int.Parse(

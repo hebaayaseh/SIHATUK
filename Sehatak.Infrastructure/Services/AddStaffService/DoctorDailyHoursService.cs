@@ -527,7 +527,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             var appointments = await db.Appointments
                 .Where(a => a.doctorId == doctor.Id
                        && a.appointmentDate == date
-                       && a.appointmentStatus == AppointmentStatus.Confirmed
+                       && a.appointmentStatus != AppointmentStatus.Cancelled
                        && a.timeSlot.HasValue)
                 .OrderBy(a => a.timeSlot)
                 .Select(a => new AppointmentSummaryDto
@@ -539,7 +539,9 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                     :$"{a.Patient.FirstName} {a.Patient.LastName}",
                     date = a.appointmentDate,
                     timeSlot = a.timeSlot!.Value,
-                    IsfollowUp = a.IsFollowUp
+                    IsfollowUp = a.IsFollowUp,
+                    status = a.appointmentStatus.ToString(),
+                    hasRecord = a.MedicalRecord != null
                 })
                 .ToListAsync();
 
